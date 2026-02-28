@@ -1,2 +1,2 @@
 [codespell]
-skip = .git,.vale,tmp
+skip = .git,.vale,tmp,go.sum

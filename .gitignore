@@ -1,3 +1,8 @@
+# Go
+bin/
+coverage.out
+coverage.html
+
 # Local development
 tmp/
 .env
