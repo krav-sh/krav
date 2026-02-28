@@ -1,0 +1,16 @@
+# Local development
+tmp/
+.env
+
+# Linter caches
+.rumdl_cache/
+node_modules/
+
+# Vale synced packages (keep vocabulary and project styles)
+.vale/*
+!.vale/config/
+!.vale/arci/
+.vale/config/*
+!.vale/config/vocabularies/
+.vale/config/vocabularies/*
+!.vale/config/vocabularies/arci/

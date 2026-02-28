@@ -1,0 +1,19 @@
+[global]
+disable = [
+  "MD013", # Line length
+  "MD033", # Inline HTML
+]
+respect_gitignore = true
+exclude = [".git", ".vale", "tmp"]
+
+[MD003]
+style = "atx"
+
+[MD004]
+style = "dash"
+
+[MD025]
+front_matter_title = ""
+
+[MD048]
+style = "backtick"

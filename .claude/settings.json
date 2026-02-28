@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(just --list:*)",
+      "Bash(just format:*)",
+      "Bash(just format-spelling:*)",
+      "Bash(just format-config:*)",
+      "Bash(just format-docs:*)",
+      "Bash(just format-markdown:*)",
+      "Bash(just fix:*)",
+      "Bash(just fix-config:*)",
+      "Bash(just fix-docs:*)",
+      "Bash(just fix-markdown:*)",
+      "Bash(just lint:*)",
+      "Bash(just lint-config:*)",
+      "Bash(just lint-docs:*)",
+      "Bash(just lint-json:*)",
+      "Bash(just lint-markdown:*)",
+      "Bash(just lint-prose:*)",
+      "Bash(just lint-spelling:*)",
+      "Bash(just lint-yaml:*)",
+      "Bash(just install:*)",
+      "Bash(just prek:*)",
+      "Bash(just prek-all:*)",
+      "Bash(just prek-install:*)",
+      "Bash(just vale-sync:*)",
+      "Bash(just generate-changelog:*)",
+      "Bash(just preview-changelog:*)",
+      "Bash(just generate-release-notes:*)"
+    ]
+  }
+}
