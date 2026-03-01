@@ -1,14 +1,14 @@
 # Single binary, three modes
 
-ARCI ships as a single Go binary that serves all roles: command-line tool, daemon, and dashboard. No separately versioned components, no coordination problems between processes at different versions, and no external runtime dependencies for core operation.
+Krav ships as a single Go binary that serves all roles: command-line tool, daemon, and dashboard. No separately versioned components, no coordination problems between processes at different versions, and no external runtime dependencies for core operation.
 
 ## The three modes
 
-**Command-line tool** is the default mode. The developer or agent invokes `arci` directly for graph management, hook evaluation, diagnostics, and administration. In direct execution mode, the command-line tool loads configuration, compiles policies, and evaluates locally. This is self-contained but pays startup costs on every invocation.
+**Command-line tool** is the default mode. The developer or agent invokes `krav` directly for graph management, hook evaluation, diagnostics, and administration. In direct execution mode, the command-line tool loads configuration, compiles policies, and evaluates locally. This is self-contained but pays startup costs on every invocation.
 
-**Daemon** is a long-running process started with `arci daemon start`. The daemon maintains a config cache, compiled policies, connection pooling, and a REST API. When a daemon is available, the command-line tool delegates to it instead of evaluating locally, avoiding per-invocation startup costs. The daemon also provides WebSocket event streaming and hot-reload on config changes.
+**Daemon** is a long-running process started with `krav daemon start`. The daemon maintains a config cache, compiled policies, connection pooling, and a REST API. When a daemon is available, the command-line tool delegates to it instead of evaluating locally, avoiding per-invocation startup costs. The daemon also provides WebSocket event streaming and hot-reload on config changes.
 
-**Dashboard** is a web-based diagnostics interface started with `arci dashboard` or served by the daemon. It provides live event streaming, policy testing, state browsing, coverage reports, and graph browsing. It reads from the daemon's cached state for consistency.
+**Dashboard** is a web-based diagnostics interface started with `krav dashboard` or served by the daemon. It provides live event streaming, policy testing, state browsing, coverage reports, and graph browsing. It reads from the daemon's cached state for consistency.
 
 ## Why a single binary
 
@@ -20,4 +20,4 @@ ARCI ships as a single Go binary that serves all roles: command-line tool, daemo
 
 ## Mode detection
 
-The binary determines its mode from the subcommand: `arci daemon start` runs the daemon, `arci dashboard` serves the dashboard, everything else runs as the command-line tool. Within command-line mode, the presence of a running daemon triggers delegation: the tool checks for a daemon, and if available, forwards requests to the daemon's API rather than loading config and evaluating locally.
+The binary determines its mode from the subcommand: `krav daemon start` runs the daemon, `krav dashboard` serves the dashboard, everything else runs as the command-line tool. Within command-line mode, the presence of a running daemon triggers delegation: the tool checks for a daemon, and if available, forwards requests to the daemon's API rather than loading config and evaluating locally.

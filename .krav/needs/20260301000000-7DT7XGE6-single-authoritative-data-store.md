@@ -10,4 +10,4 @@ The cost of scattering is particularly acute for traceability. If requirements l
 
 ## Stakeholder perspective
 
-The ARCI contributor (STK-C2B6R1GY) cares about clean architecture and clear module boundaries. A single data store is the foundation of both: the architecture has one well-defined persistence layer, and module boundaries take the form of relationships in the same graph rather than conventions scattered across file hierarchies, issue labels, and configuration files.
+The Krav contributor (STK-C2B6R1GY) cares about clean architecture and clear module boundaries. A single data store is the foundation of both: the architecture has one well-defined persistence layer, and module boundaries take the form of relationships in the same graph rather than conventions scattered across file hierarchies, issue labels, and configuration files.

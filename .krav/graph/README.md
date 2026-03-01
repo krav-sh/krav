@@ -44,7 +44,7 @@ One file per predicate. Each line has `src` and `dst` columns (plus optional met
 
 ## Lifecycle
 
-The ARCI server hydrates these files into an in-memory DuckDB instance on startup and dehydrates modified state back to these files on checkpoint, baseline creation, or graceful shutdown. The files are the git-tracked source of truth; DuckDB is the runtime query engine.
+The Krav server hydrates these files into an in-memory DuckDB instance on startup and dehydrates modified state back to these files on checkpoint, baseline creation, or graceful shutdown. The files are the git-tracked source of truth; DuckDB is the runtime query engine.
 
 ## Migration status
 

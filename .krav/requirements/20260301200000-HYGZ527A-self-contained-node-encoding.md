@@ -4,7 +4,7 @@ The graph engine shall encode each graph node as exactly one newline-delimited r
 
 ## Context
 
-The JSONLT format is central to ARCI's persistence strategy. Any tool can parse, validate, and process each line independently as a self-contained document. This property enables line-oriented tooling (`grep`, `jq`, `sed`) during Stage 0 when the graph engine doesn't yet exist, and it enables streaming processing in later stages.
+The JSONLT format is central to Krav's persistence strategy. Any tool can parse, validate, and process each line independently as a self-contained document. This property enables line-oriented tooling (`grep`, `jq`, `sed`) during Stage 0 when the graph engine doesn't yet exist, and it enables streaming processing in later stages.
 
 The "exactly one line" constraint means literal newlines must not appear in the serialized JSON. JSON string values may contain `\n` escape sequences, but the serialized record itself occupies a single line ending with a newline character. This is the standard JSON Lines convention.
 
