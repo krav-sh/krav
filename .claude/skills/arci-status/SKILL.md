@@ -49,3 +49,9 @@ Using the preceding graph data, provide a narrative summary of the project state
 5. Any suspect links pending review.
 
 Keep the summary concise. Highlight blockers and anything that needs attention. If the developer asks about a specific module, focus on that module's subtree.
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Project state aggregation query (modules, tasks, defects, test cases) | Temporary | 1 | `arci status` CLI command |

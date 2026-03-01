@@ -40,3 +40,9 @@ Examine deliverables against requirements and record defects for problems found.
 5. Summarize findings at the end: how many defects found, severity breakdown, and assessment.
 
 Be thorough but fair. Not every imperfection is a defect. Focus on problems that affect requirement satisfaction or system quality.
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Module requirements and completed tasks context query | Temporary | 3 | `arci module review` CLI command |

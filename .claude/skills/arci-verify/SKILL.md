@@ -32,3 +32,9 @@ Execute test cases and record results.
 5. For method `"analysis"`: perform the analysis described and evaluate the result.
 6. Update each TC-* node's `currentResult` to `"pass"`, `"fail"`, or `"skip"` (with rationale for skips).
 7. For failures, create a DEF-* node describing what failed and why.
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Test case and requirement inventory query | Temporary | 1 | `arci tc record` CLI command |

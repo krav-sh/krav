@@ -32,3 +32,9 @@ Flow parent requirements down to child modules via allocatesTo edges.
 2. For each requirement that child modules must satisfy, add `allocatesTo` edges with the target module's `@id`. Include budget metadata where appropriate, like `{"@id": "MOD-CHILD01", "budget": "50ms"}`.
 3. Not every requirement flows down. Some apply at the parent level only. Allocate only requirements that children are responsible for.
 4. After allocation, child modules should derive their own requirements from the allocated parent requirements.
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Module hierarchy and requirement context query | Temporary | 1 | `arci req allocate` CLI command |

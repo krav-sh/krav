@@ -43,3 +43,9 @@ jq -s --arg id "$NODE_ID" '
 ```
 
 Present the trace as a narrative: "REQ-X exists because NEED-Y captured the expectation that (statement), which came from CON-Z where the team explored (topic)."
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Recursive ancestor traversal via jq | Temporary | 1 | `arci req trace` and `arci task ancestors` CLI commands |

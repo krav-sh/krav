@@ -39,3 +39,9 @@ This skill drives the full transformation chain for a feature. Follow these phas
 At each phase, check with the developer before proceeding to the next. The developer may want to review intermediate results or adjust direction.
 
 Not every feature needs every phase. If the developer says "skip formalization" or "just build it," respect their ceremony preference. The `arci-quickfix` skill handles the minimal-ceremony path.
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Module and task count aggregation query | Temporary | 3 | `arci status` CLI command |

@@ -86,3 +86,10 @@ After finishing the task but before marking it complete, use the Agent tool to r
 - Are there obvious defects, edge cases, or missing error handling?
 
 Do not create any graph nodes, tasks, or defects. Return only your critique."
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Candidate picker: ready tasks with dependency closure | Temporary | 3 | `arci task list --status ready` CLI command |
+| Task context with full derivation chain query | Temporary | 3 | `arci task show --context` CLI command |

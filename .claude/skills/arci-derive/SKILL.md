@@ -64,3 +64,10 @@ After drafting the requirements but before writing them to the graph, use the Ag
 - Are there requirements that are really process preferences or doctrine rather than verifiable system obligations?
 
 Do not create any graph nodes, tasks, or defects. Return only your critique."
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Candidate picker: validated needs query | Temporary | 3 | `arci need list --status validated` CLI command |
+| Need context and derivation chain query | Temporary | 3 | `arci need derive` CLI command |

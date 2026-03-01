@@ -36,3 +36,9 @@ Check the criteria for the current phase:
 Each phase requires that tasks for that phase are complete, no blocking defects (critical/major, open/confirmed) exist, and verification coverage meets the threshold for the phase.
 
 If criteria pass, update the module's `phase` to the next value. If not, report what blocks advancement and what the team must do.
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Module state context query (tasks, blockers, test results) | Temporary | 1 | `arci module show` CLI command |

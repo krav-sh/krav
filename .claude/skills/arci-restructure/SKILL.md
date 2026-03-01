@@ -27,3 +27,9 @@ Module restructuring has broad graph impact. Proceed carefully:
 4. For merging: pick the surviving module, move all nodes from the absorbed module, update hierarchy.
 5. After any restructuring, expect suspect links on edges involving moved nodes. Triage them.
 6. Check whether any baselines cover the affected modules. Restructuring baselined modules is a major change.
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Module hierarchy context query | Temporary | 1 | `arci module list` CLI command |

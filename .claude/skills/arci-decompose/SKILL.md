@@ -66,3 +66,10 @@ After drafting the task DAG but before writing it to the graph, use the Agent to
 - Is the phase ordering correct? Flag any task whose processPhase violates the architecture → design → build → integration → verification → validation sequence relative to its dependencies.
 
 Do not create any graph nodes, tasks, or defects. Return only your critique."
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Candidate picker: modules with approved requirements | Temporary | 3 | `arci module list --has-approved-reqs` CLI command |
+| Module requirements and task inventory context query | Temporary | 3 | `arci module decompose` CLI command |

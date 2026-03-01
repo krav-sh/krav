@@ -57,3 +57,10 @@ After drafting the needs but before writing them to the graph, use the Agent too
 - Is the stakeholder assignment correct for each need? Would a different stakeholder be more appropriate?
 
 Do not create any graph nodes, tasks, or defects. Return only your critique."
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Candidate picker: crystallized concepts query | Temporary | 3 | `arci concept list --status crystallized` CLI command |
+| Concept and stakeholder context query | Temporary | 3 | `arci concept formalize` CLI command |

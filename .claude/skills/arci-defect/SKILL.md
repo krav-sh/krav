@@ -31,3 +31,9 @@ For each open defect:
 5. After verification of the fix, update to `"verified"`, then `"closed"`.
 
 Prioritize by severity. Critical and major defects block module advancement.
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Open defects by module context query | Temporary | 1 | `arci defect list` CLI command |

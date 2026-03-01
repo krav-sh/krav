@@ -63,3 +63,10 @@ After drafting the test cases but before writing them to the graph, use the Agen
 - Are there requirements in the module that still lack any test case coverage after this batch?
 
 Do not create any graph nodes, tasks, or defects. Return only your critique."
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Candidate picker: modules with uncovered requirements | Temporary | 3 | `arci req list --uncovered` CLI command |
+| Module requirements and test case inventory query | Temporary | 3 | `arci tc create` CLI command |

@@ -30,3 +30,9 @@ For each suspect link:
 4. Clear the `suspect` flag on the edge after triaging.
 
 Suspect links propagate through `derivesFrom`, `verifiedBy`, and `allocatesTo` edges. Other edge types don't carry suspect flags.
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Suspect link detection query | Temporary | 2 | Post-mutation hook policy with `arci suspect list` CLI command |

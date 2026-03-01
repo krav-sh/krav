@@ -36,3 +36,9 @@ Is it a new area with no requirements yet? A lightweight task node (title, modul
 Is it truly trivial (typo fix, config tweak, formatting)? Skip the graph entirely. Just make the change and commit.
 
 When in doubt, create a TASK-* node. It's cheap and preserves a record of what happened and why. But don't create needs, requirements, and test cases for a one-line bug fix.
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Baseline and module inventory query | Permanent | n/a | n/a |

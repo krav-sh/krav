@@ -27,3 +27,9 @@ Create and develop concepts through exploration. Record decisions, alternatives 
 6. If the concept informs a module's design, add an `informs` edge to that module.
 
 A crystallized concept is ready for formalization into needs. Don't rush to crystallize, because the value of exploration is in considering alternatives.
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Module inventory context query | Temporary | 3 | `arci module list` CLI command |

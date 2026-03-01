@@ -32,3 +32,9 @@ Capture graph state as a named snapshot anchored to the current git commit.
 3. Create a BSL-* node with: `module`, `phase` (current module phase), `commitSha` (current HEAD), `scope`, `approvedBy`, `status: "draft"`.
 4. The developer reviews and approves the baseline, transitioning to `"approved"`.
 5. Once approved, the baseline protects its scope from uncontrolled modification. Changes to baselined content require a defect and module phase regression.
+
+## Graph-editing conventions
+
+| Pattern | Classification | Stage | Replacement |
+|---------|---------------|-------|-------------|
+| Module state and baseline inventory query | Temporary | 1 | `arci baseline create` CLI command |
