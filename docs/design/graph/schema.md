@@ -2,16 +2,26 @@
 
 ## Overview
 
-This document defines the ontology schema (T-Box) for the ARCI knowledge graph: the RDF classes, RDF properties, identifier scheme, and JSON-LD vocabulary that constitute the graph's formal structure. Node types are RDF classes in the `arci:` namespace, datatype properties capture per-node attributes, and object properties express semantic relationships between nodes.
+This document defines the ontology schema (T-Box) for the ARCI knowledge graph: the node types, properties, identifier scheme, and vocabulary that constitute the graph's formal structure. Node types map to DuckDB vertex tables, predicates map to edge tables, and the SQL/PGQ property graph is a view layer over these relational tables.
 
-## JSON-LD vocabulary
+## Storage model
 
-The ARCI schema is an RDF vocabulary expressed in JSON-LD compact form. A shared context document defines the namespace mappings, class aliases, and property definitions that let consumers interpret JSON-LD documents as RDF triples.
+The knowledge graph runtime is an in-memory DuckDB instance with the DuckPGQ community extension (SQL/PGQ, part of the SQL:2023 standard). Each node type maps to a DuckDB vertex table (`concepts`, `modules`, `needs`, `requirements`, `test_cases`, `tasks`, `defects`, `baselines`, `stakeholders`, `test_plans`, `developers`, `agents`). Each predicate maps to an edge table (`child_of`, `derives_from`, `allocates_to`, `depends_on`, `verified_by`, `module`, `stakeholder`, `subject`, `detected_by`, `generates`, `informs`, `implements`, `operator`, `parent_agent`). DuckPGQ creates a SQL/PGQ property graph over these tables, making the same data queryable with both standard SQL (filtering, aggregation, analytics) and SQL/PGQ pattern matching syntax (graph traversals, shortest paths, variable-length paths).
+
+On-disk serialization uses per-table NDJSON files under `.arci/graph/`. Vertex tables serialize to files named after the table (`concepts.ndjson`, `needs.ndjson`, `requirements.ndjson`, `tasks.ndjson`, etc.). Edge tables serialize the same way (`derives_from.ndjson`, `verified_by.ndjson`, etc.). Each file sorts deterministically (vertex tables by `id`, edge tables by all columns) for stable git diffs. The `HydrateFromDir` / `DehydrateToDir` pattern loads NDJSON files into DuckDB tables on server startup and writes them back on checkpoint or shutdown.
+
+The NDJSON format uses plain JSON keys (`id`, `type`, `title`, `status`) rather than JSON-LD keys (`@id`, `@type`, `@context`). Object property values use plain ID strings (`"module": "MOD-A4F8R2X1"`) rather than JSON-LD reference objects (`"module": {"@id": "MOD-A4F8R2X1"}`). Multi-valued references use arrays of ID strings.
+
+The DuckPGQ spike at `experiments/duckpgq/` validates this architecture with sub-50 ms hydration, sub-5 ms dehydration, and sub-3 ms graph pattern queries at small scale.
+
+## Vocabulary
+
+The ARCI schema defines a vocabulary in the `arci:` namespace (`https://arci.dev/schema#`) that aligns with external ontologies (Dublin Core, PROV-O, OSLC) as a design reference for semantic interoperability. The runtime data model is relational tables queried via SQL/PGQ, not RDF triples. The RDF vocabulary alignment serves as design-time metadata documenting the conceptual mapping between ARCI's property graph and established engineering ontologies. See [Vocabulary alignment](vocabulary-alignment.md) for the complete mapping.
 
 **Namespace**: `https://arci.dev/schema#`
 **Prefix**: `arci`
 
-The context document maps compact JSON keys to their full RDF IRIs and declares whether each property is a datatype property or an object property (via `@type: "@id"`):
+The vocabulary maps compact property names to their canonical IRIs in the ARCI, Dublin Core, PROV-O, and OSLC namespaces:
 
 ```json
 {
@@ -120,7 +130,7 @@ DEV-J4R8T2W6    Developer
 AGT-M5V9K3X7    Agent
 ```
 
-The `@id` property in JSON-LD holds the identifier. The type prefix must be consistent with the `@type` value; a node with `@id: "CON-K7M3NP2Q"` must have `@type: "Concept"`.
+The `id` field holds the identifier. The type prefix must be consistent with the `type` value; a node with `"id": "CON-K7M3NP2Q"` must have `"type": "Concept"`.
 
 ## Common properties
 
@@ -128,18 +138,17 @@ All node types share these properties:
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `@id` | string | Yes | Unique identifier (TYPE-nanoid format) |
-| `@type` | string | Yes | Node type (must match identifier prefix) |
-| `@context` | string | Yes | Reference to the JSON-LD context document |
-| `title` | string | Yes | Human-readable title (`dcterms:title`) |
-| `description` | string | No | Extended description (`dcterms:description`) |
+| `id` | string | Yes | Unique identifier (TYPE-nanoid format) |
+| `type` | string | Yes | Node type (must match identifier prefix) |
+| `title` | string | Yes | Human-readable title (maps to `dcterms:title`) |
+| `description` | string | No | Extended description (maps to `dcterms:description`) |
 | `status` | string | Yes | Lifecycle state (type-specific enum) |
-| `created` | datetime | No | ISO 8601 creation timestamp (`dcterms:created`) |
-| `updated` | datetime | No | ISO 8601 last-modified timestamp (`dcterms:modified`) |
+| `created` | datetime | No | ISO 8601 creation timestamp (maps to `dcterms:created`) |
+| `updated` | datetime | No | ISO 8601 last-modified timestamp (maps to `dcterms:modified`) |
 | `tags` | string[] | No | Freeform tags for filtering |
 | `summary` | string | No | Inline prose for extended context beyond title and description |
-| `generatedBy` | reference | No | Task that created this node (`prov:wasGeneratedBy`) |
-| `attributedTo` | reference | No | Agent or developer responsible (`prov:wasAttributedTo`) |
+| `generated_by` | string | No | ID of the task that created this node (maps to `prov:wasGeneratedBy`) |
+| `attributed_to` | string | No | ID of the agent or developer responsible (maps to `prov:wasAttributedTo`) |
 
 ## Prose files
 
@@ -167,7 +176,7 @@ Resolution is mechanical: the node type determines the directory, and the nanoid
 
 Not every node needs a prose file. Concepts almost always have one since exploration is their purpose. Tasks and defects often get by with the `summary` field for a paragraph or two of inline context, and only reach for a file when they need more room. Stakeholders, baselines, and other lightweight types rarely need files but the mechanism is there when they do.
 
-The `summary` field and a prose file serve different purposes and can coexist on the same node. `summary` carries inline prose directly on the graph node, suited for a quick paragraph of context. The prose file is for extended content that would be unwieldy in a JSONLT line.
+The `summary` field and a prose file serve different purposes and can coexist on the same node. `summary` carries inline prose directly on the graph node, suited for a quick paragraph of context. The prose file is for extended content that would be unwieldy in an NDJSON record.
 
 ## Type-specific properties
 
@@ -302,48 +311,60 @@ Status: active → closed
 
 See [Agents](nodes/agents.md) for full specification.
 
-## JSON-LD representation
+## NDJSON representation
 
-Each node in the graph is a JSON-LD document in compact form. The `@context` key references the shared vocabulary, `@id` carries the node's identifier, `@type` names the RDF class, and remaining keys are RDF properties; either datatype properties (literal values) or object properties (references to other nodes via `{"@id": "..."}` values).
+Each node serializes as a single JSON object in the corresponding per-table NDJSON file. The `id` field carries the node's identifier, `type` names the node type, and remaining fields are properties. References to other nodes use plain ID strings rather than JSON-LD reference objects.
+
+A need in `needs.ndjson`:
 
 ```json
-{
-  "@context": "https://arci.dev/schema#",
-  "@id": "NEED-B7G3M9K2",
-  "@type": "Need",
-  "title": "Quick feedback",
-  "status": "validated",
-  "module": {"@id": "MOD-A4F8R2X1"},
-  "derivesFrom": [{"@id": "CON-K7M3NP2Q"}]
-}
+{"id": "NEED-B7G3M9K2", "type": "Need", "title": "Quick feedback", "status": "validated"}
+```
+
+The relationship between this need and its module and source concept lives in edge table files. In `module.ndjson`:
+
+```json
+{"src": "NEED-B7G3M9K2", "dst": "MOD-A4F8R2X1"}
+```
+
+In `derives_from.ndjson`:
+
+```json
+{"src": "NEED-B7G3M9K2", "dst": "CON-K7M3NP2Q"}
 ```
 
 Key representation conventions:
 
-- Object property values use the `{"@id": "..."}` form to denote references to other RDF resources
-- Multi-valued object properties use arrays: `[{"@id": "..."}, {"@id": "..."}]`
-- Object properties with metadata use extended objects: `{"@id": "...", "budget": "50ms"}`
+- Vertex tables contain node properties; edge tables contain relationships
+- Edge table rows have `src` and `dst` columns identifying the source and target nodes
+- Edge tables with metadata include additional columns: `{"src": "REQ-H4J7N2P5", "dst": "MOD-A4F8R2X1", "budget": "50ms"}`
+- Files sort deterministically for stable git diffs
 
 ## Extensibility
 
 ### Adding a new node type
 
 1. Choose a unique uppercase prefix (2-4 characters)
-2. Add the `@type` mapping to the JSON-LD context
-3. Define type-specific RDF properties and add them to the context
-4. Define valid predicates (domain/range) in [predicates](predicates.md)
-5. Add structural constraints in [constraints](constraints.md)
-6. Create an entity-specific doc with lifecycle and field definitions
+2. Define a DuckDB vertex table with the node's columns
+3. Register the table in the SQL/PGQ property graph definition
+4. Add the corresponding NDJSON file to the hydrate/dehydrate cycle
+5. Define type-specific properties and document them
+6. Define valid predicates (domain/range) in [predicates](predicates.md)
+7. Add structural constraints in [constraints](constraints.md)
+8. Create an entity-specific doc with lifecycle and field definitions
+9. Update the vocabulary alignment if the type maps to an external ontology class
 
 ### Adding a new predicate
 
-1. Add the predicate to the JSON-LD context with `"@type": "@id"` for object properties
-2. Define domain, range, cardinality, and structural constraints in [predicates](predicates.md)
-3. Add validation rules in [constraints](constraints.md)
-4. Document suspect propagation behavior if applicable
+1. Define a DuckDB edge table with `src` and `dst` columns (plus any metadata columns)
+2. Register the edge table in the SQL/PGQ property graph definition
+3. Add the corresponding NDJSON file to the hydrate/dehydrate cycle
+4. Define domain, range, cardinality, and structural constraints in [predicates](predicates.md)
+5. Add validation rules in [constraints](constraints.md)
+6. Document suspect propagation behavior if applicable
 
 ### Adding a new property
 
-1. Add the property to the JSON-LD context
+1. Add the column to the relevant DuckDB vertex table
 2. Document it in the relevant entity-specific doc
 3. Update the type-specific properties table in this document

@@ -8,24 +8,24 @@ The state store is a key-value store with metadata tracking. Each entry has a ke
 
 ## Storage backend
 
-The primary backend uses SQLite via `modernc.org/sqlite` (a pure-Go driver) with `database/sql` for persistence. SQLite provides durability, atomic operations, and the ability to query state for the dashboard without complex serialization.
+The primary backend uses DuckDB via `github.com/duckdb/duckdb-go/v2` (a CGo driver) with `database/sql` for persistence. DuckDB provides durability, atomic operations, columnar analytics for dashboard queries, and the ability to share a single engine instance with the knowledge graph via `ATTACH`.
 
-The database schema is simple:
+The database schema:
 
 ```sql
 CREATE TABLE state_store (
-    session_id TEXT,      -- Empty string for project scope
-    key TEXT NOT NULL,
+    session_id VARCHAR DEFAULT '',  -- Empty string for project scope
+    key VARCHAR NOT NULL,
     value BLOB,
-    created_at TEXT NOT NULL,
-    created_by TEXT,
-    updated_at TEXT NOT NULL,
-    updated_by TEXT,
+    created_at VARCHAR NOT NULL,
+    created_by VARCHAR,
+    updated_at VARCHAR NOT NULL,
+    updated_by VARCHAR,
     PRIMARY KEY (session_id, key)
 );
 ```
 
-The composite primary key of session_id and key allows the same key to exist in multiple sessions. Project-scoped entries use an empty string for session_id (rather than NULL) to ensure the ON CONFLICT clause works correctly.
+The composite primary key of session_id and key allows the same key to exist in multiple sessions. Project-scoped entries use an empty string for session_id (rather than NULL) to ensure the `INSERT ... ON CONFLICT` clause works correctly.
 
 An in-memory mock backend is also available for testing.
 
@@ -229,13 +229,17 @@ ARCI can optionally track common state automatically. This is configurable and i
 
 These built-in state updates happen after rule evaluation, so rules see the state from before the current event. This avoids confusion about whether the count includes the current event.
 
+## Unified DuckDB instance
+
+At runtime, the state store and the knowledge graph share the same DuckDB instance. The server opens the graph as an in-memory database (hydrated from NDJSON) and attaches the state store as a file-backed database via DuckDB's `ATTACH` mechanism. The dashboard can join hook evaluation logs with graph node data, correlate session metrics with task completion, and build analytics views that span both domains.
+
 ## Database location
 
-The state database location depends on the configuration. For project-scoped state, the database lives within the project directory structure, typically at `.arci/state.db`.
+The state database location depends on the configuration. For project-scoped state, the database lives within the project directory structure at `.arci/state.duckdb`.
 
-For user-level state that spans projects, the database lives in the user config directory at `~/.config/arci/state.db`.
+For user-level state that spans projects, the database lives in the user config directory at `~/.config/arci/state.duckdb`.
 
-The server manages database connections using `database/sql`'s built-in connection pooling for performance.
+The server manages the DuckDB instance directly. The DuckDB instance supports multiple connections for concurrent reads.
 
 ## Cleanup and lifecycle
 
@@ -245,9 +249,9 @@ Project state persists indefinitely until someone explicitly deletes it.
 
 ## Concurrency
 
-SQLite handles concurrency through its built-in locking. The `database/sql` connection pool manages multiple connections, allowing concurrent read access while serializing writes. The server coordinates writes to avoid contention.
+The server serializes all writes through a single DuckDB instance. DuckDB supports multiple concurrent readers, so dashboard queries and hook evaluations can read state without blocking each other. The server coordinates writes to avoid contention.
 
-The `atomic_increment` operation uses a single `INSERT ON CONFLICT` statement to ensure atomicity even under concurrent access.
+The `atomic_increment` operation uses a single `INSERT ... ON CONFLICT` statement to ensure atomicity. When the server is not running, the CLI can open `.arci/state.duckdb` in read-only mode for diagnostics and state inspection.
 
 ## Dashboard integration
 

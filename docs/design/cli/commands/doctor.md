@@ -16,7 +16,7 @@ The command runs a series of checks covering the full ARCI stack:
 - **claude-code**: hooks are correctly wired up with Claude Code
 - **config**: all config files parse without errors and pass schema validation
 - **policies**: all policy and rule expressions compile, and the system recognizes all action types
-- **state**: SQLite database is accessible and not corrupted
+- **state**: DuckDB state database is accessible and not corrupted
 - **extensions**: installed extensions load without errors
 - **logs**: can write to the project-level log location
 

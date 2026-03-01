@@ -55,7 +55,7 @@ default:
   failure_policy: allow
 
   state:
-    backend: sqlite
+    backend: duckdb
     path: null # uses platform default
 
   providers:
@@ -135,13 +135,13 @@ Configures the persistent state store used for session and project state.
 ```yaml
 default:
   state:
-    backend: sqlite
+    backend: duckdb
     path: null # Platform default
 ```
 
 | Field     | Description                | Default                  |
 | --------- | -------------------------- | ------------------------ |
-| `backend` | Storage backend (`sqlite`) | `sqlite`                 |
+| `backend` | Storage backend (`duckdb`) | `duckdb`                 |
 | `path`    | Database path              | Platform state directory |
 
 The state store enables patterns like rate limiting ("warn on first occurrence, block on third") with data that persists across sessions.

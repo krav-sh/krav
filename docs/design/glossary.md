@@ -44,7 +44,7 @@ This document defines key terms used throughout ARCI's documentation.
 
 **Spec.** A structured specification document containing modules. Specs use INCOSE-inspired systems engineering practices to organize requirements and traceability.
 
-**Knowledge graph.** The interconnected graph of spec modules and their relationships. Stored in `graph.jsonlt` using JSON-LD compact form, the knowledge graph provides full traceability from concepts through verified implementations. Inline prose uses the `summary` field; extended prose lives in markdown files at convention-derived paths under `.arci/`.
+**Knowledge graph.** The interconnected graph of spec modules and their relationships. On disk, per-table NDJSON files under `.arci/graph/` store vertex and edge data in a git-friendly format. At runtime, DuckDB with the DuckPGQ extension hydrates these files into relational tables queryable via SQL and SQL/PGQ. The knowledge graph provides full traceability from concepts through verified implementations. Inline prose uses the `summary` field; extended prose lives in markdown files at convention-derived paths under `.arci/`.
 
 ## Configuration
 
@@ -90,7 +90,7 @@ This document defines key terms used throughout ARCI's documentation.
 
 ## State
 
-**State store.** A persistent key-value store for tracking data across hook invocations. See [State store](state-store.md) for details.
+**State store.** A persistent key-value store backed by DuckDB for tracking data across hook invocations. The state database at `.arci/state.duckdb` attaches to the same DuckDB instance as the knowledge graph at runtime, so queries can join across both domains. See [State store](state-store.md) for details.
 
 **Session scope.** State tied to a specific Claude Code session.
 
@@ -131,6 +131,18 @@ This document defines key terms used throughout ARCI's documentation.
 **Tool.** An operation Claude Code can perform, like executing shell commands (Bash), writing files (Write), or reading files (Read). See [Hook schema](hooks/hook-schema.md) for canonical tool names.
 
 **Tool input.** The parameters passed to a tool, available in expressions as `tool_input`. See [Hook schema](hooks/hook-schema.md) for tool input schemas.
+
+## Data engine
+
+**DuckDB.** Embedded analytical database engine used for both the knowledge graph runtime and the state store. Distributed as a statically linked library within the Go binary via `github.com/duckdb/duckdb-go/v2` (CGo). No separate database process.
+
+**DuckPGQ.** DuckDB community extension that adds SQL/PGQ (SQL:2023 standard) for property graph queries over relational tables. Enables graph pattern matching, variable-length path traversals, and shortest path queries alongside standard SQL.
+
+**Hydrate/dehydrate.** The process of loading per-table NDJSON files from `.arci/graph/` into DuckDB tables (hydrate) and serializing DuckDB tables back to sorted NDJSON files (dehydrate). The server hydrates on startup and dehydrates on checkpoint, baseline creation, or graceful shutdown.
+
+**NDJSON.** Newline-delimited JSON format, one JSON object per line. Used for git-friendly serialization of knowledge graph tables under `.arci/graph/`. Each vertex table and edge table has its own NDJSON file, sorted deterministically for stable diffs.
+
+**SQL/PGQ.** The property graph query extension to SQL, standardized in SQL:2023. Adds `MATCH` clause syntax for graph pattern matching over relational tables registered as a property graph. DuckPGQ provides this capability.
 
 ---
 

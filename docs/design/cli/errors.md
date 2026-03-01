@@ -42,7 +42,7 @@ Installation      OK    arci 0.1.0 at /usr/local/bin/arci
 Claude Code       OK    hooks configured in ~/.claude/settings.json
 Configuration     OK    12 rules loaded from 3 sources
 Rule validation   WARN  1 rule has warnings (use --verbose for details)
-State store       OK    state.db accessible, 45 entries
+State store       OK    state.duckdb accessible, 45 entries
 Extensions        OK    2 extensions loaded
 Logs              OK    log directory writable
 

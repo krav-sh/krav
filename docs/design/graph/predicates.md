@@ -2,9 +2,9 @@
 
 ## Overview
 
-Predicates are RDF object properties in the `arci:` namespace that define the semantic relationships between nodes in the knowledge graph. Each predicate has a specific domain (source types), range (target types), cardinality, structural constraint, and behavior for suspect link propagation.
+Predicates define the semantic relationships between nodes in the knowledge graph. Each predicate maps to a DuckDB edge table with `src` and `dst` columns (plus optional metadata columns). Each predicate has a specific domain (source types), range (target types), cardinality, structural constraint, and behavior for suspect link propagation.
 
-JSON-LD properties on the source node represent all relationships, with `{"@id": "TARGET-ID"}` values. Directionality is always from the node that "has" the relationship to the node it references.
+In the NDJSON serialization, each edge table has its own file (`derives_from.ndjson`, `verified_by.ndjson`, etc.). Each line contains `src` (source node ID) and `dst` (target node ID), plus any metadata columns. Directionality runs from the source node to the target node.
 
 ## Predicate classification
 
@@ -25,8 +25,10 @@ Expresses module hierarchy. A module is a child of another module.
 | Inverse | (queried as "children of") |
 | Suspect propagation | Phase constraint changes propagate to children |
 
+In `child_of.ndjson`:
+
 ```json
-{"@id": "MOD-A4F8R2X1", "childOf": {"@id": "MOD-OAPSROOT"}}
+{"src": "MOD-A4F8R2X1", "dst": "MOD-OAPSROOT"}
 ```
 
 ### Derivation
@@ -46,10 +48,12 @@ Expresses formal transformation: concepts become needs, needs become requirement
 | Inverse | (queried as "derives to") |
 | Suspect propagation | Modification of source marks downstream `derivesFrom` edges as suspect |
 
+In `derives_from.ndjson`:
+
 ```json
-{"@id": "NEED-B7G3M9K2", "derivesFrom": [{"@id": "CON-K7M3NP2Q"}]}
-{"@id": "REQ-C2H6N4P8", "derivesFrom": [{"@id": "NEED-B7G3M9K2"}]}
-{"@id": "REQ-CH1LDR3Q", "derivesFrom": [{"@id": "REQ-C2H6N4P8"}]}
+{"src": "NEED-B7G3M9K2", "dst": "CON-K7M3NP2Q"}
+{"src": "REQ-C2H6N4P8", "dst": "NEED-B7G3M9K2"}
+{"src": "REQ-CH1LDR3Q", "dst": "REQ-C2H6N4P8"}
 ```
 
 ### Ownership
@@ -69,10 +73,12 @@ Expresses which module owns a node.
 | Inverse | (queried as "owned by module") |
 | Suspect propagation | None (organizational, not semantic) |
 
+In `module.ndjson`:
+
 ```json
-{"@id": "NEED-B7G3M9K2", "module": {"@id": "MOD-A4F8R2X1"}}
-{"@id": "REQ-C2H6N4P8", "module": {"@id": "MOD-A4F8R2X1"}}
-{"@id": "TASK-E3K8S6V2", "module": {"@id": "MOD-A4F8R2X1"}}
+{"src": "NEED-B7G3M9K2", "dst": "MOD-A4F8R2X1"}
+{"src": "REQ-C2H6N4P8", "dst": "MOD-A4F8R2X1"}
+{"src": "TASK-E3K8S6V2", "dst": "MOD-A4F8R2X1"}
 ```
 
 #### Stakeholder
@@ -88,9 +94,12 @@ Expresses which stakeholders have expectations captured by a need.
 | Inverse | (queried as "needs for stakeholder") |
 | Suspect propagation | None (stakeholder identity is organizational, not semantic) |
 
+In `stakeholder.ndjson`:
+
 ```json
-{"@id": "NEED-B7G3M9K2", "stakeholder": [{"@id": "STK-H5N7P3Q9"}]}
-{"@id": "NEED-ERR0R002", "stakeholder": [{"@id": "STK-H5N7P3Q9"}, {"@id": "STK-1NT3GR8R"}]}
+{"src": "NEED-B7G3M9K2", "dst": "STK-H5N7P3Q9"}
+{"src": "NEED-ERR0R002", "dst": "STK-H5N7P3Q9"}
+{"src": "NEED-ERR0R002", "dst": "STK-1NT3GR8R"}
 ```
 
 ### Allocation
@@ -111,11 +120,11 @@ Expresses requirement flow-down to child modules. When children must meet a pare
 | Inverse | (queried as "allocated from") |
 | Suspect propagation | Modification of the requirement marks `allocatesTo` edges as suspect |
 
+In `allocates_to.ndjson`:
+
 ```json
-{"@id": "REQ-H4J7N2P5", "allocatesTo": [
-  {"@id": "MOD-A4F8R2X1", "budget": "50ms"},
-  {"@id": "MOD-B9G3M7K2", "budget": "30ms"}
-]}
+{"src": "REQ-H4J7N2P5", "dst": "MOD-A4F8R2X1", "budget": "50ms"}
+{"src": "REQ-H4J7N2P5", "dst": "MOD-B9G3M7K2", "budget": "30ms"}
 ```
 
 ### Dependency
@@ -135,8 +144,10 @@ Expresses task ordering. A task depends on other tasks completing before it can 
 | Inverse | (queried as "blocks") |
 | Suspect propagation | None (dependency is structural, not semantic) |
 
+In `depends_on.ndjson`:
+
 ```json
-{"@id": "TASK-E3K8S6V2", "dependsOn": [{"@id": "TASK-G5M2R8X4"}]}
+{"src": "TASK-E3K8S6V2", "dst": "TASK-G5M2R8X4"}
 ```
 
 ### Verification
@@ -156,8 +167,10 @@ Links requirements to the verifications that provide evidence of satisfaction.
 | Inverse | (queried as "verifies") |
 | Suspect propagation | Modification of the requirement marks `verifiedBy` edges as suspect |
 
+In `verified_by.ndjson`:
+
 ```json
-{"@id": "REQ-C2H6N4P8", "verifiedBy": [{"@id": "TC-D9J5Q1R3"}]}
+{"src": "REQ-C2H6N4P8", "dst": "TC-D9J5Q1R3"}
 ```
 
 ### Quality
@@ -177,8 +190,10 @@ Points at the node that has a problem. Carries the semantic "this node is defect
 | Inverse | (queried as "defects for") |
 | Suspect propagation | None (defect is an observation, not a dependency) |
 
+In `subject.ndjson`:
+
 ```json
-{"@id": "DEF-F1L4T7W5", "subject": {"@id": "REQ-3RR0R001"}}
+{"src": "DEF-F1L4T7W5", "dst": "REQ-3RR0R001"}
 ```
 
 #### detectedBy
@@ -194,8 +209,10 @@ Points at the examination task that found the defect.
 | Inverse | (queried as "defects found by") |
 | Suspect propagation | None |
 
+In `detected_by.ndjson`:
+
 ```json
-{"@id": "DEF-F1L4T7W5", "detectedBy": {"@id": "TASK-R3V13W01"}}
+{"src": "DEF-F1L4T7W5", "dst": "TASK-R3V13W01"}
 ```
 
 #### Generates
@@ -211,8 +228,10 @@ Expresses that a defect creates a remediation task.
 | Inverse | (queried as "generated from") |
 | Suspect propagation | None |
 
+In `generates.ndjson`:
+
 ```json
-{"@id": "DEF-F1L4T7W5", "generates": {"@id": "TASK-F1X00001"}}
+{"src": "DEF-F1L4T7W5", "dst": "TASK-F1X00001"}
 ```
 
 ### Implementation
@@ -232,8 +251,10 @@ Links tasks to the requirements they exist to satisfy. Uses `oslc_cm:implementsR
 | Inverse | (queried as "implemented by") |
 | Suspect propagation | None (`verifiedBy` suspect propagation catches requirement changes) |
 
+In `implements.ndjson`:
+
 ```json
-{"@id": "TASK-E3K8S6V2", "implements": [{"@id": "REQ-C2H6N4P8"}]}
+{"src": "TASK-E3K8S6V2", "dst": "REQ-C2H6N4P8"}
 ```
 
 ### Provenance
@@ -253,8 +274,10 @@ Links an agent to the developer who initiated the session.
 | Inverse | (queried as "sessions for developer") |
 | Suspect propagation | None |
 
+In `operator.ndjson`:
+
 ```json
-{"@id": "AGT-M5V9K3X7", "operator": {"@id": "DEV-J4R8T2W6"}}
+{"src": "AGT-M5V9K3X7", "dst": "DEV-J4R8T2W6"}
 ```
 
 #### parentAgent
@@ -270,8 +293,10 @@ Links a subagent to the session agent that spawned it. Only valid on agents wher
 | Inverse | (queried as "subagents of") |
 | Suspect propagation | None |
 
+In `parent_agent.ndjson`:
+
 ```json
-{"@id": "AGT-SUB4G3NT", "parentAgent": {"@id": "AGT-M5V9K3X7"}}
+{"src": "AGT-SUB4G3NT", "dst": "AGT-M5V9K3X7"}
 ```
 
 ### Informal
@@ -291,8 +316,10 @@ Expresses that a concept informs a module. This is a bootstrap/documentation rel
 | Inverse | (queried as "informed by") |
 | Suspect propagation | None (informal, no traceability obligation) |
 
+In `informs.ndjson`:
+
 ```json
-{"@id": "CON-K7M3NP2Q", "informs": {"@id": "MOD-OAPSROOT"}}
+{"src": "CON-K7M3NP2Q", "dst": "MOD-OAPSROOT"}
 ```
 
 ## Domain/range matrix
@@ -314,13 +341,13 @@ Source types as rows, target types as columns, predicates in cells. Empty cells 
 
 ## Directionality conventions
 
-The **source** node stores relationships as JSON-LD properties:
+Edge tables use `src` and `dst` columns. The **source** node is always the node that "has" the relationship:
 
-- "MOD-A has childOf MOD-B" → the `childOf` property is on MOD-A's record
-- "REQ-A has derivesFrom NEED-B" → the `derivesFrom` property is on REQ-A's record
-- "DEF-A has subject REQ-B" → the `subject` property is on DEF-A's record
+- "MOD-A is a child of MOD-B" → `child_of` row: `src = MOD-A, dst = MOD-B`
+- "REQ-A derives from NEED-B" → `derives_from` row: `src = REQ-A, dst = NEED-B`
+- "DEF-A has subject REQ-B" → `subject` row: `src = DEF-A, dst = REQ-B`
 
-To query inverse relationships ("what are the children of MOD-B?"), traverse the graph to find all nodes with `childOf` pointing at MOD-B. See [query patterns](query-patterns.md) for canonical traversal patterns.
+To query inverse relationships ("what are the children of MOD-B?"), query the `child_of` edge table for rows where `dst = MOD-B`. SQL/PGQ pattern matching handles both directions naturally. See [query patterns](query-patterns.md) for canonical traversal patterns.
 
 ## Suspect propagation summary
 

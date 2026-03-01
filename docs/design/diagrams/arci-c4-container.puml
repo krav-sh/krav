@@ -20,9 +20,9 @@ System_Boundary(arci, "arci") {
 
     Container(mcp, "MCP Server", "stdio", "Model Context Protocol server.\nExposes policy diagnostics and\ngraph queries to Claude Code.")
 
-    ContainerDb(state_store, "State Store", "Embedded DB", "Session-scoped and project-scoped\npersistent state for hook\ncross-invocation tracking.")
+    ContainerDb(state_store, "State Store", "DuckDB", "File-backed DuckDB at\n.arci/state.duckdb.\nHook state, metrics, sessions.")
 
-    ContainerDb(graph_db, "Knowledge Graph", "graph.jsonlt", "JSON-LD compact form.\nAll typed nodes (CON, MOD, NEED,\nREQ, TC, TASK, DEF, BSL) with\nembedded relationships.")
+    ContainerDb(graph_db, "Knowledge Graph", "DuckDB + DuckPGQ", "Per-table NDJSON files hydrated\ninto in-memory DuckDB.\nSQL + SQL/PGQ queries.")
 
     ContainerDb(prose_files, "Prose Files", ".arci/ Markdown", "Concept explorations, module docs,\ntask instructions, defect details.\nNo frontmatter.")
 
@@ -49,16 +49,16 @@ Rel(claude_code, github, "Pushes, creates PRs", "Git / GitHub API")
 
 ' === Runtime relationships ===
 Rel(cli, server, "Delegates when server.enabled", "HTTP")
-Rel(cli, state_store, "Reads/persists hook state", "Embedded DB")
-Rel(cli, graph_db, "Loads/persists graph", "Filesystem")
+Rel(cli, state_store, "Reads hook state", "DuckDB read-only")
+Rel(cli, graph_db, "Reads NDJSON directly\n(read-only mode)", "DuckDB / NDJSON")
 Rel(cli, prose_files, "Reads/writes prose", "Filesystem")
 Rel(cli, policy_config, "Loads policies", "Filesystem")
 Rel(cli, harness_config, "Loads templates\nfor instantiation", "Filesystem")
 Rel(cli, git, "Branch context", "Git CLI")
 Rel(cli, param_providers, "Dynamic parameters", "HTTPS / File")
 
-Rel(server, state_store, "Pooled connections", "Embedded DB")
-Rel(server, graph_db, "Cached graph, hot-reload", "Filesystem")
+Rel(server, state_store, "Attached DuckDB", "In-process")
+Rel(server, graph_db, "Hydrate/dehydrate,\nin-memory DuckDB", "In-process")
 Rel(server, policy_config, "Watches for hot-reload", "Filesystem / fsnotify")
 Rel(server, param_providers, "Cached parameters", "HTTPS / File")
 Rel(server, git, "Branch context", "Git CLI")

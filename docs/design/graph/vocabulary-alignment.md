@@ -2,7 +2,9 @@
 
 ## Overview
 
-The ARCI ontology is an RDF vocabulary in the `arci:` namespace. Rather than inventing terms where established vocabularies already define them, the schema reuses external vocabulary terms directly or declares formal alignment through `rdfs:subClassOf` and `rdfs:subPropertyOf` relationships. This keeps ARCI's instance data interoperable with RDF-aware tooling while preserving ARCI-specific semantics where the structure adds real constraints beyond what external vocabularies provide.
+The ARCI vocabulary aligns with established external ontologies as a design reference for semantic interoperability. The runtime data model is a property graph in DuckDB queried via SQL/PGQ, not an RDF triple store. The alignment declarations (`rdfs:subClassOf`, `rdfs:subPropertyOf`) documented here are design-time metadata that record the conceptual mapping between ARCI's node types, predicates, and properties and their counterparts in Dublin Core, PROV-O, and OSLC. They are not runtime-enforced constraints. An RDF-aware tool could reconstruct the triples from ARCI's NDJSON data using these mappings, but ARCI's own code never imports external namespaces at runtime.
+
+The ARCI ontology defines terms in the `arci:` namespace. Rather than inventing terms where established vocabularies already define them, the schema reuses external vocabulary terms directly or declares formal alignment. This keeps ARCI's conceptual model interoperable with standards-aware tooling while preserving ARCI-specific semantics where the structure adds real constraints beyond what external vocabularies provide.
 
 Three external vocabularies are relevant:
 

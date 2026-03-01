@@ -51,15 +51,16 @@ See [Workflows](workflows/index.md) for the agent interaction layer documentatio
 - **Claude Code hook protocol.** stdin/stdout JSON with exit codes; ARCI cannot change this interface.
 - **Claude Code skills and subagents.** Markdown files with YAML frontmatter, following the [Agent Skills](https://agentskills.io) open standard with Claude Code extensions. ARCI's skills and subagents must conform to Claude Code's loading model, frontmatter schema, and execution semantics.
 - **MCP protocol.** stdio-based Model Context Protocol for diagnostics and graph queries.
-- **Single-binary distribution.** No external runtime dependencies for core operation.
-- **No external dependencies for state storage.** Embedded relational store, no separate database process.
+- **Single-binary distribution.** DuckDB is an embedded database distributed as a statically linked library within the Go binary via `github.com/duckdb/duckdb-go/v2` (CGo). No separate database process, no external runtime dependencies for core operation.
+- **No external database process.** Both the knowledge graph engine and the state store use embedded DuckDB instances within the ARCI process.
 
 ### Standards alignment
 
 - **INCOSE NRM.** Needs/requirements distinction (expectation vs. obligation).
 - **ISO/IEC/IEEE 15288.** Lifecycle process phases for task organization and phase gating.
-- **W3C RDF/JSON-LD.** Graph serialization format.
-- **PROV-O.** Provenance tracking for graph modifications.
+- **SQL:2023 SQL/PGQ.** Property graph queries over relational tables via the DuckPGQ extension.
+- **NDJSON.** Newline-delimited JSON for git-friendly graph serialization.
+- **PROV-O.** Provenance tracking vocabulary alignment (design reference).
 
 ### Design constraints
 
@@ -89,8 +90,8 @@ See [Workflows](workflows/index.md) for the agent interaction layer documentatio
 | Command-line tool | Terminal invocation | Developer and agent → ARCI graph management, diagnostics |
 | Server API | HTTP REST + WebSocket on localhost | Command-line delegation, live events, dashboard |
 | MCP server | stdio (Model Context Protocol) | Claude Code → ARCI diagnostics and graph queries |
-| State store | Embedded relational DB | Session-scoped and project-scoped persistent state |
-| Knowledge graph | JSON-LD compact form (JSONLT) | Typed nodes with embedded relationships |
+| State store | Embedded DuckDB (file-backed) | Session-scoped and project-scoped persistent state |
+| Knowledge graph | Per-table NDJSON files hydrated into DuckDB + DuckPGQ | Typed nodes with semantic relationships queryable via SQL and SQL/PGQ |
 | Configuration | Cascading config files | Policies, settings, managed config layers |
 
 ![System context diagram](diagrams/arci-c4-context.puml)
@@ -129,9 +130,9 @@ Key architectural decisions with rationale:
 
 **MCP Server.** Exposes policy diagnostics and graph queries to Claude Code via the Model Context Protocol. Delegates to the server API.
 
-**State Store.** Embedded relational store with session-scoped and project-scoped persistent state for hook evaluations and graph operations. See [State store](state-store.md).
+**State Store.** File-backed DuckDB database at `.arci/state.duckdb` with session-scoped and project-scoped persistent state for hook evaluations and graph operations. At runtime, the server attaches the state database alongside the in-memory graph database in a single DuckDB instance, enabling cross-domain queries. See [State store](state-store.md).
 
-**Knowledge Graph.** JSON-LD graph file (`graph.jsonlt`) containing all typed nodes with embedded relationships. Single source of truth for structured metadata. Inline prose uses the `summary` field; extended prose lives in `.arci/` markdown files at convention-derived paths (no frontmatter). See [Graph overview](graph/index.md).
+**Knowledge Graph.** Per-table NDJSON files under `.arci/graph/` (one file per vertex table, one per edge table) hydrated into an in-memory DuckDB instance with the DuckPGQ extension on server startup. The SQL/PGQ property graph is a view layer over relational tables, queryable with both standard SQL and SQL/PGQ pattern matching syntax. Single source of truth for structured metadata. Inline prose uses the `summary` field; extended prose lives in `.arci/` markdown files at convention-derived paths (no frontmatter). See [Graph overview](graph/index.md).
 
 **Policies + Settings.** Configuration across cascade layers (built-in defaults, user, project, local, managed/recommended, managed/required, command-line flags). See [Configuration](configuration/configuration.md).
 
@@ -157,9 +158,9 @@ Key architectural decisions with rationale:
 
 **Config Loader.** Discovery, loading, parsing, precedence merging, and materialization of domain objects. See [Configuration](configuration/configuration.md).
 
-**Graph Store.** JSONLT persistence (append, compact, load) and JSON-LD serialization to/from typed nodes. Prose file handling.
+**DuckDB Engine.** Unified data engine that owns both the in-memory graph database and the file-backed state database. The graph side handles NDJSON hydration on startup, dehydration on checkpoint/shutdown, DuckDB table management, and SQL/PGQ property graph creation. The state side manages session-scoped and project-scoped persistent state for hook effects (setState, counters). The `ATTACH` mechanism connects both databases through a single DuckDB instance, enabling cross-domain queries.
 
-**State Manager.** Embedded relational store with connection pooling, session/project scoping. Hook effects (setState, counters) use this component.
+**Graph Store.** NDJSON serialization layer that reads per-table NDJSON files from `.arci/graph/` into DuckDB vertex and edge tables (hydrate) and writes DuckDB tables back to sorted NDJSON files (dehydrate). Prose file handling.
 
 **Parameter Resolver.** Resolves policy parameters from named providers, inline definitions, env vars, and static values. Cacheable with TTL.
 
@@ -268,14 +269,14 @@ See [Workflows](workflows/index.md).
 3. Policy Engine compiles policies, resolves parameters
 4. Six-stage evaluation pipeline runs (structural match → conditions → parameters → variables → rules → effects)
 5. Action resolution aggregates results (deny > warn > audit > allow)
-6. ARCI persists state mutations and writes JSON response to stdout
+6. ARCI persists state mutations to DuckDB and writes JSON response to stdout
 
 See [Execution model](hooks/execution-model.md).
 
 ### Scenario 7: hook evaluation (server delegation)
 
 1. ARCI detects server enabled and delegates to the server's evaluate endpoint
-2. Server uses cached compiled policies and pooled connections
+2. Server uses cached compiled policies and the in-process DuckDB instance
 3. Core evaluates, server returns JSON response
 4. The command-line tool forwards response to stdout; latency drops because the server avoids per-invocation config loading and policy compilation
 
@@ -301,7 +302,7 @@ See [Server](server/index.md).
 
 **Deny-wins aggregation.** The most restrictive action wins across all matching policies. If any policy denies, the result is deny regardless of other policies.
 
-**Knowledge graph as single source of truth.** All structured metadata lives in the graph. Prose lives in markdown files at derived paths or inline via `summary`. Views (queries) replace documents.
+**Knowledge graph as single source of truth.** All structured metadata lives in the graph. On disk, per-table NDJSON files under `.arci/graph/` are the git-tracked representation. At runtime, DuckDB with the DuckPGQ extension is the query engine. Prose lives in markdown files at derived paths or inline via `summary`. Views (queries) replace documents.
 
 **Formal transformation chain.** Concept → need → requirement → task with unbroken `derivesFrom` edges. Each transformation has preconditions and postconditions. See [Transformations](graph/transformations.md).
 

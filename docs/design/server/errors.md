@@ -42,7 +42,7 @@ File watcher failures trigger watcher restart. If the server cannot restart the 
 
 Some situations require manual intervention.
 
-Corrupted state store: `arci state clear --all` wipes the state database. For complete reset, delete the SQLite file at `$XDG_STATE_HOME/arci/state.db`.
+Corrupted state store: `arci state clear --all` wipes the state database. For complete reset, delete the DuckDB file at `.arci/state.duckdb`.
 
 Unresponsive server: press Ctrl+C in the terminal where the server runs for a graceful shutdown. If the server is truly hung, `kill <pid>` (reading the PID from `.arci/server.json`) forces termination. The next `arci` command cleans up the stale lockfile.
 

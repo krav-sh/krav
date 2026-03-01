@@ -41,7 +41,7 @@ Setting `cwd` to the project root ensures the MCP server finds the correct `.arc
 
 On startup, `arci mcp` resolves the project root, reads `.arci/server.json`, verifies the PID is alive, and establishes a connection to `http://127.0.0.1:<port>`. If the lockfile is missing or the server process is dead, the MCP server does not attempt to start the ARCI server. Instead, tool calls that require the server return MCP error responses explaining that the server is not running.
 
-Some tools may be able to operate without the server by reading directly from project files or the SQLite database in read-only mode. This is a future consideration; the initial version proxies everything through the server.
+Some tools may be able to operate without the server by reading NDJSON files directly via DuckDB's `read_json` function or opening the state database in read-only mode. This is a future consideration; the initial version proxies everything through the server.
 
 ## Tools
 

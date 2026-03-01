@@ -2,7 +2,7 @@
 
 The ARCI server is a long-running process that owns the knowledge graph, caches compiled configuration, and serves the dashboard and REST API for a single project. It runs in the foreground via `arci server` and stops with Ctrl+C.
 
-The server serves two distinct roles. For hook evaluation, it is a performance optimization: the CLI can evaluate policies directly without a running server, but the server provides sub-10 ms evaluation by keeping configuration pre-compiled and state store connections pooled. For knowledge graph operations, the server is essential: it serializes graph mutations through a single process, enforcing invariants and managing SQLite write concurrency that direct CLI access cannot safely coordinate.
+The server serves two distinct roles. For hook evaluation, it is a performance optimization: the CLI can evaluate policies directly without a running server, but the server provides sub-10 ms evaluation by keeping configuration pre-compiled and the DuckDB instance warm. For knowledge graph operations, the server is essential: it owns the in-memory DuckDB instance containing the hydrated graph, serializes mutations through a single process, and enforces invariants that direct CLI access cannot safely coordinate.
 
 ## Documentation
 
@@ -18,9 +18,9 @@ Configuration management comes first. The server loads the merged configuration 
 
 The server owns the hook evaluation engine. It compiles policy expressions once and reuses them for each evaluation, avoiding the per-invocation cost of parsing. This drops evaluation overhead from 50 to 200 ms (direct mode) to single-digit milliseconds.
 
-Knowledge graph ownership is the server's most critical role. The knowledge graph is a shared mutable resource. When multiple Claude Code subagents run tasks concurrently, or a human and an agent both issue graph mutations, the server serializes writes through pooled SQLite connections. Without the server, concurrent `arci node add` or `arci link create` invocations would contend on SQLite's write lock, risking `SQLITE_BUSY` errors or interleaved operations that violate graph invariants. Read-only graph queries can work in direct mode, but any mutation requires the server.
+Knowledge graph ownership is the server's most critical role. The knowledge graph is a shared mutable resource. When multiple Claude Code subagents run tasks concurrently, or a human and an agent both issue graph mutations, the server serializes writes through its single DuckDB instance. Without the server, concurrent graph mutations would require external coordination. Read-only graph queries can work in direct mode by reading the NDJSON files (DuckDB's `read_json` function handles NDJSON natively), but any mutation requires the server. On startup, the server hydrates the graph from `.arci/graph/*.ndjson` into DuckDB tables and creates the SQL/PGQ property graph. On checkpoint or graceful shutdown, it dehydrates modified graph state back to NDJSON.
 
-State store connection management pools SQLite connections for performance and handles concurrent access from evaluation requests, graph operations, and the dashboard.
+State store management handles the file-backed DuckDB database at `.arci/state.duckdb`, attached to the same DuckDB instance as the in-memory graph via the `ATTACH` mechanism, so queries can join across both domains without a separate connection pool.
 
 Metrics accumulation tracks policy match counts, action executions, errors, and timing information in memory. The API exposes these metrics, and the dashboard displays them. Metrics reset on server restart; the project may add persistent metrics later but in-memory suffices for diagnostics.
 
@@ -58,13 +58,10 @@ flowchart TB
                 watcher["File watcher\n(fsnotify)"]
             end
 
-            subgraph graph_mgr["Graph manager"]
-                graph[("Knowledge graph\n(SQLite)")]
+            subgraph duckdb_engine["DuckDB engine"]
+                graph[("Knowledge graph\n(in-memory DuckDB + DuckPGQ)")]
+                state[("State store\n(file-backed DuckDB)")]
                 write_serializer["Write serializer"]
-            end
-
-            subgraph state_pool["State store pool"]
-                sqlite[("State store\n(SQLite)")]
             end
 
             subgraph metrics_acc["Metrics accumulator"]
@@ -149,9 +146,9 @@ Serves the dashboard web interface. Returns HTML pages rendered with Go template
 
 The server runs in the foreground via `arci server`. It determines the project root using the same walk-up-the-tree logic as all other `arci` commands (looking for `.arci/` or other project markers), respecting `--project-dir` and `ARCI_PROJECT_DIR` overrides.
 
-On startup, the server selects a port by trying the configured base port (default 7680) and incrementing until it finds a free port, up to a small scan limit. It then writes `.arci/server.json` to the project directory (see [discovery](discovery.md)), initializes the HTTP server and registers routes, starts the file watcher for configuration directories, and begins accepting requests.
+On startup, the server selects a port by trying the configured base port (default 7680) and incrementing until it finds a free port, up to a small scan limit. It then creates the in-memory DuckDB instance and loads the DuckPGQ extension, hydrates the knowledge graph from `.arci/graph/*.ndjson` into DuckDB vertex and edge tables, creates the SQL/PGQ property graph definition over those tables, attaches the file-backed state database at `.arci/state.duckdb`, writes `.arci/server.json` to the project directory (see [discovery](discovery.md)), initializes the HTTP server and registers routes, starts the file watcher for configuration directories, and begins accepting requests.
 
-On shutdown (SIGTERM, SIGINT, or Ctrl+C), the server stops accepting new connections, waits for in-flight requests to complete (with a timeout), stops the file watcher, closes state store and graph database connections, removes `.arci/server.json`, and exits.
+On shutdown (SIGTERM, SIGINT, or Ctrl+C), the server stops accepting new connections, waits for in-flight requests to complete (with a timeout), dehydrates the graph state back to sorted NDJSON files under `.arci/graph/`, stops the file watcher, closes the DuckDB instance, removes `.arci/server.json`, and exits. Dehydration also occurs on explicit save commands and baseline creation, not on every write.
 
 The lockfile is the single artifact of a running server. If the server crashes without cleaning up, the discovery mechanism detects and handles the stale lockfile.
 

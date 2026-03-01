@@ -46,7 +46,7 @@ This pattern keeps handlers simple and testable, as each step is a straightforwa
 
 ## Data source
 
-The dashboard reads from the server's cached state rather than hitting the filesystem or SQLite directly. The dashboard shows the same view of configuration and state that evaluation uses. The server updates its cache on configuration reloads and state changes, so the dashboard always reflects current state without its own cache invalidation logic.
+The dashboard reads from the server's cached state rather than querying DuckDB directly. The dashboard shows the same view of configuration and state that evaluation uses. The server updates its cache on configuration reloads and state changes, so the dashboard always reflects current state without its own cache invalidation logic. DuckDB's OLAP capabilities (percentiles, window functions, histograms) enable analytics views that would be expensive with a row-oriented database.
 
 ## Adding a new page
 
