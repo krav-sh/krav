@@ -224,3 +224,10 @@ processPhase
 [Yy]amllin[kt]
 [Cc]odespell
 [Cc]ommitlint
+[Oo]ntolog(y|ies)
+[Tt]bhb
+[Ii]nteroperate
+[Jj]ustfiles?
+[Cc]odebase's
+[Cc][Gg]o
+[Cc]laude|CLAUDE
