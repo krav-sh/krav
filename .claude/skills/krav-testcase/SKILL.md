@@ -1,12 +1,12 @@
 ---
-name: arci-testcase
+name: krav-testcase
 description: >-
   Create test case specifications linked to requirements. Use when
   requirements need verification cases defined, specifying what to check
   and how, without implementing the tests themselves.
 stage-classification: temporary
 replacement-stage: 3
-replacement: "Production arci-testcase skill backed by `arci tc create` CLI command"
+replacement: "Production krav-testcase skill backed by `krav tc create` CLI command"
 ---
 
 # Create test cases
@@ -21,7 +21,7 @@ If the developer did not provide a MOD-* identifier, list modules that have requ
   [.[] | select(."@type" == "Requirement" and (.verifiedBy == null or (.verifiedBy | length) == 0))] as $uncovered |
   [$uncovered[].module."@id"] | unique as $mod_ids |
   [.[] | select(."@id" == ($mod_ids[] // empty)) | {id: ."@id", title: .title, uncovered_count: ([$uncovered[] | select(.module."@id" == ."@id")] | length)}]
-' .arci/graph.jsonlt 2>/dev/null || echo '[]'`
+' .krav/graph.jsonlt 2>/dev/null || echo '[]'`
 
 Present the candidates using the AskUserQuestion tool so the developer can select one. If the list is empty, all requirements have test cases (or there are no requirements yet).
 
@@ -38,7 +38,7 @@ After identifying the MOD-* identifier, load its context:
     requirements: [$reqs[] | {id: ."@id", title: .title, statement: .statement, verifiedBy: .verifiedBy}],
     existing_test_cases: [$tcs[] | {id: ."@id", title: .title, method: .method, status: .status}]
   }
-' .arci/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a MOD-* identifier."}'`
+' .krav/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a MOD-* identifier."}'`
 
 ## Instructions
 
@@ -49,7 +49,7 @@ After identifying the MOD-* identifier, load its context:
 5. Before writing to the graph, run the review loop (see below).
 6. Incorporate review feedback, then present the final test cases to the developer for approval.
 7. Write approved test cases to `graph.jsonlt` and add corresponding `verifiedBy` edges on the requirement nodes.
-8. For each test case, create a prose file at `.arci/test-cases/{timestamp}-{NANOID}-{slug}.md`. Include the full acceptance criteria, rationale for the chosen verification method, any environment or precondition notes, and for inspection checklists the reasoning behind each checklist item. The prose file ensures the person or agent running verification later understands the intent behind each check, not just the pass/fail criteria.
+8. For each test case, create a prose file at `.krav/test-cases/{timestamp}-{NANOID}-{slug}.md`. Include the full acceptance criteria, rationale for the chosen verification method, any environment or precondition notes, and for inspection checklists the reasoning behind each checklist item. The prose file ensures the person or agent running verification later understands the intent behind each check, not just the pass/fail criteria.
 
 ## Review loop
 
@@ -69,5 +69,5 @@ Do not create any graph nodes, tasks, or defects. Return only your critique."
 
 | Pattern | Classification | Stage | Replacement |
 |---------|---------------|-------|-------------|
-| Candidate picker: modules with uncovered requirements | Temporary | 3 | `arci req list --uncovered` CLI command |
-| Module requirements and test case inventory query | Temporary | 3 | `arci tc create` CLI command |
+| Candidate picker: modules with uncovered requirements | Temporary | 3 | `krav req list --uncovered` CLI command |
+| Module requirements and test case inventory query | Temporary | 3 | `krav tc create` CLI command |

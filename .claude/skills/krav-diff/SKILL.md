@@ -1,12 +1,12 @@
 ---
-name: arci-diff
+name: krav-diff
 description: >-
   Compare two baselines to show what changed between them. Use when asked
   about changes between milestones, what was added or removed, or for
   release notes.
 stage-classification: temporary
 replacement-stage: 1
-replacement: "`arci baseline diff` CLI command"
+replacement: "`krav baseline diff` CLI command"
 allowed-tools:
   - Read
   - Grep
@@ -23,7 +23,7 @@ Produce a semantic diff between two graph states.
 Given two baseline identifiers (or one baseline and the current state):
 
 1. Read the baseline nodes to get their `commitSha` values.
-2. Use `git show {sha}:.arci/graph.jsonlt` to read the graph at each baseline's commit.
+2. Use `git show {sha}:.krav/graph.jsonlt` to read the graph at each baseline's commit.
 3. Compare the two graph states:
    - Added nodes (present in later, absent in earlier)
    - Removed nodes (present in earlier, absent in later)

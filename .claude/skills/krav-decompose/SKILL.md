@@ -1,12 +1,12 @@
 ---
-name: arci-decompose
+name: krav-decompose
 description: >-
   Decompose work into tasks by generating a task DAG from a module's
   requirements. Use when a module has approved requirements and needs
   an implementation plan broken into executable tasks.
 stage-classification: temporary
 replacement-stage: 3
-replacement: "Production arci-decompose skill backed by `arci module decompose` CLI command"
+replacement: "Production krav-decompose skill backed by `krav module decompose` CLI command"
 ---
 
 # Decompose work into tasks
@@ -21,7 +21,7 @@ If the developer did not provide a MOD-* identifier, list modules that have appr
   [.[] | select(."@type" == "Requirement" and .status == "approved")] as $approved |
   [$approved[].module."@id"] | unique as $mod_ids |
   [.[] | select(."@id" == ($mod_ids[] // empty)) | {id: ."@id", title: .title, phase: .phase, approved_count: ([$approved[] | select(.module."@id" == ."@id")] | length)}]
-' .arci/graph.jsonlt 2>/dev/null || echo '[]'`
+' .krav/graph.jsonlt 2>/dev/null || echo '[]'`
 
 Present the candidates using the AskUserQuestion tool so the developer can select one. If the list is empty, no modules have approved requirements ready for decomposition.
 
@@ -38,7 +38,7 @@ After identifying the MOD-* identifier, load its context:
     approved_requirements: [$reqs[] | {id: ."@id", title: .title, statement: .statement, priority: .priority}],
     existing_tasks: [$existing[] | {id: ."@id", title: .title, status: .status, processPhase: .processPhase}]
   }
-' .arci/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a MOD-* identifier."}'`
+' .krav/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a MOD-* identifier."}'`
 
 ## Instructions
 
@@ -51,7 +51,7 @@ After identifying the MOD-* identifier, load its context:
 7. Before writing to the graph, run the review loop (see below).
 8. Incorporate review feedback, then present the final task DAG to the developer for approval.
 9. Write approved tasks to `graph.jsonlt`.
-10. For each task, create a prose file at `.arci/tasks/{timestamp}-{NANOID}-{slug}.md`. Include the task's scope, approach, relevant design context, key decisions or constraints from the requirements it covers, and any notes on integration with dependency deliverables. The prose file gives the agent working the task a richer starting point than the graph node's summary field alone.
+10. For each task, create a prose file at `.krav/tasks/{timestamp}-{NANOID}-{slug}.md`. Include the task's scope, approach, relevant design context, key decisions or constraints from the requirements it covers, and any notes on integration with dependency deliverables. The prose file gives the agent working the task a richer starting point than the graph node's summary field alone.
 
 ## Review loop
 
@@ -72,5 +72,5 @@ Do not create any graph nodes, tasks, or defects. Return only your critique."
 
 | Pattern | Classification | Stage | Replacement |
 |---------|---------------|-------|-------------|
-| Candidate picker: modules with approved requirements | Temporary | 3 | `arci module list --has-approved-reqs` CLI command |
-| Module requirements and task inventory context query | Temporary | 3 | `arci module decompose` CLI command |
+| Candidate picker: modules with approved requirements | Temporary | 3 | `krav module list --has-approved-reqs` CLI command |
+| Module requirements and task inventory context query | Temporary | 3 | `krav module decompose` CLI command |

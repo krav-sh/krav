@@ -1,11 +1,11 @@
 ---
-name: arci-task
+name: krav-task
 description: >-
   Work on a specific task from the knowledge graph. Use when starting work on
   a task, resuming a task, or when told to work on a specific TASK-* identifier.
 stage-classification: temporary
 replacement-stage: 3
-replacement: "Production arci-task skill backed by `arci task` CLI commands"
+replacement: "Production krav-task skill backed by `krav task` CLI commands"
 ---
 
 # Work on a task
@@ -21,7 +21,7 @@ If the developer did not provide a TASK-* identifier, list tasks that are ready 
   [.[] | select(."@type" == "Task" and (.status == "pending" or .status == "blocked")) |
     select((.dependsOn // []) | map(."@id") | all(. as $d | $done | index($d) != null)) |
     {id: ."@id", title: .title, processPhase: .processPhase, module: .module."@id"}]
-' .arci/graph.jsonlt 2>/dev/null || echo '[]'`
+' .krav/graph.jsonlt 2>/dev/null || echo '[]'`
 
 Present the candidates using the AskUserQuestion tool so the developer can select one. If the list is empty, no tasks are ready (either all are complete, or remaining tasks have incomplete dependencies).
 
@@ -47,7 +47,7 @@ After identifying the TASK-* identifier, load its full context:
     originating_concepts: [$concepts[] | {id: ."@id", title: .title, conceptType: .conceptType}],
     completed_dependencies: [$deps[] | {id: ."@id", title: .title, deliverables: .deliverables}]
   }
-' .arci/graph.jsonlt 2>/dev/null || echo '{"error": "Could not load task context. Provide a valid TASK-* identifier."}'`
+' .krav/graph.jsonlt 2>/dev/null || echo '{"error": "Could not load task context. Provide a valid TASK-* identifier."}'`
 
 ## Exploration phase
 
@@ -68,7 +68,7 @@ You are working on the task described in the preceding context, informed by the 
 1. Present the plan from the exploration phase to the developer for approval before writing code.
 2. Do the work, following the project's code organization and conventions.
 3. When done, run the review loop (see below) on your deliverables.
-4. Incorporate review feedback, then update the task in `.arci/graph.jsonlt`: set `status` to `"complete"`, add `completed` timestamp, and record `deliverables`.
+4. Incorporate review feedback, then update the task in `.krav/graph.jsonlt`: set `status` to `"complete"`, add `completed` timestamp, and record `deliverables`.
 5. Commit with a message referencing the task ID.
 
 If you get blocked, update the task status to `"blocked"` and note the reason in the `summary` field.
@@ -91,5 +91,5 @@ Do not create any graph nodes, tasks, or defects. Return only your critique."
 
 | Pattern | Classification | Stage | Replacement |
 |---------|---------------|-------|-------------|
-| Candidate picker: ready tasks with dependency closure | Temporary | 3 | `arci task list --status ready` CLI command |
-| Task context with full derivation chain query | Temporary | 3 | `arci task show --context` CLI command |
+| Candidate picker: ready tasks with dependency closure | Temporary | 3 | `krav task list --status ready` CLI command |
+| Task context with full derivation chain query | Temporary | 3 | `krav task show --context` CLI command |

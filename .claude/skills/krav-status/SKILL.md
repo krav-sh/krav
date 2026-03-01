@@ -1,12 +1,12 @@
 ---
-name: arci-status
+name: krav-status
 description: >-
   Check project status by synthesizing current state from the knowledge graph.
   Use when asked about project progress, module phases, task status, defect
   counts, verification coverage, or suspect links.
 stage-classification: temporary
 replacement-stage: 1
-replacement: "`arci` query CLI commands (`task list`, `defect list`, `module list`)"
+replacement: "`krav` query CLI commands (`task list`, `defect list`, `module list`)"
 allowed-tools:
   - Read
   - Grep
@@ -36,7 +36,7 @@ Synthesize the current state of the project from the knowledge graph.
       group_by(.currentResult) | map({(.[0].currentResult // "unknown"): length}) | add
     )
   }
-' .arci/graph.jsonlt 2>/dev/null || echo '{"error": "No graph data found. Run arci init or create graph.jsonlt first."}'`
+' .krav/graph.jsonlt 2>/dev/null || echo '{"error": "No graph data found. Run krav init or create graph.jsonlt first."}'`
 
 ## Instructions
 
@@ -54,4 +54,4 @@ Keep the summary concise. Highlight blockers and anything that needs attention. 
 
 | Pattern | Classification | Stage | Replacement |
 |---------|---------------|-------|-------------|
-| Project state aggregation query (modules, tasks, defects, test cases) | Temporary | 1 | `arci status` CLI command |
+| Project state aggregation query (modules, tasks, defects, test cases) | Temporary | 1 | `krav status` CLI command |

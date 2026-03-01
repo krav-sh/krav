@@ -1,5 +1,5 @@
 ---
-name: arci-quickfix
+name: krav-quickfix
 description: >-
   Implement something with minimal or no graph ceremony. Use for trivial
   fixes, quick changes, and work where the full transformation chain adds
@@ -21,7 +21,7 @@ Determine the appropriate ceremony level and execute with minimal graph overhead
     baselines: [$baselines[] | {id: ."@id", scope: .scope, commitSha: .commitSha}],
     modules: $mods
   }
-' .arci/graph.jsonlt 2>/dev/null || echo '{}'`
+' .krav/graph.jsonlt 2>/dev/null || echo '{}'`
 
 ## Instructions
 

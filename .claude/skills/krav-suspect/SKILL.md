@@ -1,5 +1,5 @@
 ---
-name: arci-suspect
+name: krav-suspect
 description: >-
   Handle suspect links caused by upstream changes. Use when nodes have been
   modified and downstream traceability links need review to determine if
@@ -18,7 +18,7 @@ Triage downstream impacts of upstream changes.
 !`jq -s '
   [.[] | to_entries | .[] | select(.value | type == "object" and .suspect == true) | {node: .key, edge: .value}] // [] |
   if length == 0 then "No suspect links found." else . end
-' .arci/graph.jsonlt 2>/dev/null || echo '"No graph data found."'`
+' .krav/graph.jsonlt 2>/dev/null || echo '"No graph data found."'`
 
 ## Instructions
 
@@ -35,4 +35,4 @@ Suspect links propagate through `derivesFrom`, `verifiedBy`, and `allocatesTo` e
 
 | Pattern | Classification | Stage | Replacement |
 |---------|---------------|-------|-------------|
-| Suspect link detection query | Temporary | 2 | Post-mutation hook policy with `arci suspect list` CLI command |
+| Suspect link detection query | Temporary | 2 | Post-mutation hook policy with `krav suspect list` CLI command |

@@ -1,11 +1,11 @@
 ---
-name: arci-advance
+name: krav-advance
 description: >-
   Advance a module to its next lifecycle phase. Use when checking whether
   phase advancement criteria are met and, if so, advancing the module.
 stage-classification: temporary
 replacement-stage: 1
-replacement: "`arci module advance` CLI command"
+replacement: "`krav module advance` CLI command"
 ---
 
 # Advance a module's phase
@@ -25,7 +25,7 @@ Check criteria and move a module to its next lifecycle phase.
     blocking_defects: [$blockers[] | {id: ."@id", title: .title, severity: .severity}],
     test_cases_by_result: ($tcs | group_by(.currentResult) | map({(.[0].currentResult // "unknown"): length}) | add)
   }
-' .arci/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a MOD-* identifier."}'`
+' .krav/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a MOD-* identifier."}'`
 
 ## Instructions
 
@@ -41,4 +41,4 @@ If criteria pass, update the module's `phase` to the next value. If not, report 
 
 | Pattern | Classification | Stage | Replacement |
 |---------|---------------|-------|-------------|
-| Module state context query (tasks, blockers, test results) | Temporary | 1 | `arci module show` CLI command |
+| Module state context query (tasks, blockers, test results) | Temporary | 1 | `krav module show` CLI command |

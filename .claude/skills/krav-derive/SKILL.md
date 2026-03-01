@@ -1,12 +1,12 @@
 ---
-name: arci-derive
+name: krav-derive
 description: >-
   Derive verifiable requirements from validated needs. Use when needs have
   been validated and should be transformed into formal REQ-* obligations
   in the knowledge graph.
 stage-classification: temporary
 replacement-stage: 3
-replacement: "Production arci-derive skill backed by `arci req create` and `arci need derive` CLI commands"
+replacement: "Production krav-derive skill backed by `krav req create` and `krav need derive` CLI commands"
 ---
 
 # Derive requirements from needs
@@ -17,7 +17,7 @@ Transform validated needs into verifiable design obligations.
 
 If the developer did not provide a NEED-* identifier, list validated needs and ask the developer to pick one:
 
-!`jq -s '[.[] | select(."@type" == "Need" and .status == "validated") | {id: ."@id", title: .title, module: .module."@id", statement: .statement}]' .arci/graph.jsonlt 2>/dev/null || echo '[]'`
+!`jq -s '[.[] | select(."@type" == "Need" and .status == "validated") | {id: ."@id", title: .title, module: .module."@id", statement: .statement}]' .krav/graph.jsonlt 2>/dev/null || echo '[]'`
 
 Present the candidates using the AskUserQuestion tool so the developer can select one. If the list is empty, there are no validated needs ready for derivation. Suggest the developer validate a need first.
 
@@ -37,7 +37,7 @@ After identifying the NEED-* identifier, load its context and trace the derivati
     originating_concepts: [$concepts[] | {id: ."@id", title: .title, conceptType: .conceptType}],
     existing_requirements: [$existing[] | {id: ."@id", title: .title, statement: .statement}]
   }
-' .arci/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a NEED-* identifier."}'`
+' .krav/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a NEED-* identifier."}'`
 
 ## Instructions
 
@@ -50,7 +50,7 @@ After identifying the NEED-* identifier, load its context and trace the derivati
 7. Before writing to the graph, run the review loop (see below).
 8. Incorporate review feedback, then present the final requirements to the developer for approval.
 9. Write approved requirements to `graph.jsonlt` with `status: "approved"`. The developer's approval during this skill constitutes requirement approval: they review the obligation and confirm it should go into the build. In team workflows where a separate review board or architect must sign off, set `status: "draft"` instead and note that approval is pending.
-10. For each requirement, create a prose file at `.arci/requirements/{timestamp}-{NANOID}-{slug}.md`. Include the full statement, rationale, verification approach, and the design context from originating concepts and needs that motivated this obligation. The prose file captures the reasoning chain so future readers understand not just what the requirement says but why it exists and how to verify it.
+10. For each requirement, create a prose file at `.krav/requirements/{timestamp}-{NANOID}-{slug}.md`. Include the full statement, rationale, verification approach, and the design context from originating concepts and needs that motivated this obligation. The prose file captures the reasoning chain so future readers understand not just what the requirement says but why it exists and how to verify it.
 
 ## Review loop
 
@@ -70,5 +70,5 @@ Do not create any graph nodes, tasks, or defects. Return only your critique."
 
 | Pattern | Classification | Stage | Replacement |
 |---------|---------------|-------|-------------|
-| Candidate picker: validated needs query | Temporary | 3 | `arci need list --status validated` CLI command |
-| Need context and derivation chain query | Temporary | 3 | `arci need derive` CLI command |
+| Candidate picker: validated needs query | Temporary | 3 | `krav need list --status validated` CLI command |
+| Need context and derivation chain query | Temporary | 3 | `krav need derive` CLI command |

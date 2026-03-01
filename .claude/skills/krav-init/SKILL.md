@@ -1,13 +1,13 @@
 ---
-name: arci-init
+name: krav-init
 description: >-
   Bootstrap a new project with a root module, module hierarchy, stakeholders,
-  and initial concepts. Use when starting a new arci-managed project or when
-  asked to initialize arci for an existing codebase.
+  and initial concepts. Use when starting a new krav-managed project or when
+  asked to initialize krav for an existing codebase.
 disable-model-invocation: true
 stage-classification: temporary
 replacement-stage: 1
-replacement: "`arci init` CLI command"
+replacement: "`krav init` CLI command"
 ---
 
 # Start a new project
@@ -17,8 +17,8 @@ Bootstrap the knowledge graph with the core structure for a project.
 ## Instructions
 
 1. Ask the developer about the project: what it does, who the stakeholders are, and what the major architectural boundaries are.
-2. Create the `.arci/` directory structure if it doesn't exist: `concepts/`, `modules/`, `needs/`, `requirements/`, `test-cases/`, `tasks/`, `defects/`, `baselines/`, `stakeholders/`, `developers/`, `agents/`, `policies/`.
-3. Initialize `.arci/graph.jsonlt` with:
+2. Create the `.krav/` directory structure if it doesn't exist: `concepts/`, `modules/`, `needs/`, `requirements/`, `test-cases/`, `tasks/`, `defects/`, `baselines/`, `stakeholders/`, `developers/`, `agents/`, `policies/`.
+3. Initialize `.krav/graph.jsonlt` with:
    - A root MOD-* node (phase: architecture, status: active)
    - Child MOD-* nodes for each major architectural boundary, with `childOf` edges to the root
    - STK-* nodes for each identified stakeholder, with `concerns`

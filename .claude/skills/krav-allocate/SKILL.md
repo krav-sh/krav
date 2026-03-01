@@ -1,12 +1,12 @@
 ---
-name: arci-allocate
+name: krav-allocate
 description: >-
   Allocate parent module requirements to child modules. Use when flowing
   down requirements from a parent module to its children, optionally with
   budgets or partitions.
 stage-classification: temporary
 replacement-stage: 1
-replacement: "`arci req allocate` CLI command"
+replacement: "`krav req allocate` CLI command"
 ---
 
 # Allocate requirements to child modules
@@ -24,7 +24,7 @@ Flow parent requirements down to child modules via allocatesTo edges.
     children: [$children[] | {id: ."@id", title: .title, phase: .phase}],
     requirements: [$reqs[] | {id: ."@id", title: .title, statement: .statement, allocatesTo: .allocatesTo}]
   }
-' .arci/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a MOD-* identifier."}'`
+' .krav/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a MOD-* identifier."}'`
 
 ## Instructions
 
@@ -37,4 +37,4 @@ Flow parent requirements down to child modules via allocatesTo edges.
 
 | Pattern | Classification | Stage | Replacement |
 |---------|---------------|-------|-------------|
-| Module hierarchy and requirement context query | Temporary | 1 | `arci req allocate` CLI command |
+| Module hierarchy and requirement context query | Temporary | 1 | `krav req allocate` CLI command |

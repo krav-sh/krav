@@ -1,12 +1,12 @@
 ---
-name: arci-restructure
+name: krav-restructure
 description: >-
   Restructure the module hierarchy by reparenting, splitting, or merging
   modules. Use when the architectural decomposition needs to change.
 disable-model-invocation: true
 stage-classification: temporary
 replacement-stage: 1
-replacement: "`arci module` CLI subcommands (reparent, split, merge)"
+replacement: "`krav module` CLI subcommands (reparent, split, merge)"
 ---
 
 # Restructure modules
@@ -15,7 +15,7 @@ Reparent, split, or merge modules in the hierarchy.
 
 ## Current hierarchy
 
-!`jq -s '[.[] | select(."@type" == "Module") | {id: ."@id", title: .title, phase: .phase, parent: .childOf."@id"}]' .arci/graph.jsonlt 2>/dev/null || echo '[]'`
+!`jq -s '[.[] | select(."@type" == "Module") | {id: ."@id", title: .title, phase: .phase, parent: .childOf."@id"}]' .krav/graph.jsonlt 2>/dev/null || echo '[]'`
 
 ## Instructions
 
@@ -32,4 +32,4 @@ Module restructuring has broad graph impact. Proceed carefully:
 
 | Pattern | Classification | Stage | Replacement |
 |---------|---------------|-------|-------------|
-| Module hierarchy context query | Temporary | 1 | `arci module list` CLI command |
+| Module hierarchy context query | Temporary | 1 | `krav module list` CLI command |

@@ -1,12 +1,12 @@
 ---
-name: arci-formalize
+name: krav-formalize
 description: >-
   Formalize crystallized concepts into stakeholder needs. Use when a concept
   has been explored and crystallized and its stakeholder expectations should
   be captured as formal NEED-* nodes in the knowledge graph.
 stage-classification: temporary
 replacement-stage: 3
-replacement: "Production arci-formalize skill backed by `arci need create` and `arci concept formalize` CLI commands"
+replacement: "Production krav-formalize skill backed by `krav need create` and `krav concept formalize` CLI commands"
 ---
 
 # Formalize concepts into needs
@@ -17,7 +17,7 @@ Extract stakeholder expectations from crystallized concepts as formal needs.
 
 If the developer did not provide a CON-* identifier, list crystallized concepts and ask them to pick one:
 
-!`jq -s '[.[] | select(."@type" == "Concept" and .status == "crystallized") | {id: ."@id", title: .title, module: .module."@id"}]' .arci/graph.jsonlt 2>/dev/null || echo '[]'`
+!`jq -s '[.[] | select(."@type" == "Concept" and .status == "crystallized") | {id: ."@id", title: .title, module: .module."@id"}]' .krav/graph.jsonlt 2>/dev/null || echo '[]'`
 
 Present the candidates using the AskUserQuestion tool so the developer can select one. If the list is empty, there are no crystallized concepts ready for formalization. Suggest the developer explore or crystallize a concept first.
 
@@ -32,7 +32,7 @@ After identifying the CON-* identifier, load its context:
     concept: $con,
     stakeholders: [$stk[] | {id: ."@id", title: .title, concerns: .concerns}]
   }
-' .arci/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a CON-* identifier."}'`
+' .krav/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a CON-* identifier."}'`
 
 ## Instructions
 
@@ -43,7 +43,7 @@ After identifying the CON-* identifier, load its context:
 5. Before writing to the graph, run the review loop (see below).
 6. Incorporate review feedback, then present the final needs to the developer for approval.
 7. Write approved needs to `graph.jsonlt` with `status: "validated"`. The developer's approval during this skill constitutes stakeholder validation: they review the need statement and confirm it captures their expectation. In team workflows where a separate stakeholder review must happen, set `status: "proposed"` instead and note that validation is pending.
-8. For each need, create a prose file at `.arci/needs/{timestamp}-{NANOID}-{slug}.md`. Include the full statement, rationale, stakeholder perspective, and any context from the concept exploration that informed this need. The prose file gives future readers (and agents) the "why" behind the need without chasing graph edges.
+8. For each need, create a prose file at `.krav/needs/{timestamp}-{NANOID}-{slug}.md`. Include the full statement, rationale, stakeholder perspective, and any context from the concept exploration that informed this need. The prose file gives future readers (and agents) the "why" behind the need without chasing graph edges.
 9. Transition the concept to `"formalized"` once all expectations have landed.
 
 ## Review loop
@@ -64,5 +64,5 @@ Do not create any graph nodes, tasks, or defects. Return only your critique."
 
 | Pattern | Classification | Stage | Replacement |
 |---------|---------------|-------|-------------|
-| Candidate picker: crystallized concepts query | Temporary | 3 | `arci concept list --status crystallized` CLI command |
-| Concept and stakeholder context query | Temporary | 3 | `arci concept formalize` CLI command |
+| Candidate picker: crystallized concepts query | Temporary | 3 | `krav concept list --status crystallized` CLI command |
+| Concept and stakeholder context query | Temporary | 3 | `krav concept formalize` CLI command |

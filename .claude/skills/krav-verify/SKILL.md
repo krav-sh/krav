@@ -1,11 +1,11 @@
 ---
-name: arci-verify
+name: krav-verify
 description: >-
   Run test cases and record verification results. Use when test cases need
   to be executed and their results recorded on TC-* nodes.
 stage-classification: temporary
 replacement-stage: 1
-replacement: "`arci tc record` CLI command"
+replacement: "`krav tc record` CLI command"
 ---
 
 # Run verification
@@ -20,7 +20,7 @@ If the developer did not provide a MOD-* identifier, list modules that have exec
   [.[] | select(."@type" == "TestCase" and .status == "executable")] as $executable |
   [$executable[].module."@id"] | unique as $mod_ids |
   [.[] | select(."@id" == ($mod_ids[] // empty)) | {id: ."@id", title: .title, executable_count: ([$executable[] | select(.module."@id" == ."@id")] | length)}]
-' .arci/graph.jsonlt 2>/dev/null || echo '[]'`
+' .krav/graph.jsonlt 2>/dev/null || echo '[]'`
 
 Present the candidates using the AskUserQuestion tool so the developer can select one. If the list is empty, no modules have executable test cases.
 
@@ -35,7 +35,7 @@ Once you have a MOD-* identifier, load test cases and their linked requirements:
     test_cases: [$tcs[] | {id: ."@id", title: .title, method: .method, level: .level, status: .status, currentResult: .currentResult, acceptanceCriteria: .acceptanceCriteria, checklist: .checklist, procedure: .procedure, approach: .approach, verifies: .verifies}],
     requirements: [$reqs[] | {id: ."@id", title: .title, statement: .statement, verifiedBy: .verifiedBy}]
   }
-' .arci/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a MOD-* identifier."}'`
+' .krav/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a MOD-* identifier."}'`
 
 ## Instructions
 
@@ -48,7 +48,7 @@ Once you have a MOD-* identifier, load test cases and their linked requirements:
 3. For inspection test cases with checklists, evaluate each item individually and report which passed and which failed.
 4. Before recording results to the graph, run the review loop (see below).
 5. After incorporating review feedback, update each TC-* node: set `currentResult` to `"pass"`, `"fail"`, or `"skip"` (with rationale for skips), and set `lastRunAt` to the current timestamp.
-6. For failures, create a DEF-* defect node describing what failed and why, with `subject` referencing the failed test case. Create a prose file at `.arci/defects/{timestamp}-{NANOID}-{slug}.md` with the full failure evidence, the expected vs. observed outcome, and any relevant context from the verification execution.
+6. For failures, create a DEF-* defect node describing what failed and why, with `subject` referencing the failed test case. Create a prose file at `.krav/defects/{timestamp}-{NANOID}-{slug}.md` with the full failure evidence, the expected vs. observed outcome, and any relevant context from the verification execution.
 
 ## Review loop
 
@@ -68,5 +68,5 @@ Do not create any graph nodes, tasks, or defects. Return only your critique."
 
 | Pattern | Classification | Stage | Replacement |
 |---------|---------------|-------|-------------|
-| Candidate picker: modules with executable test cases | Temporary | 1 | `arci tc list --status executable` CLI command |
-| Module test case and requirement inventory query | Temporary | 1 | `arci tc record` CLI command |
+| Candidate picker: modules with executable test cases | Temporary | 1 | `krav tc list --status executable` CLI command |
+| Module test case and requirement inventory query | Temporary | 1 | `krav tc record` CLI command |

@@ -1,5 +1,5 @@
 ---
-name: arci-baseline
+name: krav-baseline
 description: >-
   Create a baseline to capture graph state at a decision point. Use when
   a milestone is reached and the current state should be frozen as a named
@@ -7,7 +7,7 @@ description: >-
 disable-model-invocation: true
 stage-classification: temporary
 replacement-stage: 1
-replacement: "`arci baseline create` CLI command"
+replacement: "`krav baseline create` CLI command"
 ---
 
 # Create a baseline
@@ -23,7 +23,7 @@ Capture graph state as a named snapshot anchored to the current git commit.
     module: {id: $mod."@id", title: $mod.title, phase: $mod.phase},
     existing_baselines: [$existing[] | {id: ."@id", title: .title, phase: .phase, commitSha: .commitSha, status: .status}]
   }
-' .arci/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a MOD-* identifier."}'`
+' .krav/graph.jsonlt 2>/dev/null || echo '{"error": "Provide a MOD-* identifier."}'`
 
 ## Instructions
 
@@ -37,4 +37,4 @@ Capture graph state as a named snapshot anchored to the current git commit.
 
 | Pattern | Classification | Stage | Replacement |
 |---------|---------------|-------|-------------|
-| Module state and baseline inventory query | Temporary | 1 | `arci baseline create` CLI command |
+| Module state and baseline inventory query | Temporary | 1 | `krav baseline create` CLI command |

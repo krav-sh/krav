@@ -1,12 +1,12 @@
 ---
-name: arci-trace
+name: krav-trace
 description: >-
   Trace the derivation chain for any node to explain why it exists and what
   depends on it. Use for impact analysis, provenance questions, or when asked
   "why does this exist" or "what depends on this."
 stage-classification: temporary
 replacement-stage: 1
-replacement: "`arci req trace` and `arci task ancestors` CLI commands"
+replacement: "`krav req trace` and `krav task ancestors` CLI commands"
 allowed-tools:
   - Read
   - Grep
@@ -39,7 +39,7 @@ jq -s --arg id "$NODE_ID" '
       [$n] + ([$n.derivesFrom // [] | .[]."@id"] | map(ancestors(.)) | add // [])
     end;
   ancestors($id) | map({id: ."@id", type: ."@type", title: .title, statement: .statement})
-' .arci/graph.jsonlt
+' .krav/graph.jsonlt
 ```
 
 Present the trace as a narrative: "REQ-X exists because NEED-Y captured the expectation that (statement), which came from CON-Z where the team explored (topic)."
@@ -48,4 +48,4 @@ Present the trace as a narrative: "REQ-X exists because NEED-Y captured the expe
 
 | Pattern | Classification | Stage | Replacement |
 |---------|---------------|-------|-------------|
-| Recursive ancestor traversal via jq | Temporary | 1 | `arci req trace` and `arci task ancestors` CLI commands |
+| Recursive ancestor traversal via jq | Temporary | 1 | `krav req trace` and `krav task ancestors` CLI commands |
