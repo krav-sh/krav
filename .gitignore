@@ -1,5 +1,6 @@
 # Go
 bin/
+/krav
 coverage.out
 coverage.html
 
