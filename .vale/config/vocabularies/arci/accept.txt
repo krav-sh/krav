@@ -167,6 +167,7 @@ TSKs
 [Tt]yposquatting
 [Uu]ninstallation
 [Uu]nsandboxed
+[Uu]nreviewed
 [Uu]ntracked
 [Uu]ntrusted
 [Uu]ntyped
@@ -218,3 +219,8 @@ OSLC's
 INCOSE's
 [Uu]nderspecified
 processPhase
+[Jj]q
+[Rr]umdl
+[Yy]amllin[kt]
+[Cc]odespell
+[Cc]ommitlint
