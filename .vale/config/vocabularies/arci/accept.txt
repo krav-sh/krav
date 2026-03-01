@@ -231,3 +231,7 @@ processPhase
 [Cc]odebase's
 [Cc][Gg]o
 [Cc]laude|CLAUDE
+[Dd]ebounces?
+MCP's
+[Rr]enderers?
+[sS]uppressions?
