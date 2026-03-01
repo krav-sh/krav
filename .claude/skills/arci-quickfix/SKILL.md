@@ -4,6 +4,8 @@ description: >-
   Implement something with minimal or no graph ceremony. Use for trivial
   fixes, quick changes, and work where the full transformation chain adds
   no value. Also use when the developer says "just fix it" or "just do it."
+stage-classification: permanent
+rationale: "Methodology guidance about ceremony levels; encodes developer judgment that no tool can replace"
 ---
 
 # Implement without ceremony

@@ -4,6 +4,9 @@ description: >-
   Restructure the module hierarchy by reparenting, splitting, or merging
   modules. Use when the architectural decomposition needs to change.
 disable-model-invocation: true
+stage-classification: temporary
+replacement-stage: 1
+replacement: "`arci module` CLI subcommands (reparent, split, merge)"
 ---
 
 # Restructure modules

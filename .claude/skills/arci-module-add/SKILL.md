@@ -3,6 +3,9 @@ name: arci-module-add
 description: >-
   Add a new module to the project. Use when introducing a new subsystem or
   component to the module hierarchy.
+stage-classification: temporary
+replacement-stage: 1
+replacement: "`arci module create` CLI command"
 ---
 
 # Add a module

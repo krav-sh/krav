@@ -3,6 +3,9 @@ name: arci-advance
 description: >-
   Advance a module to its next lifecycle phase. Use when checking whether
   phase advancement criteria are met and, if so, advancing the module.
+stage-classification: temporary
+replacement-stage: 1
+replacement: "`arci module advance` CLI command"
 ---
 
 # Advance a module's phase

@@ -4,6 +4,9 @@ description: >-
   Handle suspect links caused by upstream changes. Use when nodes have been
   modified and downstream traceability links need review to determine if
   dependent nodes need updating.
+stage-classification: temporary
+replacement-stage: 2
+replacement: "Post-mutation hook policy that marks downstream edges as suspect when a node's content fields change"
 ---
 
 # Handle suspect links

@@ -4,6 +4,9 @@ description: >-
   Allocate parent module requirements to child modules. Use when flowing
   down requirements from a parent module to its children, optionally with
   budgets or partitions.
+stage-classification: temporary
+replacement-stage: 1
+replacement: "`arci req allocate` CLI command"
 ---
 
 # Allocate requirements to child modules

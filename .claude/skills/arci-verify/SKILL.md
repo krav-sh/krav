@@ -3,6 +3,9 @@ name: arci-verify
 description: >-
   Run test cases and record verification results. Use when test cases need
   to be executed and their results recorded on TC-* nodes.
+stage-classification: temporary
+replacement-stage: 1
+replacement: "`arci tc record` CLI command"
 ---
 
 # Run verification

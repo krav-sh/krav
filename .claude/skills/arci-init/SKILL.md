@@ -5,6 +5,9 @@ description: >-
   and initial concepts. Use when starting a new arci-managed project or when
   asked to initialize arci for an existing codebase.
 disable-model-invocation: true
+stage-classification: temporary
+replacement-stage: 1
+replacement: "`arci init` CLI command"
 ---
 
 # Start a new project

@@ -4,6 +4,9 @@ description: >-
   Explore a design question by creating and developing concepts. Use when
   investigating design alternatives, making architectural decisions, or
   thinking through a problem before formalizing it into needs and requirements.
+stage-classification: temporary
+replacement-stage: 3
+replacement: "Production arci-explore skill backed by `arci concept` CLI subcommands (create, explore, crystallize)"
 ---
 
 # Explore a design question

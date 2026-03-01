@@ -4,6 +4,9 @@ description: >-
   Trace the derivation chain for any node to explain why it exists and what
   depends on it. Use for impact analysis, provenance questions, or when asked
   "why does this exist" or "what depends on this."
+stage-classification: temporary
+replacement-stage: 1
+replacement: "`arci req trace` and `arci task ancestors` CLI commands"
 allowed-tools:
   - Read
   - Grep

@@ -27,15 +27,6 @@ repos:
       - id: codespell
         exclude: (^\.)
 
-  - repo: https://github.com/errata-ai/vale
-    rev: 27593b0e0e7eb8f0c2b7fae0d93fa1cfaabceb2f # v3.13.0
-    hooks:
-      - id: vale
-      - id: vale
-        name: vale (commit message)
-        stages: [commit-msg]
-        args: [--ext=.md]
-
   - repo: https://github.com/rvben/rumdl-pre-commit
     rev: f82d34de69ae7ddb36af40383c18d81d042fa3b1 # v0.0.222
     hooks:
@@ -62,6 +53,17 @@ repos:
         language: system
         types: [go]
         pass_filenames: false
+      - id: vale
+        name: vale
+        entry: vale
+        language: system
+        types: [markdown]
+      - id: vale-commit-msg
+        name: vale (commit message)
+        entry: vale --ext=.md
+        language: system
+        stages: [commit-msg]
+        always_run: true
       - id: cog-verify
         name: conventional commits
         entry: cog verify --file

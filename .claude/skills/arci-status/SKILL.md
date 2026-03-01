@@ -4,6 +4,9 @@ description: >-
   Check project status by synthesizing current state from the knowledge graph.
   Use when asked about project progress, module phases, task status, defect
   counts, verification coverage, or suspect links.
+stage-classification: temporary
+replacement-stage: 1
+replacement: "`arci` query CLI commands (`task list`, `defect list`, `module list`)"
 allowed-tools:
   - Read
   - Grep

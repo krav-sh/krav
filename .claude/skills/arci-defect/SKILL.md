@@ -4,6 +4,9 @@ description: >-
   Triage and fix defects. Use when reviewing open defects, deciding their
   disposition (confirm, defer, reject), creating remediation tasks, or
   verifying fixes.
+stage-classification: temporary
+replacement-stage: 1
+replacement: "`arci defect` CLI subcommands (create, confirm, defer, reject)"
 ---
 
 # Triage and fix defects

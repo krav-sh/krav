@@ -4,6 +4,9 @@ description: >-
   Compare two baselines to show what changed between them. Use when asked
   about changes between milestones, what was added or removed, or for
   release notes.
+stage-classification: temporary
+replacement-stage: 1
+replacement: "`arci baseline diff` CLI command"
 allowed-tools:
   - Read
   - Grep

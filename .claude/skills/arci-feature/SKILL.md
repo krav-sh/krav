@@ -6,6 +6,9 @@ description: >-
   full transformation chain. This is a composite workflow that orchestrates
   other skills.
 disable-model-invocation: true
+stage-classification: temporary
+replacement-stage: 3
+replacement: "Production arci-feature skill backed by CLI commands and subagent orchestration"
 ---
 
 # Build a feature end to end

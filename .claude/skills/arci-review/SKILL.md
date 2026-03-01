@@ -4,6 +4,9 @@ description: >-
   Review work deliverables against requirements and produce defects for
   problems found. Use when code review, design review, or any examination
   of deliverables is needed.
+stage-classification: temporary
+replacement-stage: 3
+replacement: "Review subagent with `arci defect create` CLI command"
 allowed-tools:
   - Read
   - Grep

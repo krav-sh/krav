@@ -5,6 +5,9 @@ description: >-
   a milestone is reached and the current state should be frozen as a named
   reference point.
 disable-model-invocation: true
+stage-classification: temporary
+replacement-stage: 1
+replacement: "`arci baseline create` CLI command"
 ---
 
 # Create a baseline
