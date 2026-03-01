@@ -8,37 +8,65 @@ match: $sentence
 indicators:
   - ":"
 exceptions:
+  - Actions
+  - AGT-\*
   - ARCI
   - Azure
+  - BSL-\*
   - CEL
   - CLI
   - Claude
-  - CRUD
-  - DAG
+  - CM
   - Code
-  - I/O
+  - CON-\*
+  - Core
   - Cosmos
+  - CQ-[A-Z0-9]+
+  - CRUD
+  - CSS
+  - DAG
+  - DEF-\*
+  - DEV-\*
   - Docker
   - Dockerfile
+  - Dublin
+  - DuckDB
   - Emmet
+  - FND-\*
+  - GitHub
   - GritQL
   - gRPC
   - I
+  - I/O
   - JSON
+  - JSON-LD
   - Kubernetes
   - Linux
   - macOS
   - Marketplace
   - MCP
+  - MOD-\*
   - MongoDB
+  - NEED-\*
+  - OSLC
+  - OSS
   - PagerDuty
+  - PROV-O
   - React
   - REPL
+  - REQ-\*
+  - RPC
   - SQL
   - Starlark
+  - STK-\*
   - Studio
+  - TASK-\*
+  - TC-\*
   - TypeScript
   - URLs
   - Visual
+  - vs
   - VS
+  - WebSocket
   - Windows
+  - WSL2
