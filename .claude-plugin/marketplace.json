@@ -1,17 +1,17 @@
 {
-  "name": "arci",
-  "description": "Agentic requirements composition integration.",
+  "name": "krav",
+  "description": "Krav requirements engineering.",
   "owner": {
     "name": "Tony Burns",
-    "email": "tony@tonyburns.net"
+    "email": "hello@krav.sh"
   },
   "plugins": [
     {
-      "name": "arci",
-      "description": "Agentic requirements composition integration.",
+      "name": "krav",
+      "description": "Krav requirements engineering.",
       "source": "./claude",
       "category": "development",
-      "homepage": "https://github.com/tbhb/arci"
+      "homepage": "https://krav.sh"
     }
   ]
 }

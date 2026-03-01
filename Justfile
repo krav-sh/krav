@@ -4,8 +4,8 @@ set positional-arguments := true
 
 # Go project metadata
 
-module := "github.com/tbhb/arci"
-bin_name := "arci"
+module := "pkg.krav.sh/krav"
+bin_name := "krav"
 bin_dir := "bin"
 
 # Build metadata
@@ -35,13 +35,13 @@ install-tools:
     vale sync
     @echo "Note: plantuml and watchman must be installed separately (e.g., brew install plantuml watchman)"
 
-# Install the arci binary to GOPATH/bin
+# Install the krav binary to GOPATH/bin
 install:
-    go install -ldflags "{{ ldflags }}" ./cmd/arci
+    go install -ldflags "{{ ldflags }}" ./cmd/krav
 
 # Build the binary
 build:
-    go build -trimpath -ldflags "{{ ldflags }}" -o {{ bin_dir }}/{{ bin_name }} ./cmd/arci
+    go build -trimpath -ldflags "{{ ldflags }}" -o {{ bin_dir }}/{{ bin_name }} ./cmd/krav
 
 # Build for all platforms
 build-all: (build-for "linux" "amd64") (build-for "linux" "arm64") (build-for "darwin" "amd64") (build-for "darwin" "arm64") (build-for "windows" "amd64") (build-for "windows" "arm64")
@@ -55,15 +55,15 @@ build-for os arch:
     if [[ "{{ os }}" == "windows" ]]; then
         ext=".exe"
     fi
-    GOOS={{ os }} GOARCH={{ arch }} go build -trimpath -ldflags "{{ ldflags }}" -o {{ bin_dir }}/{{ bin_name }}-{{ os }}-{{ arch }}${ext} ./cmd/arci
+    GOOS={{ os }} GOARCH={{ arch }} go build -trimpath -ldflags "{{ ldflags }}" -o {{ bin_dir }}/{{ bin_name }}-{{ os }}-{{ arch }}${ext} ./cmd/krav
 
 # Run the binary
 run *args:
-    go run -ldflags "{{ ldflags }}" ./cmd/arci "$@"
+    go run -ldflags "{{ ldflags }}" ./cmd/krav "$@"
 
 # Run the binary with debug logging enabled
 run-debug *args:
-    ARCI_DEBUG=1 go run -ldflags "{{ ldflags }}" ./cmd/arci "$@"
+    KRAV_DEBUG=1 go run -ldflags "{{ ldflags }}" ./cmd/krav "$@"
 
 # Clean build artifacts
 clean:

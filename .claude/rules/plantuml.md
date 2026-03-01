@@ -10,8 +10,8 @@ paths:
 ## Diagram location and naming
 
 - All diagrams live in `docs/diagrams/`
-- Naming convention: `arci-c4-{level}.puml` (kebab-case)
-- The `@startuml` identifier must match the filename without extension: `@startuml arci-c4-context`
+- Naming convention: `krav-c4-{level}.puml` (kebab-case)
+- The `@startuml` identifier must match the filename without extension: `@startuml krav-c4-context`
 
 ## C4 library conventions
 

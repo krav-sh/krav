@@ -1,14 +1,14 @@
 {
-  "name": "arci",
+  "name": "krav",
   "version": "0.0.0",
-  "description": "Agentic requirements composition integration.",
+  "description": "Krav requirements engineering.",
   "author": {
     "name": "Tony Burns",
-    "email": "tony@tonyburns.net",
-    "url": "https://github.com/tbhb"
+    "email": "hello@krav.sh",
+    "url": "https://krav.sh"
   },
-  "homepage": "https://github.com/tbhb/arci",
-  "repository": "https://github.com/tbhb/arci",
+  "homepage": "https://krav.sh",
+  "repository": "https://github.com/krav-sh/krav",
   "license": "MIT",
   "keywords": ["development"]
 }

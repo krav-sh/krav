@@ -1,0 +1,73 @@
+---
+extends: capitalization
+message: "'%s' should use sentence-style capitalization."
+link: "https://developers.google.com/style/capitalization#capitalization-in-titles-and-headings"
+level: warning
+scope: heading
+match: $sentence
+indicators:
+  - ":"
+exceptions:
+  - Actions
+  - AGT-\*
+  - Krav
+  - Azure
+  - BSL-\*
+  - CEL
+  - CLI
+  - Claude
+  - CM
+  - Code
+  - CON-\*
+  - Core
+  - Cosmos
+  - CQ-[A-Z0-9]+
+  - CRUD
+  - CSS
+  - DAG
+  - DEF-\*
+  - DEV-\*
+  - Docker
+  - Dockerfile
+  - Dublin
+  - DuckDB
+  - Emmet
+  - FND-\*
+  - GitHub
+  - '[Gg]raph'
+  - GritQL
+  - gRPC
+  - I
+  - I/O
+  - JSON
+  - JSON-LD
+  - Kubernetes
+  - Linux
+  - macOS
+  - Marketplace
+  - MCP
+  - MOD-\*
+  - MongoDB
+  - NEED-\*
+  - OSLC
+  - OSS
+  - PagerDuty
+  - PROV-O
+  - React
+  - REPL
+  - REQ-\*
+  - RPC
+  - SQL
+  - Starlark
+  - STK-\*
+  - Studio
+  - TASK-\*
+  - TC-\*
+  - TypeScript
+  - URLs
+  - Visual
+  - vs
+  - VS
+  - WebSocket
+  - Windows
+  - WSL2

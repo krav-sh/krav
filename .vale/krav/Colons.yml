@@ -1,0 +1,10 @@
+---
+extends: existence
+message: "'%s' should be in lowercase."
+link: "https://developers.google.com/style/colons"
+nonword: true
+level: warning
+scope: sentence
+tokens:
+  # yamllint disable-line rule:line-length
+  - '(?<!:[^ ]+?):\s(?!O\(|AGT|BSL|CON|DAG|DEF|DEV|FND|MOD|NED|NEED|OSLC|PROV|REQ|STK|TASK|TC|TSK|WebSocket|DuckDB|GritQL|Starlark|TypeScript|Read|Grep|Glob|Write|Edit|Bash|JSON|SQL|YAML|CRUD|CLI|API|RPC|HTTP|URL|HTML|CSS|UUID|Krav|Docker|GitHub|Linux|Windows|Azure|React|MCP|PreToolUse|PostToolUse|SessionStart|Stop)[A-Z]'

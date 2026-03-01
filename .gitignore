@@ -16,11 +16,11 @@ node_modules/
 # Vale synced packages (keep vocabulary and project styles)
 .vale/*
 !.vale/config/
-!.vale/arci/
+!.vale/krav/
 .vale/config/*
 !.vale/config/vocabularies/
 .vale/config/vocabularies/*
-!.vale/config/vocabularies/arci/
+!.vale/config/vocabularies/krav/
 
 # PlantUML exports (regenerated from .puml source)
 docs/diagrams/png/

@@ -26,7 +26,7 @@ if [[ -n "$VALE_OUTPUT" && "$VALE_OUTPUT" != "No findings." ]]; then
   echo "$VALE_OUTPUT"
   echo ""
   echo ">>> ALL vale and rumdl warnings and errors MUST be resolved before continuing. <<<"
-  echo ">>> You may edit rules in .vale/arci/ and add vocabulary to .vale/config/vocabularies/arci/. <<<"
+  echo ">>> You may edit rules in .vale/krav/ and add vocabulary to .vale/config/vocabularies/krav/. <<<"
   echo ">>> You MUST ask the user before modifying rumdl or vale project configs (.vale.ini, .rumdl.toml) or adding <!-- vale --> suppression comments. <<<"
 fi
 

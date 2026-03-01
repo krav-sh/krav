@@ -33,7 +33,7 @@
     ]
   },
   "extraKnownMarketplaces": {
-    "arci": {
+    "krav": {
       "source": {
         "source": "directory",
         "path": "."
@@ -42,7 +42,7 @@
     }
   },
   "enabledPlugins": {
-    "arci@arci": true
+    "krav@krav": true
   },
   "hooks": {
     "PostToolUse": [
