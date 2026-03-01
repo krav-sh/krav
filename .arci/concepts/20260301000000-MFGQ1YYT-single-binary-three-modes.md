@@ -1,6 +1,6 @@
 # Single binary, three modes
 
-arci ships as a single Go binary that serves all roles: command-line tool, daemon, and dashboard. No separately versioned components, no coordination problems between processes at different versions, and no external runtime dependencies for core operation.
+ARCI ships as a single Go binary that serves all roles: command-line tool, daemon, and dashboard. No separately versioned components, no coordination problems between processes at different versions, and no external runtime dependencies for core operation.
 
 ## The three modes
 

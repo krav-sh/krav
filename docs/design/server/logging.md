@@ -43,7 +43,7 @@ The `--console` flag controls which mode the server uses: `rich` forces the TUI,
 
 ## Security note
 
-Log output may contain file paths, policy names, and other project metadata. When redirecting logs to shared storage or a logging service, consider what information the logs expose. The same general principle applies as with all arci data: it describes your development workflow and deserves appropriate care.
+Log output may contain file paths, policy names, and other project metadata. When redirecting logs to shared storage or a logging service, consider what information the logs expose. The same general principle applies as with all ARCI data: it describes your development workflow and deserves appropriate care.
 
 ## See also
 

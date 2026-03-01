@@ -172,7 +172,7 @@ When a confirmed defect needs work, `generates` links to the remediation task. T
 
 ## Interaction with reviews
 
-A review in arci is a verification-phase task (task_type: `architecture-review`, `design-review`, `code-review`, `requirements-review`). The review task produces two kinds of output:
+A review in ARCI is a verification-phase task (task_type: `architecture-review`, `design-review`, `code-review`, `requirements-review`). The review task produces two kinds of output:
 
 **Review report** (task deliverable): a prose document capturing the review's analysis, observations, recommendations, and aggregate disposition. This is where neutral observations, suggestions, and commentary live. The report is a file in the module's deliverables directory.
 
@@ -353,7 +353,7 @@ def defects_for_subject(graph: Graph, subject_id: str) -> tuple[DefectNode, ...]
 def defects_by_review(graph: Graph, task_id: str) -> tuple[DefectNode, ...]: ...
 ```
 
-### Service layer (arci.service.defect)
+### Service layer (`arci.service.defect`)
 
 Orchestrates core and IO:
 

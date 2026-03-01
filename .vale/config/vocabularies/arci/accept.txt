@@ -1,5 +1,5 @@
 Agentic
-[Aa][Rr][Cc][Ii]
+ARCI
 [Aa]ddressedBy
 afterbegin
 [Aa]llocatesTo

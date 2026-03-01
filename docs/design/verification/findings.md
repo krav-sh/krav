@@ -278,7 +278,7 @@ def regarding(graph: Graph, finding_id: str) -> str | None: ...
 def generated_task(graph: Graph, finding_id: str) -> str | None: ...
 ```
 
-### Service layer (arci.service.finding)
+### Service layer (`arci.service.finding`)
 
 Orchestrates core and IO:
 

@@ -1,6 +1,6 @@
 # Formal transformation chain
 
-Work in arci follows a formal transformation chain: concept → need → requirement → task → deliverable. Each step produces `derivesFrom` edges maintaining full traceability from stakeholder intent through to built artifacts.
+Work in ARCI follows a formal transformation chain: concept → need → requirement → task → deliverable. Each step produces `derivesFrom` edges maintaining full traceability from stakeholder intent through to built artifacts.
 
 ## The chain
 
@@ -20,4 +20,4 @@ Without the chain, requirements appear from nowhere and tasks accumulate without
 
 ## Skipping ceremony
 
-Not every change needs the full chain. Quick fixes, trivial changes, and work where the transformation chain adds no value can skip ceremony. The arci-quickfix workflow exists for this purpose. But design decisions, architectural changes, and work that affects many modules should stay traceable. The judgment call is: "would someone later ask why this exists or what depends on it?" If yes, trace it.
+Not every change needs the full chain. Quick fixes, trivial changes, and work where the transformation chain adds no value can skip ceremony. The `arci-quickfix` workflow exists for this purpose. But design decisions, architectural changes, and work that affects many modules should stay traceable. The judgment call is: "would someone later ask why this exists or what depends on it?" If yes, trace it.

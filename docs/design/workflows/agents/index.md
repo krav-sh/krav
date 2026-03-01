@@ -1,6 +1,6 @@
 # Agents
 
-This directory contains design specifications for the subagents that arci ships as part of its Claude Code plugin. Subagents provide isolated execution contexts for workflows that benefit from a fresh context window, restricted tool access, or a different evaluative posture.
+This directory contains design specifications for the subagents that ARCI ships as part of its Claude Code plugin. Subagents provide isolated execution contexts for workflows that benefit from a fresh context window, restricted tool access, or a different evaluative posture.
 
 Agents live in the plugin's `claude/agents/` directory. Each is a markdown file with YAML frontmatter (tool restrictions, skill preloads, hooks, model overrides, permission mode) and a markdown body that serves as the subagent's system prompt. The delegating agent's message provides the specific task, and preloaded skills inject full workflow instructions (including preprocessed graph context) at startup.
 
@@ -8,11 +8,11 @@ Agents live in the plugin's `claude/agents/` directory. Each is a markdown file 
 
 | Agent | Primary workflows | What it does |
 |-------|-------------------|-------------|
-| arci-reviewer | [Reviewing work](../reviewing-work.md) | Evaluates deliverables against requirements and produces defects |
-| arci-verifier | [Running verification](../running-verification.md) | Executes test cases and records results |
-| arci-analyst | [Comparing baselines](../comparing-baselines.md), [Handling suspect links](../handling-suspect-links.md), [Tracing requirements](../tracing-requirements.md) | Read-only investigation and analysis of graph state |
+| `arci-reviewer` | [Reviewing work](../reviewing-work.md) | Evaluates deliverables against requirements and produces defects |
+| `arci-verifier` | [Running verification](../running-verification.md) | Executes test cases and records results |
+| `arci-analyst` | [Comparing baselines](../comparing-baselines.md), [Handling suspect links](../handling-suspect-links.md), [Tracing requirements](../tracing-requirements.md) | Read-only investigation and analysis of graph state |
 
-### arci-reviewer
+### `arci-reviewer`
 
 The review agent is the canonical case for subagent isolation. The agent that wrote the code shouldn't review it: it carries coding context that biases it toward confirming its own decisions. The reviewer starts with a clean context window, loads the module's requirements and deliverable files, and evaluates independently.
 
@@ -24,7 +24,7 @@ The reviewer's system prompt sets the posture: thorough, independent, skeptical 
 
 A SubagentStop hook (defined in the agent's frontmatter) ensures the reviewer produces required deliverables before completing: at minimum, a structured assessment of each requirement's satisfaction and any defect records.
 
-### arci-verifier
+### `arci-verifier`
 
 The verification agent executes test cases in isolation from coding context. The agent that wrote the tests might unconsciously shape execution to match expectations. The verifier starts fresh, loads the test case specifications and their implementations, runs them, and records results.
 
@@ -34,11 +34,11 @@ Preloaded skills: `arci:verify`. Preprocessing injects the module's test cases, 
 
 The verification agent's system prompt emphasizes faithful execution: run the tests as specified, report results accurately, don't fix failing tests. If a test case specification is ambiguous, the verifier flags it as a defect rather than interpreting it charitably.
 
-### arci-analyst
+### `arci-analyst`
 
 The analysis agent handles read-only investigation tasks that benefit from a dedicated context window: baseline comparisons, suspect link triage, and deep traceability queries. These tasks can involve loading large amounts of graph data and walking complex chains of relationships, so a fresh context window avoids competing with ongoing coding work.
 
-Tool access: Read, Grep, Glob, and Bash (read-only arci CLI commands). No Write or Edit.
+Tool access: Read, Grep, Glob, and Bash (read-only `arci` CLI commands). No Write or Edit.
 
 Preloaded skills vary by task. For baseline comparisons: `arci:diff`. For suspect link triage: `arci:suspect`. For traceability queries: `arci:trace`. The delegating agent specifies the task and the appropriate skill is preloaded based on the task type.
 

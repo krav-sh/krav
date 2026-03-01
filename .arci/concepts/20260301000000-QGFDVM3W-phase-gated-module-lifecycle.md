@@ -1,6 +1,6 @@
 # Phase-gated module lifecycle
 
-Each module in arci tracks its current lifecycle phase independently. Phases gate what work can happen and when a module can advance, ensuring that architecture settles before design begins, design settles before coding begins, and so on.
+Each module in ARCI tracks its current lifecycle phase independently. Phases gate what work can happen and when a module can advance, ensuring that architecture settles before design begins, design settles before coding begins, and so on.
 
 ## The phases
 

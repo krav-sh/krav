@@ -1,6 +1,6 @@
 # Knowledge graph as single source of truth
 
-The central architectural decision in arci is that all structured metadata about a project lives in the knowledge graph, not scattered across document frontmatter, separate databases, issue trackers, or ad-hoc files. The graph stores typed nodes (concepts, modules, needs, requirements, test cases, tasks, defects, baselines) connected by semantic predicates, and views on the graph replace traditional documents.
+The central architectural decision in ARCI is that all structured metadata about a project lives in the knowledge graph, not scattered across document frontmatter, separate databases, issue trackers, or ad-hoc files. The graph stores typed nodes (concepts, modules, needs, requirements, test cases, tasks, defects, baselines) connected by semantic predicates, and views on the graph replace traditional documents.
 
 ## What this means in practice
 
@@ -10,10 +10,10 @@ The graph uses JSON-LD compact form serialized as JSON Lines (JSONLT). Each line
 
 ## Why JSON-LD and not just JSON
 
-JSON-LD buys two things. First, formal vocabulary alignment: arci's node types and predicates map to established ontologies (Dublin Core for metadata, PROV-O for provenance, OSLC for requirements management) via `rdfs:subClassOf` and `rdfs:subPropertyOf` declarations. This isn't academic; arci's graph has well-defined semantics that tools can reason about.
+JSON-LD buys two things. First, formal vocabulary alignment: ARCI's node types and predicates map to established ontologies (Dublin Core for metadata, PROV-O for provenance, OSLC for requirements management) via `rdfs:subClassOf` and `rdfs:subPropertyOf` declarations. This isn't academic; ARCI's graph has well-defined semantics that tools can reason about.
 
 Second, the `@context` mechanism separates compact keys from their full meaning. The graph file uses short keys like `title`, `derivesFrom`, and `module`, but these expand to `dcterms:title`, `arci:derivesFrom`, and `arci:module` when processed as RDF. This keeps the file readable while maintaining formal rigor.
 
 ## What this replaces
 
-Traditional document-centric requirements management maintains separate SRS documents, test plans, traceability matrices, and V&V plans as independent artifacts. Keeping these in sync is the classic document management problem. arci eliminates it by making all these "documents" views on the same underlying data.
+Traditional document-centric requirements management maintains separate SRS documents, test plans, traceability matrices, and V&V plans as independent artifacts. Keeping these in sync is the classic document management problem. ARCI eliminates it by making all these "documents" views on the same underlying data.

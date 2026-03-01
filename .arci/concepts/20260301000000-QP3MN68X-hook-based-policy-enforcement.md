@@ -1,6 +1,6 @@
 # Hook-based policy enforcement
 
-arci intercepts Claude Code tool execution through declarative policies evaluated via hooks. Policies define what the agent can and cannot do, injecting graph context and enforcing development discipline without requiring the agent to remember rules on its own.
+ARCI intercepts Claude Code tool execution through declarative policies evaluated via hooks. Policies define what the agent can and cannot do, injecting graph context and enforcing development discipline without requiring the agent to remember rules on its own.
 
 ## The evaluation pipeline
 
@@ -27,7 +27,7 @@ When policies match the same event, **deny-wins aggregation** applies: if any po
 
 ## Fail-open semantics
 
-Every error path in policy evaluation results in allow. Malformed policy files get skipped. CEL expression errors cause the condition to return false (policy doesn't match). Failed parameter resolution skips the policy. The system never blocks Claude Code because of arci's own errors.
+Every error path in policy evaluation results in allow. Malformed policy files get skipped. CEL expression errors cause the condition to return false (policy doesn't match). Failed parameter resolution skips the policy. The system never blocks Claude Code because of ARCI's own errors.
 
 This is a non-negotiable design constraint. A development tool that unpredictably blocks the agent is worse than no tool at all.
 

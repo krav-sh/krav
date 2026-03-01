@@ -147,7 +147,7 @@ Serves the dashboard web interface. Returns HTML pages rendered with Go template
 
 ## Lifecycle
 
-The server runs in the foreground via `arci server`. It determines the project root using the same walk-up-the-tree logic as all other arci commands (looking for `.arci/` or other project markers), respecting `--project-dir` and `ARCI_PROJECT_DIR` overrides.
+The server runs in the foreground via `arci server`. It determines the project root using the same walk-up-the-tree logic as all other `arci` commands (looking for `.arci/` or other project markers), respecting `--project-dir` and `ARCI_PROJECT_DIR` overrides.
 
 On startup, the server selects a port by trying the configured base port (default 7680) and incrementing until it finds a free port, up to a small scan limit. It then writes `.arci/server.json` to the project directory (see [discovery](discovery.md)), initializes the HTTP server and registers routes, starts the file watcher for configuration directories, and begins accepting requests.
 
@@ -159,7 +159,7 @@ The lockfile is the single artifact of a running server. If the server crashes w
 
 Each server instance owns exactly one project. The server knows its project root because that directory is where it started (or the directory specified by `--project-dir`). Configuration loading, graph operations, and state management are all scoped to that project.
 
-Running multiple arci servers for different projects is straightforward: each binds its own port and writes its own `.arci/server.json`. The auto-detection scan handles port conflicts between projects; the second server simply takes the next available port.
+Running multiple ARCI servers for different projects is straightforward: each binds its own port and writes its own `.arci/server.json`. The auto-detection scan handles port conflicts between projects; the second server simply takes the next available port.
 
 ## Process management
 

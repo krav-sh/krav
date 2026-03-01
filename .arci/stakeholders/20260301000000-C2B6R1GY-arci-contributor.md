@@ -1,4 +1,4 @@
-# arci contributor
+# ARCI contributor
 
 ## Concerns
 

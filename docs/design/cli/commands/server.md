@@ -12,7 +12,7 @@ The server is a long-running process that caches compiled configuration, owns th
 
 Hook evaluation works without a running server (the CLI evaluates policies directly), but the server provides faster evaluation and knowledge graph mutations require it. See the [server design](../../server/index.md) for details.
 
-The server binds to localhost on the configured base port (default 7680). If the port is in use, it tries incrementing ports up to 20 times. The server writes the actual port to `.arci/server.json` for discovery by other arci commands.
+The server binds to localhost on the configured base port (default 7680). If the port is in use, it tries incrementing ports up to 20 times. The server writes the actual port to `.arci/server.json` for discovery by other `arci` commands.
 
 When running in a TTY, the server displays a live TUI showing recent evaluations, active policies, and configuration status. When not in a TTY, it outputs structured logs to stderr.
 

@@ -1,10 +1,10 @@
 # Versioning and compatibility
 
-This document describes arci's versioning policy, backward compatibility guarantees, and migration strategies. When teams commit rule configurations to git, they need confidence that upgrading arci won't break their workflows.
+This document describes ARCI's versioning policy, backward compatibility guarantees, and migration strategies. When teams commit rule configurations to git, they need confidence that upgrading ARCI won't break their workflows.
 
 ## Version numbering
 
-arci uses semantic versioning (SemVer) with the format MAJOR.MINOR.PATCH.
+ARCI uses semantic versioning (SemVer) with the format MAJOR.MINOR.PATCH.
 
 MAJOR version increments indicate breaking changes that may require configuration migration. Examples include removing deprecated features, changing configuration schema in incompatible ways, or altering expression language semantics.
 
@@ -58,7 +58,7 @@ Topics to cover:
 
 - Protocol version for extensions
 - Backward compatibility for extension authors
-- Extension/arci version matrix
+- Extension/ARCI version matrix
 
 ## Schema versioning
 
@@ -90,11 +90,11 @@ Pending: document extension versioning concerns.
 
 Topics to cover:
 
-### Extension/arci version constraints
+### Extension/ARCI version constraints
 
-- How extensions declare compatible arci versions
+- How extensions declare compatible ARCI versions
 - Behavior when constraints aren't met
-- Upgrade coordination between extension and arci
+- Upgrade coordination between extension and ARCI
 
 ### Extension API versions
 
@@ -164,7 +164,7 @@ Pending: document upgrade procedures.
 
 Topics to cover:
 
-### Upgrading arci
+### Upgrading ARCI
 
 - Testing configuration against new version
 - Reviewing breaking changes
@@ -179,7 +179,7 @@ Topics to cover:
 ### Team coordination
 
 - Communicating upgrades to team members
-- Synchronizing arci versions across team
+- Synchronizing ARCI versions across team
 - CI/CD considerations
 
 ## Known breaking changes

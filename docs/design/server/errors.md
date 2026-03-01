@@ -22,7 +22,7 @@ In direct execution mode (no server), configuration loads fresh on every invocat
 
 ### Stale lockfile
 
-If `.arci/server.json` exists but the server isn't running, any arci command detects the stale PID and cleans up the file automatically. No manual intervention is necessary. See [discovery](discovery.md) for details.
+If `.arci/server.json` exists but the server isn't running, any `arci` command detects the stale PID and cleans up the file automatically. No manual intervention is necessary. See [discovery](discovery.md) for details.
 
 ## Error recovery
 
@@ -44,7 +44,7 @@ Some situations require manual intervention.
 
 Corrupted state store: `arci state clear --all` wipes the state database. For complete reset, delete the SQLite file at `$XDG_STATE_HOME/arci/state.db`.
 
-Unresponsive server: press Ctrl+C in the terminal where the server runs for a graceful shutdown. If the server is truly hung, `kill <pid>` (reading the PID from `.arci/server.json`) forces termination. The next arci command cleans up the stale lockfile.
+Unresponsive server: press Ctrl+C in the terminal where the server runs for a graceful shutdown. If the server is truly hung, `kill <pid>` (reading the PID from `.arci/server.json`) forces termination. The next `arci` command cleans up the stale lockfile.
 
 Extension conflicts: `arci extension sync` reinstalls extensions from the lockfile. For persistent issues, `arci extension remove <name>` and re-add.
 

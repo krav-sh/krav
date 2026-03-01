@@ -1,6 +1,6 @@
 # Server discovery
 
-Every arci command that talks to the server uses the same discovery mechanism: read `.arci/server.json` from the project directory. This lockfile is the single source of truth for whether a server is running and how to reach it.
+Every `arci` command that talks to the server uses the same discovery mechanism: read `.arci/server.json` from the project directory. This lockfile is the single source of truth for whether a server is running and how to reach it.
 
 ## The lockfile
 
@@ -15,7 +15,7 @@ When `arci server` starts, it writes `.arci/server.json` to the project root:
 }
 ```
 
-The file contains the server's process ID, the HTTP port it bound to, the arci version, and the start timestamp. The CLI, MCP server, and any other client read this file to locate the server.
+The file contains the server's process ID, the HTTP port it bound to, the ARCI version, and the start timestamp. The CLI, MCP server, and any other client read this file to locate the server.
 
 When the server shuts down cleanly, it removes the lockfile.
 
@@ -70,7 +70,7 @@ A theoretical edge case exists where the OS recycles a PID and a different proce
 
 ## Version checking
 
-The lockfile includes the arci version that started the server. If the CLI version does not match the server version (the user upgraded arci while a server was running), the CLI logs a warning suggesting the user restart the server. It does not automatically stop or restart the server.
+The lockfile includes the ARCI version that started the server. If the CLI version does not match the server version (the user upgraded ARCI while a server was running), the CLI logs a warning suggesting the user restart the server. It does not automatically stop or restart the server.
 
 ## Gitignore
 

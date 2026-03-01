@@ -1,10 +1,10 @@
 # Skills and subagents encode development method
 
-arci's development method isn't just enforced by hooks or documented in CLAUDE.md. Skills teach the agent step-by-step workflow instructions, and subagents provide isolated execution contexts. Together they form the agent interaction layer: the bridge between the knowledge graph and what Claude Code actually does.
+ARCI's development method isn't just enforced by hooks or documented in CLAUDE.md. Skills teach the agent step-by-step workflow instructions, and subagents provide isolated execution contexts. Together they form the agent interaction layer: the bridge between the knowledge graph and what Claude Code actually does.
 
 ## Skills
 
-Skills are markdown files with YAML frontmatter that encode specific development workflows. Each skill maps to an arci workflow: formalization, derivation, decomposition, task execution, review, verification, and so on.
+Skills are markdown files with YAML frontmatter that encode specific development workflows. Each skill maps to an ARCI workflow: formalization, derivation, decomposition, task execution, review, verification, and so on.
 
 Skills have two mechanisms for incorporating graph context:
 
@@ -16,7 +16,7 @@ Skills have two mechanisms for incorporating graph context:
 
 Subagents provide isolated execution contexts for workflows that need a fresh context window, restricted tool access, or a different posture. The primary use case is review: a review subagent starts with the review skill loaded (full content, including preprocessed requirements data) and operates with read-only tool access. It hasn't seen the coding context, so it reviews without bias.
 
-Subagents load specified skills at startup (full content, not just descriptions) and can define lifecycle-scoped hooks in their frontmatter. They're defined as markdown files in `.claude/agents/` and bundled with the arci plugin.
+Subagents load specified skills at startup (full content, not just descriptions) and can define lifecycle-scoped hooks in their frontmatter. They're defined as markdown files in `.claude/agents/` and bundled with the ARCI plugin.
 
 ## Why encode the method, not just enforce it
 

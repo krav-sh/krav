@@ -235,7 +235,7 @@ def verifies(graph: Graph, verification_id: str) -> frozenset[str]: ...  # Retur
 def owning_module(graph: Graph, verification_id: str) -> str | None: ...
 ```
 
-### Service layer (arci.service.verification)
+### Service layer (`arci.service.verification`)
 
 Orchestrates core and IO:
 

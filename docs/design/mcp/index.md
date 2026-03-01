@@ -1,10 +1,10 @@
 # MCP server
 
-ARCI provides an MCP (Model Context Protocol) server that exposes diagnostic and introspection tools to Claude Code. The MCP server is a separate process from the main arci server, running over stdio transport as Claude Code expects.
+ARCI provides an MCP (Model Context Protocol) server that exposes diagnostic and introspection tools to Claude Code. The MCP server is a separate process from the main ARCI server, running over stdio transport as Claude Code expects.
 
-## Relationship to the arci server
+## Relationship to the ARCI server
 
-The MCP server is a thin proxy. It connects to the arci server's HTTP API and translates MCP tool calls into API requests. It holds no state of its own and performs no evaluation. If the arci server is not running, the MCP server reports errors through MCP tool responses rather than attempting to start the server itself. Lifecycle management stays cleanly separated: the user starts the arci server, and Claude Code starts the MCP server.
+The MCP server is a thin proxy. It connects to the ARCI server's HTTP API and translates MCP tool calls into API requests. It holds no state of its own and performs no evaluation. If the ARCI server is not running, the MCP server reports errors through MCP tool responses rather than attempting to start the server itself. Lifecycle management stays cleanly separated: the user starts the ARCI server, and Claude Code starts the MCP server.
 
 ```mermaid
 flowchart LR
@@ -19,7 +19,7 @@ flowchart LR
 
 The command is `arci mcp`. It runs in the foreground, communicating with Claude Code over stdin/stdout using the MCP protocol, and exits when the client disconnects.
 
-`arci mcp` uses the same project root resolution as every other arci command: it walks up from cwd looking for `.arci/`, or respects `--project-dir` and `ARCI_PROJECT_DIR`. Once it knows the project root, it reads `.arci/server.json` to discover the running arci server's port (see [server discovery](../server/discovery.md)).
+`arci mcp` uses the same project root resolution as every other `arci` command: it walks up from cwd looking for `.arci/`, or respects `--project-dir` and `ARCI_PROJECT_DIR`. Once it knows the project root, it reads `.arci/server.json` to discover the running ARCI server's port (see [server discovery](../server/discovery.md)).
 
 A typical Claude Code MCP configuration:
 
@@ -39,7 +39,7 @@ Setting `cwd` to the project root ensures the MCP server finds the correct `.arc
 
 ## Server discovery
 
-On startup, `arci mcp` resolves the project root, reads `.arci/server.json`, verifies the PID is alive, and establishes a connection to `http://127.0.0.1:<port>`. If the lockfile is missing or the server process is dead, the MCP server does not attempt to start the arci server. Instead, tool calls that require the server return MCP error responses explaining that the server is not running.
+On startup, `arci mcp` resolves the project root, reads `.arci/server.json`, verifies the PID is alive, and establishes a connection to `http://127.0.0.1:<port>`. If the lockfile is missing or the server process is dead, the MCP server does not attempt to start the ARCI server. Instead, tool calls that require the server return MCP error responses explaining that the server is not running.
 
 Some tools may be able to operate without the server by reading directly from project files or the SQLite database in read-only mode. This is a future consideration; the initial version proxies everything through the server.
 
@@ -63,7 +63,7 @@ Graph query and mutation tools expose the knowledge graph to Claude Code through
 
 The MCP server uses the official Go SDK (`github.com/modelcontextprotocol/go-sdk`). The SDK handles protocol negotiation, transport, and message framing. The MCP server registers tools using the SDK typed handler API, where input and output schemas are auto-generated from Go structs.
 
-Each tool handler is a thin function that makes an HTTP request to the arci server, transforms the response into MCP content, and returns it. Error handling follows MCP conventions: transport or server errors produce MCP error responses, not crashes.
+Each tool handler is a thin function that makes an HTTP request to the ARCI server, transforms the response into MCP content, and returns it. Error handling follows MCP conventions: transport or server errors produce MCP error responses, not crashes.
 
 ```go
 mcp.AddTool(server, &mcp.Tool{
@@ -79,6 +79,6 @@ The SDK `StdioTransport` handles communication with Claude Code. The MCP server 
 
 ## Design constraints
 
-The MCP server does not start, stop, or manage the arci server. It serves primarily as a read interface: diagnostic queries, graph reads, and status checks. Graph mutations through MCP tools are possible but should be carefully considered, since they bypass the CLI's validation and user-facing feedback.
+The MCP server does not start, stop, or manage the ARCI server. It serves primarily as a read interface: diagnostic queries, graph reads, and status checks. Graph mutations through MCP tools are possible but should be carefully considered, since they bypass the CLI's validation and user-facing feedback.
 
 The MCP server process is lightweight and stateless. Claude Code may start and stop it freely without concern for cleanup or resource leaks.

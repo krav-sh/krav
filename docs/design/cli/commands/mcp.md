@@ -12,7 +12,7 @@ arci mcp [options]
 
 The MCP server exposes ARCI diagnostic and introspection tools to Claude Code via the Model Context Protocol. It communicates over stdin/stdout using MCP's stdio transport and exits when the client disconnects.
 
-The MCP server acts as a stateless proxy that connects to the running arci server's HTTP API. It discovers the server by reading `.arci/server.json` from the project root (see [server discovery](../../server/discovery.md)). If the arci server is not running, tool calls return MCP error responses rather than failing silently.
+The MCP server acts as a stateless proxy that connects to the running `arci server`'s HTTP API. It discovers the server by reading `.arci/server.json` from the project root (see [server discovery](../../server/discovery.md)). If the `arci server` is not running, tool calls return MCP error responses rather than failing silently.
 
 This command is typically not run manually. Claude Code's MCP settings configure it so that Claude Code launches it automatically.
 
