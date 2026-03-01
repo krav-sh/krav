@@ -6,7 +6,7 @@ This document describes the managed configuration system for enterprise deployme
 
 Managed configuration allows enterprises to enforce policies across their fleet. It follows Chrome's two-tier model with recommended (overridable defaults) and required (enforced, non-overridable) tiers.
 
-```
+```text
 <system config dir>/
 ├── managed/
 │   ├── recommended/    # Enterprise defaults, user/project can override
@@ -19,21 +19,21 @@ Managed configuration allows enterprises to enforce policies across their fleet.
 │       └── policies.d/
 ```
 
-Managed configuration is deployed via MDM (Mobile Device Management), configuration management tools like Ansible/Chef/Puppet, or manual installation by IT administrators. The files require elevated privileges to modify on most systems.
+IT administrators deploy managed configuration via MDM (Mobile Device Management), configuration management tools like Ansible/Chef/Puppet, or manual installation. Modifying the files requires elevated privileges on most systems.
 
 ## Cascade behavior
 
 Managed recommended loads early in the cascade, after built-in defaults. Users, projects, environment variables, and CLI flags can all override these settings.
 
-Managed required loads last in the cascade, after all other sources including CLI flags. Nothing can override these settings. This provides absolute enforcement for security-critical policies.
+Managed required loads last in the cascade, after all other sources including CLI flags. Nothing can override these settings, providing absolute enforcement for security-critical policies.
 
-If managed required configuration exists but fails to parse, arci fails closed—it refuses to run rather than proceeding without enterprise security policies. This is the only source with fail-closed semantics.
+If managed required configuration exists but fails to parse, ARCI fails closed, refusing to run rather than proceeding without enterprise security policies. This is the only source with fail-closed semantics.
 
 ## Bypass mechanism for policy developers
 
 Developers writing managed policies need to test their changes without production managed policies interfering. The custom config override (`ARCI_CONFIG_FILE`, etc.) doesn't help because managed required still applies on top.
 
-A bypass mechanism allows authorized developers to disable managed policy loading entirely. This requires cryptographic proof of authorization to prevent abuse.
+A bypass mechanism allows authorized developers to turn off managed policy loading entirely. This requires cryptographic proof of authorization to prevent abuse.
 
 ### Threat model
 
@@ -41,28 +41,28 @@ The bypass mechanism must protect against:
 
 - End users disabling security policies to circumvent controls
 - Leaked credentials enabling bypass on production machines
-- Malware using bypass to disable protective policies
+- Malware using bypass to turn off protective policies
 
 It does not need to protect against:
 
-- Developers with admin access on their own machines (they could modify the managed files directly)
+- Developers with administrator access on their own machines (they could modify the managed files directly)
 - Nation-state attackers with persistent access (out of scope for this control)
 
 ### Key distribution
 
 The bypass mechanism uses asymmetric cryptography. Policy developers hold private keys and generate signed bypass tokens. Machines that should accept bypass have the corresponding public key installed.
 
-Critically, the public key is NOT distributed via MDM. Production machines have managed policies but no public key, so bypass tokens cannot be verified and bypass simply doesn't work.
+MDM does NOT distribute the public key. Production machines have managed policies but no public key, so the system cannot verify bypass tokens and bypass simply does not work.
 
 Developer machine setup is a manual process:
 
-1. Machine is enrolled in MDM, receives managed policies like all other machines
-2. Developer manually installs `bypass.pub` to system config directory (requires admin)
+1. MDM enrolls the machine and delivers managed policies like all other machines
+2. Developer manually installs `bypass.pub` to system config directory (requires administrator access)
 3. Developer can now use signed bypass tokens
 
-This means the presence of the public key is itself the opt-in to bypass capability. A leaked token is useless on machines without the key.
+The presence of the public key is itself the opt-in to bypass capability. A leaked token is useless on machines without the key.
 
-```
+```text
 <system config dir>/
 ├── managed/
 │   ├── recommended/
@@ -74,7 +74,7 @@ This means the presence of the public key is itself the opt-in to bypass capabil
 
 Bypass tokens are JSON payloads with an Ed25519 signature, base64-encoded for use in environment variables:
 
-```
+```text
 ARCI_BYPASS_MANAGED=<base64(payload + signature)>
 ```
 
@@ -97,14 +97,14 @@ Fields:
 | `v` | Yes | Token format version, currently `1` |
 | `exp` | Yes | Expiration timestamp (RFC 3339). Tokens should be short-lived. |
 | `sub` | Yes | Subject identifier, typically email. For audit logging. |
-| `scope` | No | Which bypass types are allowed: `config`, `policies`, `policies-dir`. Default is all. |
+| `scope` | No | Which bypass types the token allows: `config`, `policies`, `policies-dir`. Default is all. |
 | `machine` | No | If present, token only valid on this machine hostname. |
 
 ### Token validation
 
-When `ARCI_BYPASS_MANAGED` is set:
+When the user sets `ARCI_BYPASS_MANAGED`:
 
-1. Check if `<system config dir>/bypass.pub` exists. If not, ignore the token entirely (no warning—this is expected on production machines).
+1. Check if `<system config dir>/bypass.pub` exists. If not, ignore the token entirely (no warning, this is the expected behavior on production machines).
 
 2. Decode the base64 token and split into payload and signature.
 
@@ -172,33 +172,33 @@ The `status` command shows:
 
 ### Security considerations
 
-**Token expiration**: Tokens should be short-lived. Recommend 24 hours for interactive development, 1 hour for CI/CD (if ever needed). The `token` command should warn if expiration exceeds 7 days.
+**Token expiration**: tokens should be short-lived. Recommend 24 hours for interactive development, 1 hour for CI/CD (if ever needed). The `token` command should warn if expiration exceeds 7 days.
 
-**Audit logging**: When bypass is active, every arci invocation should log the `sub` from the token. This creates an audit trail of who bypassed policies and when.
+**Audit logging**: when bypass is active, every ARCI invocation should log the `sub` from the token. This creates an audit trail of who bypassed policies and when.
 
-**No bypass.pub in version control**: The public key should not be committed to the arci-policies repository. It's a machine-local file that developers install manually.
+**No bypass.pub in version control**: the public key should not go into the ARCI-policies repository. It's a machine-local file that developers install manually.
 
-**Separate keys per environment**: Large organizations might want separate keypairs for different teams or environments. The public key filename could be configurable or support multiple keys.
+**Separate keys per environment**: large organizations might want separate keypairs for different teams or environments. The public key filename could be configurable or support multiple keys.
 
-**Revocation**: There's no revocation mechanism beyond expiration. If a private key is compromised, rotate to a new keypair and distribute the new public key to developer machines. Short-lived tokens limit exposure.
+**Revocation**: there's no revocation mechanism beyond expiration. If an attacker compromises a private key, rotate to a new keypair and distribute the new public key to developer machines. Short-lived tokens limit exposure.
 
 ## Future considerations
 
 ### ADMX/mobileconfig integration
 
-For organizations using Windows Group Policy or macOS MDM profiles, a small subset of scalar settings could be read from OS policy stores:
+For organizations using Windows Group Policy or macOS MDM profiles, the system could read a small subset of scalar settings from OS policy stores:
 
-- `ArciEnabled` (bool) - kill switch
-- `FailurePolicy` (string) - allow/deny  
+- `ArciEnabled` (bool): master on/off switch
+- `FailurePolicy` (string): allow/deny
 - `DaemonEnabled` (bool)
 - `LogLevel` (string)
 
-These would slot above managed required in precedence, providing an ultimate override capability for emergency situations (e.g., disabling arci fleet-wide if a bug is causing outages).
+These would slot higher than managed required in precedence, providing an ultimate override capability for emergency situations (such as turning off ARCI fleet-wide if a bug is causing outages).
 
 File-based managed config remains the primary mechanism for complex policy definitions.
 
 ### Managed policy signing
 
-Beyond bypass tokens, organizations might want to sign the managed policy files themselves, ensuring they haven't been tampered with. This is a separate concern from bypass and would require a different key distribution model (public key via MDM, since all machines need to verify).
+Beyond bypass tokens, organizations might want to sign the managed policy files themselves, ensuring nobody has altered them. This is a separate concern from bypass and would require a different key distribution model (public key via MDM, since all machines need to verify).
 
-Not planned for initial implementation.
+Not planned for initial release.

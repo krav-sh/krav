@@ -1,43 +1,41 @@
 @startuml arci-c4-component
 !include <C4/C4_Component>
 
-LAYOUT_WITH_LEGEND()
-
 title Component diagram for arci CLI / Daemon
 
-Container_Ext(claude_code, "Claude Code", "Hook events via stdin/stdout JSON,\nspec queries via CLI invocation")
-ContainerDb_Ext(state_store, "State Store", "SQLite")
+Container_Ext(claude_code, "Claude Code", "Hook events via stdin/stdout JSON,\ngraph queries via CLI invocation")
+ContainerDb_Ext(state_store, "State Store", "Embedded DB")
 ContainerDb_Ext(graph_db, "Knowledge Graph", "graph.jsonlt")
 ContainerDb_Ext(prose_files, "Prose Files", ".arci/ Markdown")
-ContainerDb_Ext(policy_config, "Policies + Settings", "YAML")
+ContainerDb_Ext(policy_config, "Policies + Settings", "")
 ContainerDb_Ext(harness_config, "Agent Harness", "Markdown / YAML")
 System_Ext(git, "Git", "Branch context")
 System_Ext(param_providers, "Parameter providers", "Dynamic policy params")
 
 Container_Boundary(arci_binary, "arci binary") {
 
-    Component(cli_commands, "CLI Commands", "", "Command router. Dispatches hook\nevaluation, spec CRUD, graph queries,\ntemplate instantiation, daemon control.")
+    Component(cli_commands, "CLI Commands", "", "Command router. Dispatches hook\nevaluation, graph CRUD, queries,\ntemplate instantiation, daemon control.")
 
     Component(hook_handler, "Hook Handler", "", "Translates Claude Code hook JSON\n(camelCase) to internal events\n(snake_case). Maps results to\nexit codes and JSON output.")
 
-    Container_Boundary(core, "Functional core (pure, no I/O)") {
+    Container_Boundary(core, "Core (pure, no I/O)") {
         Component(policy_engine, "Policy Engine", "", "Policy compilation and six-stage\nevaluation pipeline: structural match,\nconditions, params, variables,\nrules, effects. Action resolution.")
 
-        Component(graph_engine, "Graph Engine", "", "Seven typed nodes (CON, ENT, NED,\nREQ, VRF, TSK, FND). Graph algorithms,\ntraversal, validation, lifecycle\nstate machines, phase constraints.")
+        Component(graph_engine, "Graph Engine", "", "Eight typed nodes (CON, MOD, NEED,\nREQ, TC, TASK, DEF, BSL). Graph\nalgorithms, traversal, validation,\nlifecycle state machines, phase constraints.")
 
         Component(template_engine, "Template Engine", "", "Task and decomposition template\nresolution. Context interpolation,\ninheritance, parameter handling.\nDAG construction from patterns.")
     }
 
     Container_Boundary(io, "I/O layer") {
-        Component(config_loader, "Config Loader", "", "Policy discovery across user/project/\nlocal layers. YAML parsing, schema\nvalidation, precedence merging.\nMaterializes domain objects for core.")
+        Component(config_loader, "Config Loader", "", "Policy discovery across user/project/\nlocal layers. Parsing, schema\nvalidation, precedence merging.\nMaterializes domain objects for core.")
 
         Component(graph_store, "Graph Store", "", "JSONLT persistence: append, compact,\nload. JSON-LD serialization to/from\ntyped nodes. Prose file handling.\nSingle source of truth.")
 
-        Component(state_mgr, "State Manager", "", "Session-scoped and project-scoped\nstate. SQLite read/write with\nconnection pooling. Used by hook\neffects (setState, counters).")
+        Component(state_mgr, "State Manager", "", "Session-scoped and project-scoped\nstate. Embedded DB read/write with\nconnection pooling. Used by hook\neffects (setState, counters).")
 
         Component(param_resolver, "Parameter Resolver", "", "Resolves policy parameters from\nnamed providers, inline definitions,\nenv vars, and static values.\nCacheable with TTL.")
 
-        Component(git_provider, "Git Context", "", "Reads current branch, dirty state,\nstaged files. Provides context\nfor policy conditions and\nspec operations.")
+        Component(git_provider, "Git Context", "", "Reads current branch, dirty state,\nstaged files. Provides context\nfor policy conditions and\ngraph operations.")
     }
 
     Container_Boundary(api, "API layer (daemon mode)") {
@@ -53,11 +51,11 @@ Container_Boundary(arci_binary, "arci binary") {
 
 ' === External inbound ===
 Rel(claude_code, hook_handler, "Hook JSON on stdin", "stdin/stdout")
-Rel(claude_code, cli_commands, "Spec queries", "CLI invocation")
+Rel(claude_code, cli_commands, "Graph queries", "CLI invocation")
 
 ' === CLI dispatch ===
 Rel(cli_commands, hook_handler, "Routes hook\nsubcommands")
-Rel(cli_commands, graph_engine, "Spec CRUD, queries,\ntransformations", "In-process")
+Rel(cli_commands, graph_engine, "Graph CRUD, queries,\ntransformations", "In-process")
 Rel(cli_commands, template_engine, "Template\ninstantiation", "In-process")
 
 ' === Hook evaluation path ===
@@ -65,7 +63,7 @@ Rel(hook_handler, policy_engine, "Compiled evaluation", "In-process")
 Rel(hook_handler, state_mgr, "Read/persist\nhook state", "In-process")
 
 ' === Core cross-references ===
-Rel(policy_engine, graph_engine, "Spec-aware policies:\nphase context, module\nconstraints, active task", "In-process")
+Rel(policy_engine, graph_engine, "Graph-aware policies:\nphase context, module\nconstraints, active task", "In-process")
 Rel(template_engine, graph_engine, "Module context for\ntemplate interpolation", "In-process")
 
 ' === Core to I/O ===
@@ -76,7 +74,7 @@ Rel(policy_engine, config_loader, "Compiled policies", "In-process")
 Rel(config_loader, policy_config, "Reads policies", "Filesystem")
 Rel(graph_store, graph_db, "Append / compact / load", "Filesystem")
 Rel(graph_store, prose_files, "Read / write", "Filesystem")
-Rel(state_mgr, state_store, "SQL read/write", "SQLite")
+Rel(state_mgr, state_store, "Read/write", "Embedded DB")
 Rel(param_resolver, param_providers, "HTTP, file, env", "HTTPS / File")
 Rel(git_provider, git, "Branch, dirty, staged", "Git CLI")
 
@@ -97,5 +95,7 @@ Rel(config_cache, graph_store, "Reloads graph\non change", "In-process")
 Rel(http_api, config_cache, "Uses cached\ncompiled config", "In-process")
 Rel(http_api, metrics, "Records evaluation\nresults", "In-process")
 Rel(ws_events, http_api, "Broadcasts\nevaluation events", "In-process")
+
+SHOW_LEGEND()
 
 @enduml

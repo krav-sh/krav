@@ -1,36 +1,36 @@
 # Claude Code integration
 
-Claude Code is Anthropic's AI coding assistant that runs in the terminal. Its comprehensive hooks system provides the foundation for arci's policy evaluation engine.
+Claude Code is Anthropic's AI coding assistant that runs in the terminal. Its hooks system provides the foundation for ARCI's policy evaluation engine.
 
 ## Hooks overview
 
-Claude Code provides a full lifecycle hooks system that allows intercepting and controlling tool execution, permission requests, session events, and more. Hooks are configured in JSON settings files and execute shell commands that receive JSON input via stdin and communicate decisions via exit codes and stdout.
+Claude Code provides a full lifecycle hooks system that allows intercepting and controlling tool execution, permission requests, session events, and more. Settings files in JSON configure hooks as shell commands that receive JSON input via stdin and communicate decisions via exit codes and stdout.
 
 ## Hook events
 
 Claude Code supports the following hook events:
 
-PreToolUse fires after Claude creates tool parameters but before the tool executes. Common matchers include Bash for shell commands, Read/Write/Edit for file operations, and Task for subagent invocations. This hook can block tool execution, modify tool input, or auto-approve operations.
+PreToolUse fires after Claude creates tool parameters but before the tool executes. Common matchers include Bash for shell commands, Read/Write/Edit for file operations, and Task for subagent invocations. This hook can block tool execution, change tool input, or auto-approve operations.
 
-PostToolUse fires immediately after a tool completes successfully. It receives the tool response in addition to the input, allowing validation of results and injection of feedback to Claude.
+PostToolUse fires immediately after a tool completes successfully. It receives the tool response along with the input, allowing result checking and injection of feedback to Claude.
 
-PostToolUseFailure fires when a tool execution fails. It includes the error message and an `is_interrupt` flag indicating whether the failure was caused by user interruption. This event enables error monitoring and recovery logic.
+PostToolUseFailure fires when a tool execution fails. It includes the error message and an `is_interrupt` flag indicating whether user interruption caused the failure. Hooks can use this event for error monitoring and recovery logic.
 
-PermissionRequest fires when the user is shown a permission dialog. Hooks can automatically approve or deny permissions on behalf of the user.
+PermissionRequest fires when Claude Code shows the user a permission dialog. Hooks can automatically approve or deny permissions on behalf of the user.
 
-UserPromptSubmit fires when the user submits a prompt before Claude processes it. Hooks can validate prompts, block certain requests, or inject additional context.
+UserPromptSubmit fires when the user submits a prompt before Claude processes it. Hooks can check prompts, block certain requests, or inject extra context.
 
 Notification fires when Claude Code sends notifications, supporting matchers to filter by notification type such as permission_prompt or idle_prompt.
 
-SessionStart fires when a new session begins or an existing session resumes. Useful for loading development context, installing dependencies, or setting environment variables. Supports persisting environment variables via CLAUDE_ENV_FILE. The input includes the `model` field indicating which Claude model is being used.
+SessionStart fires when a new session begins or an existing session resumes. Useful for loading development context, installing dependencies, or setting environment variables. Supports persisting environment variables via CLAUDE_ENV_FILE. The input includes the `model` field indicating which Claude model the session uses.
 
-SessionEnd fires when a session ends, enabling cleanup tasks and logging. The `reason` field indicates why the session ended (e.g., `prompt_input_exit`).
+SessionEnd fires when a session ends, enabling cleanup tasks and logging. The `reason` field indicates why the session ended, such as `prompt_input_exit`.
 
 Stop fires when Claude finishes responding. Hooks can prevent Claude from stopping and instruct it to continue working. Includes a `stop_hook_active` flag.
 
-SubagentStart fires when a subagent is launched. It includes `agent_id` (a short hex identifier) and `agent_type` (e.g., `arci:code-explorer`, `Explore`). This enables tracking and auditing of subagent activity.
+SubagentStart fires when Claude Code launches a subagent. It includes `agent_id` (a short hex identifier) and `agent_type` (such as `arci:code-explorer` or `Explore`). Hooks can track and audit subagent activity through this event.
 
-SubagentStop fires when a subagent completes its task. Similar to Stop but scoped to subagents. Includes `agent_id`, `agent_transcript_path` for the subagent's transcript, and `stop_hook_active` flag.
+SubagentStop fires when a subagent completes its task. It works like Stop but scoped to subagents. Includes `agent_id`, `agent_transcript_path` for the subagent's transcript, and `stop_hook_active` flag.
 
 PreCompact fires before context compaction, with matchers for manual versus auto triggers.
 
@@ -42,15 +42,15 @@ User-level configuration at `~/.claude/settings.json` provides personal defaults
 
 Project-level configuration at `.claude/settings.json` contains team-shared settings that should be version controlled. Project rules override user rules.
 
-Local project configuration at `.claude/settings.local.json` provides personal settings that shouldn't be committed to version control. This allows developers to customize behavior without affecting teammates.
+Local project configuration at `.claude/settings.local.json` provides personal settings that developers should not commit to version control.
 
 Claude Code does not support system-level configuration for enterprise deployments.
 
-For arci integration, configuration will live at `~/.claude/arci/config.yaml` for user-level rules, `.claude/arci/config.yaml` for project rules, and `.claude/arci/config.local.yaml` for personal project settings.
+For ARCI integration, configuration lives at `~/.claude/arci/config.yaml` for user-level rules, `.claude/arci/config.yaml` for project rules, and `.claude/arci/config.local.yaml` for personal project settings.
 
 ## Configuration
 
-Hooks are configured in settings.json files at user level (~/.claude/settings.json), project level (.claude/settings.json), or local project level (.claude/settings.local.json).
+Settings.json files at user level (~/.claude/settings.json), project level (.claude/settings.json), or local project level (.claude/settings.local.json) define hooks.
 
 ```json
 {
@@ -71,7 +71,7 @@ Hooks are configured in settings.json files at user level (~/.claude/settings.js
 }
 ```
 
-Matchers are case-sensitive strings or regex patterns that filter which tools trigger the hook. Use * or empty string to match all tools.
+Matchers are case-sensitive strings or regular expression patterns that filter which tools trigger the hook. Use * or empty string to match all tools.
 
 ## Input schema
 
@@ -87,17 +87,17 @@ Every hook event receives these base fields:
 | `transcript_path` | string | Path to the conversation JSONL transcript file               |
 | `cwd`             | string | Current working directory                                    |
 | `permission_mode` | string | One of `default`, `plan`, `acceptEdits`, `bypassPermissions` |
-| `hook_event_name` | string | The event type (e.g., `PreToolUse`, `PostToolUse`)           |
+| `hook_event_name` | string | The event type (such as `PreToolUse`, `PostToolUse`)         |
 
-The `permission_mode` field is particularly valuable for arci rules. It indicates the current permission context and enables rules that behave differently in plan mode (where Claude is just proposing actions) versus normal execution mode.
+The `permission_mode` field is particularly valuable for ARCI rules. It indicates the current permission context and lets rules behave differently in plan mode (where Claude is just proposing actions) versus normal execution mode.
 
-### PreToolUse input
+### `PreToolUse`
 
 PreToolUse fires before tool execution and includes:
 
 | Field         | Type   | Description                                                     |
 |---------------|--------|-----------------------------------------------------------------|
-| `tool_name`   | string | Tool identifier (e.g., `Bash`, `Write`, `Edit`, `Read`, `Task`) |
+| `tool_name`   | string | Tool identifier (such as `Bash`, `Write`, `Edit`, `Read`, `Task`) |
 | `tool_input`  | object | Tool-specific parameters (schema varies by tool)                |
 | `tool_use_id` | string | Unique identifier for this tool invocation                      |
 
@@ -137,7 +137,7 @@ Example PreToolUse input for a Write operation:
 }
 ```
 
-### PostToolUse input
+### `PostToolUse`
 
 PostToolUse fires after successful tool execution and adds the tool response:
 
@@ -318,20 +318,20 @@ The `tool_input` structure varies by tool. Below are the common tools; Claude Co
 }
 ```
 
-### UserPromptSubmit input
+### `UserPromptSubmit`
 
 | Field    | Type   | Description                      |
 |----------|--------|----------------------------------|
 | `prompt` | string | The user's submitted prompt text |
 
-### Notification input
+### `Notification`
 
 | Field               | Type   | Description                                  |
 |---------------------|--------|----------------------------------------------|
 | `message`           | string | The notification message                     |
 | `notification_type` | string | Type like `permission_prompt`, `idle_prompt` |
 
-### PostToolUseFailure input
+### `PostToolUseFailure`
 
 PostToolUseFailure fires when a tool execution fails and includes:
 
@@ -340,7 +340,7 @@ PostToolUseFailure fires when a tool execution fails and includes:
 | `tool_name`   | string  | Tool identifier                                           |
 | `tool_input`  | object  | The original tool parameters                              |
 | `error`       | string  | The error message describing what went wrong              |
-| `is_interrupt`| boolean | True if the failure was caused by user interruption       |
+| `is_interrupt`| boolean | True if user interruption caused the failure              |
 | `tool_use_id` | string  | Unique identifier for this tool invocation                |
 
 Example PostToolUseFailure input:
@@ -362,14 +362,14 @@ Example PostToolUseFailure input:
 }
 ```
 
-### SubagentStart input
+### `SubagentStart`
 
-SubagentStart fires when a subagent is launched and includes:
+SubagentStart fires when Claude Code launches a subagent and includes:
 
 | Field        | Type   | Description                                              |
 |--------------|--------|----------------------------------------------------------|
 | `agent_id`   | string | Short hex identifier for this subagent instance          |
-| `agent_type` | string | The type of subagent (e.g., `Explore`, `arci:code-explorer`) |
+| `agent_type` | string | The subagent kind (such as `Explore`, `arci:code-explorer`) |
 
 Example SubagentStart input:
 
@@ -384,7 +384,7 @@ Example SubagentStart input:
 }
 ```
 
-### Stop input
+### `Stop`
 
 Stop fires when Claude finishes responding and includes:
 
@@ -392,7 +392,7 @@ Stop fires when Claude finishes responding and includes:
 |-------------------|---------|---------------------------------------------------|
 | `stop_hook_active`| boolean | Whether a stop hook is currently active            |
 
-### SubagentStop input
+### `SubagentStop`
 
 SubagentStop fires when a subagent completes and includes:
 
@@ -417,12 +417,12 @@ Example SubagentStop input:
 }
 ```
 
-### SessionStart input
+### `SessionStart`
 
 | Field    | Type   | Description                                              |
 |----------|--------|----------------------------------------------------------|
 | `source` | string | One of `startup`, `resume`, `clear`                      |
-| `model`  | string | The Claude model being used (e.g., `claude-opus-4-5-20251101`) |
+| `model`  | string | The Claude model for the session (such as `claude-opus-4-5-20251101`) |
 
 Example SessionStart input:
 
@@ -437,11 +437,11 @@ Example SessionStart input:
 }
 ```
 
-### SessionEnd input
+### `SessionEnd`
 
 | Field    | Type   | Description                                              |
 |----------|--------|----------------------------------------------------------|
-| `reason` | string | Why the session ended (e.g., `prompt_input_exit`)        |
+| `reason` | string | Why the session ended (such as `prompt_input_exit`)      |
 
 Example SessionEnd input:
 
@@ -455,53 +455,53 @@ Example SessionEnd input:
 }
 ```
 
-### PreCompact input
+### `PreCompact`
 
 | Field     | Type   | Description             |
 |-----------|--------|-------------------------|
 | `trigger` | string | One of `manual`, `auto` |
 
-### PermissionRequest input
+### `PermissionRequest`
 
 | Field             | Type   | Description                  |
 |-------------------|--------|------------------------------|
 | `tool_name`       | string | Tool requesting permission   |
 | `tool_input`      | object | Tool parameters              |
-| `permission_type` | string | Type of permission requested |
+| `permission_type` | string | The requested permission kind |
 
 ## Environment variables
 
-Claude Code injects several environment variables that hook scripts can access:
+Claude Code injects environment variables that hook scripts can access:
 
-`CLAUDECODE` is set to "1" when running inside Claude Code. This provides a simple check for scripts that need to know if they're being invoked by Claude Code versus another context.
+`CLAUDECODE` equals "1" when running inside Claude Code. Scripts can use it to distinguish Claude Code invocations from other contexts.
 
-`CLAUDE_PROJECT_DIR` contains the absolute path to the project root directory where Claude Code was started. This is the most commonly used variable, enabling portable scripts that reference project files regardless of the hook's current working directory. Available for all hook events.
+`CLAUDE_PROJECT_DIR` contains the absolute path to the project root directory where Claude Code started. This is the most commonly used variable, enabling portable scripts that reference project files regardless of the hook's current working directory. Available for all hook events.
 
 `CLAUDE_SESSION_ID` contains the current session UUID. While this is also available in the JSON stdin input, having it as an environment variable enables simpler scripts that don't need to parse JSON. Available for all hook events.
 
-`CLAUDE_TRANSCRIPT_DIR` contains the directory path where transcript files are stored. This is the parent directory containing all session transcripts for the current project.
+`CLAUDE_TRANSCRIPT_DIR` contains the directory path where Claude Code stores transcript files. This is the parent directory containing all session transcripts for the current project.
 
-`CLAUDE_TRANSCRIPT_PATH` contains the full path to the current session's transcript file (a JSONL file). This provides the same information as `transcript_path` in the JSON input but as an environment variable.
+`CLAUDE_TRANSCRIPT_PATH` contains the full path to the current session's transcript file (a JSONL file). It mirrors `transcript_path` from the JSON input as an environment variable.
 
-`CLAUDE_CODE_ENTRYPOINT` indicates how Claude Code was started, with values like `cli` for command-line invocation.
+`CLAUDE_CODE_ENTRYPOINT` indicates how Claude Code started, with values like `cli` for command-line invocation.
 
 `CLAUDE_CODE_SSE_PORT` contains the port number for Server-Sent Events communication between Claude Code components.
 
-`CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR` when set to "1", indicates that bash commands should maintain the project working directory rather than changing to a different directory.
+`CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR` when set to "1," indicates that bash commands should maintain the project working directory rather than changing to a different directory.
 
-`CLAUDE_CODE_REMOTE` indicates whether the hook is running in a remote (web) environment. When set to "true", the hook is executing in Claude Code's web interface. When not set or empty, the hook is running in the local CLI environment. Hooks can use this to adjust behavior based on execution context.
+`CLAUDE_CODE_REMOTE` indicates whether the hook runs in a remote (web) environment. When set to "true," the hook executes in Claude Code's web interface. When not set or empty, the hook runs in the local command-line environment. Hooks can use this to adjust behavior based on execution context.
 
-`CLAUDE_PLUGIN_ROOT` is available only for hooks defined within a plugin's `hooks/hooks.json` file. It contains the absolute path to the plugin directory, enabling plugin hooks to reference bundled scripts and resources portably. Plugin hooks typically use `${CLAUDE_PLUGIN_ROOT}/scripts/myscript.sh` patterns in the command field.
+`CLAUDE_PLUGIN_ROOT` is available only for hooks defined within a plugin's `hooks/hooks.json` file. It contains the absolute path to the plugin directory, so plugin hooks can reference bundled scripts and resources portably. Plugin hooks typically use `${CLAUDE_PLUGIN_ROOT}/scripts/myscript.sh` patterns in the command field.
 
-`CLAUDE_ENV_FILE` is available during SessionStart hooks. The hook can write environment variable definitions to this file path, and Claude Code will load them into the session environment. This enables dynamic environment setup based on project context.
+`CLAUDE_ENV_FILE` is available during SessionStart hooks. The hook can write environment variable definitions to this path, and Claude Code loads them into the session environment.
 
-For arci integration, these variables are exposed through the expression language. Rules can access them via `{{ env("CLAUDE_PROJECT_DIR") }}` or through normalized functions like `{{ project_dir }}`.
+For ARCI integration, the expression language exposes these variables. Rules can access them via `{{ env("CLAUDE_PROJECT_DIR") }}` or through normalized functions like `{{ project_dir }}`.
 
 ## Session identifiers
 
 Claude Code provides `session_id` as a common field in all hook events via the JSON stdin payload. The session ID is a UUID that persists across the entire conversation, enabling reliable session-scoped state tracking.
 
-Every hook event includes `session_id` in the JSON input: SessionStart, SessionEnd, PreToolUse, PostToolUse, UserPromptSubmit, Stop, Notification, PermissionRequest, PreCompact, and SubagentStop. This consistent availability makes Claude Code fully compatible with arci's state store functionality.
+Every hook event includes `session_id` in the JSON input, covering SessionStart, SessionEnd, PreToolUse, PostToolUse, UserPromptSubmit, Stop, Notification, PermissionRequest, PreCompact, and SubagentStop. This consistent availability makes Claude Code fully compatible with ARCI's state store feature.
 
 Example JSON input showing session_id:
 
@@ -517,9 +517,9 @@ Example JSON input showing session_id:
 }
 ```
 
-The session ID enables patterns like "warn on first occurrence, block on third" where arci tracks state across multiple hook invocations within the same conversation. Rules can use `session_get`, `session_set`, and session-scoped counters with full confidence that the session ID will be available.
+The session ID enables patterns like "warn on first occurrence, block on third" where ARCI tracks state across many hook invocations within the same conversation. Rules can use `session_get`, `session_set`, and session-scoped counters with full confidence that the session ID is always available.
 
-The `transcript_path` field provides an additional correlation mechanism, as the path includes the session UUID and can be used for audit logging or conversation history access.
+The `transcript_path` field provides another correlation mechanism. The path includes the session UUID and supports audit logging or conversation history access.
 
 ## Output schema
 
@@ -534,7 +534,7 @@ Hooks communicate decisions through a combination of exit codes and JSON output 
 | `128`     | Catastrophic failure | Reserved for fatal errors                                     |
 | Other     | Non-blocking warning | Action proceeds; stderr shown to user in verbose mode         |
 
-JSON output is only processed when exit code is 0. For exit code 2, stderr content is used directly as the block reason.
+JSON output is only processed when exit code is 0. For exit code 2, Claude Code uses stderr content directly as the block reason.
 
 ### Common JSON output fields
 
@@ -549,7 +549,7 @@ When exiting with code 0, hooks can return JSON with these common fields:
 
 The `continue: false` behavior differs from permission denial. Denying permission blocks only the specific tool call and provides feedback to Claude. Setting `continue: false` stops Claude entirely.
 
-### PreToolUse output
+### `PreToolUse`
 
 PreToolUse hooks can control tool execution through `hookSpecificOutput`:
 
@@ -574,7 +574,7 @@ PreToolUse hooks can control tool execution through `hookSpecificOutput`:
 
 The `updatedInput` feature (added in v2.0.10) enables transparent sandboxing, automatic security enforcement, and convention adherence. Claude sees the modified input as if it were the original.
 
-### PermissionRequest output
+### `PermissionRequest`
 
 PermissionRequest hooks control automatic permission decisions:
 
@@ -593,7 +593,7 @@ PermissionRequest hooks control automatic permission decisions:
 |            | `deny`    | Auto-deny the permission request    |
 | `reason`   | string    | Explanation shown to user           |
 
-### PostToolUse output
+### `PostToolUse`
 
 PostToolUse hooks can inject context or block further processing:
 
@@ -610,10 +610,10 @@ PostToolUse hooks can inject context or block further processing:
 | Field               | Description                                        |
 |---------------------|----------------------------------------------------|
 | `decision`          | Set to `block` to stop Claude and provide feedback |
-| `reason`            | Must be provided when decision is `block`          |
+| `reason`            | Required when decision is `block`                  |
 | `additionalContext` | Text appended to Claude's context window           |
 
-### UserPromptSubmit output
+### `UserPromptSubmit`
 
 ```json
 {
@@ -625,7 +625,7 @@ PostToolUse hooks can inject context or block further processing:
 }
 ```
 
-### Stop and SubagentStop output
+### `Stop` and `SubagentStop`
 
 ```json
 {
@@ -638,7 +638,7 @@ PostToolUse hooks can inject context or block further processing:
 
 Setting `decision: "block"` prevents Claude from stopping and the reason tells Claude how to proceed.
 
-### SessionStart output
+### `SessionStart`
 
 ```json
 {
@@ -652,41 +652,41 @@ SessionStart is unique in that hooks can also write to `CLAUDE_ENV_FILE` to set 
 
 ## Modification capabilities
 
-### Tool input modification (PreToolUse)
+### Tool input modification (`PreToolUse`)
 
-Claude Code fully supports tool input modification. The PreToolUse output schema includes an `updatedInput` field that enables transparent tool input modification. When a hook returns `updatedInput`, Claude uses the modified parameters instead of the original, completely unaware of the modification. This enables patterns like automatic sandboxing, security enforcement, and convention adherence.
+Claude Code fully supports tool input modification. The PreToolUse output schema includes an `updatedInput` field for transparent tool input modification. When a hook returns `updatedInput`, Claude uses the modified parameters instead of the original, unaware of the modification. Supported patterns include automatic sandboxing, security enforcement, and convention adherence.
 
-The capability was added in Claude Code v2.0.10.
+Claude Code v2.0.10 added this capability.
 
-### Prompt modification (UserPromptSubmit)
+### Prompt modification (`UserPromptSubmit`)
 
-Claude Code does not support direct prompt modification. The UserPromptSubmit hook can inject additional context via the `additionalContext` field, which is prepended to the conversation before Claude processes it. However, the hook cannot modify or replace the user's original prompt text. The hook can also block prompts entirely with `continue: false`.
+Claude Code does not support direct prompt modification. The UserPromptSubmit hook can inject extra context via the `additionalContext` field, which Claude Code adds before the conversation before Claude processes it. The hook cannot change or replace the user's original prompt text. The hook can also block prompts entirely with `continue: false`.
 
-## arci integration
+## ARCI integration
 
-arci integrates directly with Claude Code's hooks system. The JSON-over-stdin contract, exit code semantics, and matcher syntax provide a robust foundation for policy evaluation.
+ARCI integrates directly with Claude Code's hooks system. The JSON-over-stdin contract, exit code semantics, and matcher syntax provide a stable foundation for policy evaluation.
 
-arci contributes configuration sources at ~/.claude/arci/config.yaml for user-level rules, .claude/arci/config.yaml for project rules, and .claude/arci/config.local.yaml for personal project settings.
+ARCI contributes configuration sources at `~/.claude/arci/config.yaml` for user-level rules, `.claude/arci/config.yaml` for project rules, and `.claude/arci/config.local.yaml` for personal project settings.
 
-arci parses Claude Code's camelCase hook input (hookEventType, toolName, etc.) and normalizes to snake_case internal representations. It formats output according to Claude Code's expected schemas and maps evaluation results to appropriate exit codes (0 for success, 2 for block, 128 for catastrophic failure).
+ARCI parses Claude Code's camelCase hook input (hookEventType, toolName, etc.) and normalizes to snake_case internal representations. It formats output according to Claude Code's expected schemas and maps evaluation results to appropriate exit codes (0 for success, 2 for block, 128 for catastrophic failure).
 
 ## Considerations
 
 Claude Code's hooks are well-documented and stable, having been battle-tested in production. The system supports both simple exit-code-based decisions and complex JSON output for fine-grained control.
 
-The prompt-based hooks feature (type: "prompt") uses an LLM for context-aware decisions, which is orthogonal to arci's rules-based approach but could be complementary.
+The prompt-based hooks feature (type: "prompt") uses an LLM for context-aware decisions, which is orthogonal to ARCI's rules-based approach but could be complementary.
 
-Plugin hooks in Claude Code can be merged with user and project hooks, which aligns well with arci's layered configuration model.
+Claude Code merges plugin hooks with user and project hooks, which aligns well with ARCI's layered configuration model.
 
-The CLAUDE_PROJECT_DIR environment variable enables portable scripts that work regardless of working directory, which arci can leverage.
+The CLAUDE_PROJECT_DIR environment variable enables portable scripts that work regardless of working directory, which ARCI can use.
 
-## Hook installation for arci
+## Hook installation for ARCI
 
-arci integration with Claude Code requires adding hook entries to settings.json files. The recommended approach is to ship a Claude Code plugin that users install via `/plugin install`.
+ARCI integration with Claude Code requires adding hook entries to settings.json files. The recommended approach is to ship a Claude Code plugin that users install via `/plugin install`.
 
 ### Manual installation
 
-To manually configure arci, add entries to `~/.claude/settings.json` (user-level) or `.claude/settings.json` (project-level):
+To manually configure ARCI, add entries to `~/.claude/settings.json` (user-level) or `.claude/settings.json` (project-level):
 
 ```json
 {
@@ -721,9 +721,9 @@ To manually configure arci, add entries to `~/.claude/settings.json` (user-level
 
 ### Plugin installation
 
-Once published, users would install arci via the plugin system:
+Once published, users would install ARCI via the plugin system:
 
-```
+```text
 /plugin marketplace add tbhb/arci
 /plugin install arci
 ```
@@ -749,11 +749,11 @@ The plugin would include a `hooks/hooks.json` file with pre-configured hook entr
 
 ### Enterprise deployment
 
-Enterprise administrators can use `allowManagedHooksOnly` to restrict hooks to managed sources, ensuring only approved plugins and hooks run. arci's fail-open semantics align well with this model since configuration errors or daemon unavailability won't block developer workflows.
+Enterprise administrators can use `allowManagedHooksOnly` to restrict hooks to managed sources, ensuring only approved plugins and hooks run. ARCI's fail-open semantics align well with this model since configuration errors or daemon unavailability won't block developer workflows.
 
 ## Plugin mechanism
 
-Claude Code's plugin system (public beta since October 2025) provides comprehensive extensibility:
+Claude Code's plugin system (public beta since October 2025) provides full extensibility:
 
 Plugin structure follows a standardized directory layout with `.claude-plugin/plugin.json` manifest, optional `commands/`, `agents/`, `skills/`, `hooks/`, and `.mcp.json` files.
 
@@ -763,7 +763,7 @@ Hook bundling places hook configuration in `hooks/hooks.json` within the plugin.
 
 Marketplaces like the official `anthropics/claude-code` collection and community marketplaces provide discoverability and one-command installation.
 
-This plugin system makes arci distribution straightforward. Users install once and the hooks are automatically configured, with updates handled through the plugin update mechanism.
+This plugin system makes ARCI distribution straightforward. Users install once and the hooks are automatically configured, with updates handled through the plugin update mechanism.
 
 ## References
 

@@ -8,48 +8,48 @@ The config command group provides configuration inspection, validation, and modi
 
 ## Description
 
-These commands operate on arci's layered configuration system. Configuration is merged from multiple sources in precedence order — these commands let you inspect the effective result, validate structure, and modify individual layers.
+These commands operate on ARCI's layered configuration system. ARCI merges configuration from multiple sources in precedence order; these commands let you inspect the effective result, validate structure, and modify individual layers.
 
 ## Subcommands
 
-### validate
+### Validate
 
 Checks all configuration files for structural errors. Reports YAML syntax errors, unknown fields, and schema violations. This validates the configuration file structure; use `arci hook policy validate` to validate policy and rule expressions.
 
 **Exit codes:**
 
-- `0` — Configuration is valid.
-- `1` — One or more errors found.
+- `0`: configuration is valid.
+- `1`: one or more errors found.
 
-### list
+### List
 
 Shows all discovered configuration sources in precedence order. For each source, it displays the path (or indicates built-in/environment), whether the file exists, and how many policies it contributes.
 
-### show
+### Show
 
-Dumps the merged configuration as YAML. This shows the effective configuration after all sources are merged.
+Dumps the effective configuration as YAML after all sources merge.
 
-### where
+### Where
 
-Prints the paths where arci looks for configuration.
+Prints the paths where ARCI looks for configuration.
 
 **Flags:**
 
-- `--project` — Show project-level paths for a specific directory.
+- `--project`: show project-level paths for a specific directory.
 
-### get
+### Get
 
 Retrieves a configuration value by key.
 
     arci config get <key>
 
-Keys use dot notation (e.g., `daemon.port`, `logging.level`).
+Keys use dot notation (like `daemon.port`, `logging.level`).
 
 **Flags:**
 
-- `--scope <scope>` — Read from a specific configuration layer. Without this flag, shows the effective merged value.
+- `--scope <scope>`: read from a specific configuration layer. Without this flag, shows the effective merged value.
 
-### set
+### Set
 
 Sets a configuration value.
 
@@ -59,9 +59,9 @@ Modifies the YAML file on disk and triggers a configuration reload if the daemon
 
 **Flags:**
 
-- `--scope <scope>` — Which configuration file to modify (defaults to local/project).
+- `--scope <scope>`: which configuration file to modify (defaults to local/project).
 
-### unset
+### Unset
 
 Removes a configuration value from a file.
 
@@ -69,7 +69,7 @@ Removes a configuration value from a file.
 
 **Flags:**
 
-- `--scope <scope>` — Which configuration file to modify (defaults to local).
+- `--scope <scope>`: which configuration file to modify (defaults to local).
 
 ## See also
 

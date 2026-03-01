@@ -2,27 +2,27 @@
 
 ## Overview
 
-Baselines (BSL-*) capture the state of the knowledge graph at a meaningful point in time. A baseline records which nodes existed, their states, and the relationships between them, anchored to a specific git commit. Baselines enable milestone recording, change auditing, regression detection, and phase gate enforcement.
+Baselines (BSL-*) capture the state of the knowledge graph at a decision point. A baseline records which nodes existed, their states, and the relationships between them, anchoring everything to a specific git commit. Baselines enable milestone recording, change auditing, regression detection, and phase gate enforcement.
 
-Traditional RE tools treat baselines as snapshots of a requirements database. arci takes a lighter approach: since graph.jsonlt is version-controlled and append-only, the git history already contains every historical state. A baseline is a named reference into that history with metadata about why it was created, what it covers, and who approved it.
+Traditional RE tools treat baselines as snapshots of a requirements database. ARCI takes a lighter approach: since graph.jsonlt is version-controlled and append-only, the git history already contains every historical state. A baseline is a named reference into that history with metadata about why someone created it, what it covers, and who approved it.
 
 ## Purpose
 
-Baselines serve several roles:
+Baselines serve multiple roles:
 
-**Milestone recording**: "This is what was agreed at the architecture review." A baseline freezes the graph state at a decision point, creating an unambiguous record of what existed when a commitment was made.
+**Milestone recording**: "This is what the team agreed at the architecture review." A baseline freezes the graph state at a decision point, creating an unambiguous record of what existed when the team made a commitment.
 
-**Change auditing**: Semantic diff between baselines shows what changed in terms the project cares about (nodes added, modified, removed; relationships changed; phases advanced) rather than raw JSONLT line diffs.
+**Change auditing**: semantic diff between baselines shows what changed in terms the project cares about (nodes that the team added, modified, or removed; relationships that changed; phases that advanced) rather than raw JSONLT line diffs.
 
-**Phase gates**: Phase advancement can require a baseline of the current phase before proceeding. This ensures the pre-advancement state is recorded and reviewable. The architecture baseline captures what was agreed before design begins; the design baseline captures what was agreed before implementation.
+**Phase gates**: phase advancement can require a baseline of the current phase before proceeding, ensuring the system records the pre-advancement state for later review. The architecture baseline captures what the team agreed before design begins; the design baseline captures what the team agreed before coding.
 
-**Regression detection**: Comparing the current graph against a baseline reveals unintended changes. A requirement that existed in the architecture baseline but is missing now warrants investigation.
+**Regression detection**: comparing the current graph against a baseline reveals unintended changes. A requirement that existed in the architecture baseline but is missing now warrants investigation.
 
-**Suspect link review**: Baselines interact with suspect propagation. When reviewing suspect links, the baseline provides a reference point: "this link was valid at baseline X, what changed since then?"
+**Suspect link review**: baselines interact with suspect propagation. When reviewing suspect links, the baseline provides a reference point: "this link was valid at baseline X, what changed since then?"
 
 ## Storage model
 
-Baseline metadata is stored in `graph.jsonlt` as JSON-LD compact form, like all other node types. The baseline record does not contain a full graph snapshot — it stores a git commit SHA that can be used to reconstruct the graph state at baseline time.
+Baseline metadata lives in `graph.jsonlt` as JSON-LD compact form, like all other node types. The baseline record does not contain a full graph snapshot; it stores a git commit SHA that ARCI uses to reconstruct the graph state at baseline time.
 
 ```json
 {"@context": "context.jsonld", "@id": "BSL-R3L3AS31", "@type": "Baseline", "title": "Architecture baseline", "module": {"@id": "MOD-OAPSROOT"}, "scope": "subtree", "commitSha": "a1b2c3d4e5f6789...", "phase": "architecture", "status": "approved", "approvedBy": "tony", "approvedAt": "2026-02-28T16:00:00Z", "description": "Architecture phase complete for root module. All architecture tasks done, no blocking findings.", "statistics": {"modules": 5, "concepts": 12, "needs": 8, "requirements": 15, "verifications": 6, "tasks": 23, "findings": {"open": 0, "closed": 7}}}
@@ -33,23 +33,23 @@ Fields:
 - `@id`: Unique identifier (BSL-XXXXXXXX format)
 - `@type`: Always "Baseline"
 - `title`: Human-readable title
-- `module`: The module this baseline is rooted at
+- `module`: The root module for this baseline
 - `scope`: What the baseline covers (see Scope below)
 - `commitSha`: Git commit SHA anchoring the graph state
 - `phase`: The lifecycle phase this baseline captures (optional, for phase-gate baselines)
 - `status`: Lifecycle state (see Lifecycle below)
 - `approvedBy`: Who approved this baseline (optional)
-- `approvedAt`: When it was approved (optional)
-- `description`: Why this baseline was created
+- `approvedAt`: When the approver approved it (optional)
+- `description`: Why someone created this baseline
 - `statistics`: Denormalized counts at baseline time (see Statistics below)
 - `created`, `updated`: ISO 8601 timestamps
 - `tags`: Array of strings (optional)
 
 ### Why git commit SHA, not a full snapshot?
 
-The graph.jsonlt file is version-controlled. Any historical state can be reconstructed by checking out graph.jsonlt at the baseline's commit SHA. This avoids duplicating the entire graph inside the baseline record (which would be expensive and redundant), while remaining fully reproducible.
+The graph.jsonlt file is version-controlled. Checking out graph.jsonlt at the baseline's commit SHA reconstructs any historical state. This avoids duplicating the entire graph inside the baseline record (which would be expensive and redundant), while remaining fully reproducible.
 
-The tradeoff: if git history is rewritten (force push, rebase) and the baseline's commit SHA becomes unreachable, the baseline is unresolvable. This is a feature — it surfaces history tampering. Projects that need tamper-evident baselines should protect the branch containing .arci/ from force pushes.
+The tradeoff: if someone rewrites git history (force push, rebase) and the baseline's commit SHA becomes unreachable, the baseline cannot resolve. This is a feature, as it surfaces history tampering. Projects that need tamper-evident baselines should protect the branch containing `.arci/` from force pushes.
 
 ### Statistics
 
@@ -77,15 +77,15 @@ The `statistics` field captures a denormalized snapshot of graph counts at basel
 }
 ```
 
-The `verificationCoverage` field records the ratio of requirements that have at least one passing verification. The `suspectLinks` count records how many links were marked suspect at baseline time — a healthy baseline should have zero.
+The `verificationCoverage` field records the ratio of requirements that have at least one passing verification. The `suspectLinks` count records how many links carried the suspect flag at baseline time; a healthy baseline should have zero.
 
 ## Scope
 
 Baselines scope to an module subtree. The `scope` field indicates what's included:
 
-**subtree** (default): The baseline covers the specified module and all its descendants, including all nodes owned by any module in the subtree (needs, requirements, verifications, tasks, findings) and all relationships between them. This is the common case — baseline an module to capture its complete state.
+**subtree** (default): the baseline covers the specified module and all its descendants, including all nodes owned by any module in the subtree (needs, requirements, verifications, tasks, findings) and all relationships between them. This is the common case: baseline a module to capture its complete state.
 
-**module-only**: The baseline covers only the specified module's directly-owned nodes, not descendants. Useful for component-level baselines where child modules are baselined independently.
+**module-only**: the baseline covers only the specified module's directly owned nodes, not descendants. Useful for component-level baselines where child modules receive independent baselines.
 
 The module field determines the root of the scope. Baselining the root module with `subtree` scope captures the entire project.
 
@@ -104,26 +104,26 @@ arci baseline create --module MOD-L3X3R001 --title "Lexer implementation baselin
 
 Baselines have a simple lifecycle:
 
-```
+```text
 draft → approved → superseded
 ```
 
 | State      | Description                                               |
 |------------|-----------------------------------------------------------|
-| draft      | Baseline created but not yet reviewed or approved         |
-| approved   | Baseline reviewed and accepted as an official record      |
+| draft      | Baseline exists but nobody has reviewed or approved it yet |
+| approved   | Reviewer accepted the baseline as an official record      |
 | superseded | A newer baseline for the same module and phase exists     |
 
 State transitions:
 
-- `draft → approved`: Baseline reviewed and approved, approvedBy and approvedAt set.
-- `approved → superseded`: A newer baseline is approved for the same module and phase. The older baseline remains in the graph for historical reference but is no longer the active baseline for that scope.
+- `draft → approved`: Reviewer approves the baseline, setting approvedBy and approvedAt.
+- `approved → superseded`: A newer baseline gains approval for the same module and phase. The older baseline remains in the graph for historical reference but no longer serves as the active baseline for that scope.
 
-Draft baselines are useful when a phase gate requires a baseline but approval is deferred (e.g., the developer creates the baseline, a reviewer approves it later). For solo projects or less formal workflows, baselines can be created directly in `approved` status.
+Draft baselines are useful when a phase gate requires a baseline but the team defers approval (the developer creates the baseline, a reviewer approves it later). For solo projects or less formal workflows, baselines can enter `approved` status directly at creation.
 
 ## Phase gate integration
 
-Baselines integrate with module phase advancement. A hook policy can require a baseline of the current phase before advancing:
+Baselines integrate with module phase advancement. A hook policy can require the team to baseline the current phase before advancing:
 
 ```yaml
 policies:
@@ -150,9 +150,9 @@ policies:
 When phase advancement triggers a baseline:
 
 1. The CLI commits any pending changes to graph.jsonlt
-2. A BSL-* record is created with the current commit SHA
-3. Statistics are computed from the current graph state
-4. If auto-approve is enabled, the baseline enters `approved` status immediately
+2. The CLI creates a BSL-* record with the current commit SHA
+3. The CLI computes statistics from the current graph state
+4. If the configuration enables auto-approve, the baseline enters `approved` status immediately
 5. Phase advancement proceeds
 
 The resulting baseline records exactly what existed when the module left that phase. Later, `arci baseline diff` can show what changed between phases.
@@ -163,7 +163,7 @@ The primary analytical operation on baselines is semantic diff: given two baseli
 
 ### Reconstruction
 
-To diff two baselines, arci materializes the graph at each commit:
+To diff two baselines, ARCI materializes the graph at each commit:
 
 1. Read graph.jsonlt at baseline A's commit SHA (via `git show <sha>:.arci/graph.jsonlt`)
 2. Read graph.jsonlt at baseline B's commit SHA (or current working tree)
@@ -173,21 +173,21 @@ To diff two baselines, arci materializes the graph at each commit:
 
 ### Diff output
 
-The diff produces a structured result covering several dimensions.
+The diff produces a structured result covering five dimensions.
 
-Node changes identify nodes that were added, modified, or removed between baselines. A modification is any change to a node's fields (status, statement, phase, etc.). The diff reports which fields changed and their old/new values.
+Node changes identify nodes that the team added, modified, or removed between baselines. A modification is any change to a node's fields (status, statement, phase, etc.). The diff reports which fields changed and their old/new values.
 
-Relationship changes identify links that were added, removed, or modified (e.g., suspect flag set, budget changed). This is where suspect propagation becomes visible — a link that was healthy at baseline A but suspect at baseline B shows up here.
+Relationship changes identify links that the team added, removed, or modified (suspect flag set, budget changed). This is where suspect propagation becomes visible: a link that was healthy at baseline A but suspect at baseline B shows up here.
 
 Phase changes show module phase transitions between baselines, which modules advanced, regressed, or remained unchanged.
 
-Coverage changes show how verification coverage shifted: new requirements without verifications, newly-verified requirements, verifications that changed status.
+Coverage changes show how verification coverage shifted: new requirements without verifications, newly verified requirements, verifications that changed status.
 
 Statistics delta compares the aggregate counts between baselines.
 
 ### CLI output
 
-```
+```text
 $ arci baseline diff BSL-4RCH0001 BSL-D3S1GN01
 
 Comparing "Architecture baseline" → "Design baseline" for MOD-OAPSROOT
@@ -230,7 +230,7 @@ Coverage: 60% → 73% (+13%)
 
 ### Incoming relationships (queried via graph)
 
-Baselines don't typically have incoming relationships from other node types. They are reference points, not targets of traceability.
+Baselines don't typically have incoming relationships from other node types. Baselines serve as reference points, not targets of traceability.
 
 ### Baseline-to-baseline ordering
 
@@ -238,7 +238,7 @@ Baselines for the same module and phase form a temporal sequence via their `crea
 
 ## Implementation architecture
 
-Baseline functionality follows the three-layer architecture.
+Baseline capability follows the three-layer architecture.
 
 ### Typed node
 
@@ -287,7 +287,7 @@ class BaselineStatistics:
     verification_coverage: float = 0.0
 ```
 
-### Core layer (arci.core.baseline)
+### Core layer (`arci.core.baseline`)
 
 Pure functions for baseline operations:
 
@@ -305,7 +305,7 @@ def current_for_phase(graph: Graph, module_id: str, phase: ModulePhase) -> Basel
 def has_approved_baseline(graph: Graph, module_id: str, phase: ModulePhase) -> bool: ...
 ```
 
-### Core layer (arci.core.baseline_diff)
+### Core layer (`arci.core.baseline_diff`)
 
 Pure functions for semantic diff. These operate on two Graph instances and produce a structured diff result:
 
@@ -371,7 +371,7 @@ def has_uncommitted_changes(repo_root: Path, path: str) -> bool:
     ...
 ```
 
-### Service layer (arci.service.baseline)
+### Service layer (`arci.service.baseline`)
 
 Orchestrates baseline creation, approval, and diff:
 
@@ -446,15 +446,15 @@ arci baseline verify BSL-R3L3AS31            # Check commit is reachable, statis
 
 ### Phase advancement
 
-Phase advancement can optionally require an approved baseline. This is configured via hook policy (see Phase gate integration above) rather than hardcoded into the advancement logic.
+Phase advancement can optionally require an approved baseline. Hook policy configures this requirement (see the preceding Phase gate integration section) rather than hardcoding it into the advancement logic.
 
 ### Suspect links
 
-When reviewing suspect links, baselines provide temporal context. The review finding can reference the baseline where the link was last known-good: "This link was valid at BSL-4RCH0001. NED-B7G3M9K2 was modified in commit f6e5d4c."
+When reviewing suspect links, baselines provide temporal context. The review finding can reference the baseline where the link was last known-good: "This link was valid at BSL-4RCH0001. Someone modified NED-B7G3M9K2 in commit f6e5d4c."
 
 ### Findings
 
-Baseline creation can itself produce findings. If there are open blocking findings or suspect links at baseline time, the create command can warn or (via hook policy) refuse to create the baseline until they're resolved.
+Baseline creation can itself produce findings. If open blocking findings or suspect links exist at baseline time, the create command can warn or (via hook policy) refuse to create the baseline until someone resolves them.
 
 ### Templates
 
@@ -491,11 +491,11 @@ A baseline-creation task template could standardize the baselining process: revi
 
 ## Summary
 
-Baselines are named references into git history that capture the knowledge graph state at meaningful points:
+Each baseline serves as a named reference into git history, capturing the knowledge graph state at a decision point:
 
-- Anchored to git commit SHAs rather than full graph snapshots
-- Scoped to module subtrees for targeted baselining
-- Integrated with phase gates via hook policies
+- Anchor to git commit SHAs rather than full graph snapshots
+- Scope to module subtrees for targeted baselining
+- Integrate with phase gates via hook policies
 - Semantic diff produces structured changelogs at the graph level (not JSONLT line diffs)
 - Statistics snapshot enables quick inspection and integrity verification
 - Temporal sequencing via lifecycle (draft → approved → superseded)

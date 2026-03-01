@@ -1,6 +1,6 @@
 # Extension
 
-The extension command group manages arci extensions.
+The extension command group manages ARCI extensions.
 
 ## Synopsis
 
@@ -8,15 +8,15 @@ The extension command group manages arci extensions.
 
 ## Description
 
-Extensions add policies, functions, and action handlers to arci. They can be installed from Go module paths, git URLs, or local paths. Extension dependencies are tracked in a manifest and resolved to a lockfile for reproducible installations.
+Extensions add policies, functions, and action handlers to ARCI. Users can install them from Go module paths, git URLs, or local paths. ARCI tracks extension dependencies in a manifest and resolves them to a lockfile for reproducible installations.
 
 ## Subcommands
 
-### list
+### List
 
 Shows installed extensions. For each extension, it displays the name, version, source (Go module, git, or path), and what the extension provides (policies, functions, action handlers).
 
-### add
+### Add
 
 Installs an extension.
 
@@ -26,10 +26,10 @@ The spec can be a Go module path for published packages, a git URL, or a local p
 
 **Flags:**
 
-- `--project` — Add to the project manifest instead of user manifest.
-- `--path` — Treat spec as a local path.
+- `--project`: add to the project manifest instead of user manifest.
+- `--path`: treat spec as a local path.
 
-### remove
+### Remove
 
 Uninstalls an extension.
 
@@ -37,15 +37,15 @@ Uninstalls an extension.
 
 Removes the extension from the manifest and updates the lockfile.
 
-### lock
+### Lock
 
 Resolves the manifest to a lockfile without installing. Useful for generating a lockfile in CI before a separate install step.
 
-### sync
+### Sync
 
 Installs exactly what's in the lockfile without re-resolving. Ensures reproducible installations across machines.
 
-### upgrade
+### Upgrade
 
 Upgrades extensions within their manifest constraints.
 
@@ -53,7 +53,7 @@ Upgrades extensions within their manifest constraints.
 
 Without a name argument, upgrades all extensions. With a name, upgrades only that extension.
 
-### init
+### Init
 
 Scaffolds a new extension package.
 
@@ -61,7 +61,7 @@ Scaffolds a new extension package.
 
 **Flags:**
 
-- `--policies-only` — Generate a minimal policies-only extension structure instead of a full extension with stub function and action handler implementations.
+- `--policies-only`: generate a minimal policies-only extension structure instead of a full extension with stub function and action handler code.
 
 ## See also
 

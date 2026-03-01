@@ -1,6 +1,6 @@
 # State store
 
-arci includes a persistent state store for tracking data across hook invocations. This enables rules that depend on history, such as warning on first occurrence and blocking on third, or tracking cumulative token usage across a session. This document describes the state store design and usage.
+ARCI includes a persistent state store for tracking data across hook invocations. Rules that depend on history can use the state store: warning on first occurrence and blocking on third, or tracking cumulative token usage across a session. This document describes the state store design and usage.
 
 ## Overview
 
@@ -8,7 +8,7 @@ The state store is a key-value store with metadata tracking. Each entry has a ke
 
 ## Storage backend
 
-The primary implementation uses SQLite via `modernc.org/sqlite` (a pure-Go driver) with `database/sql` for persistence. SQLite provides durability, atomic operations, and the ability to query state for the dashboard without complex serialization.
+The primary backend uses SQLite via `modernc.org/sqlite` (a pure-Go driver) with `database/sql` for persistence. SQLite provides durability, atomic operations, and the ability to query state for the dashboard without complex serialization.
 
 The database schema is simple:
 
@@ -27,15 +27,15 @@ CREATE TABLE state_store (
 
 The composite primary key of session_id and key allows the same key to exist in multiple sessions. Project-scoped entries use an empty string for session_id (rather than NULL) to ensure the ON CONFLICT clause works correctly.
 
-An in-memory mock implementation is also available for testing.
+An in-memory mock backend is also available for testing.
 
 ## Scoping
 
-State entries are scoped to either a session or a project.
+State entries scope to either a session or a project.
 
-Session-scoped state is tied to a specific Claude Code session. When Claude Code starts a new session, that session gets a unique ID. State stored with that session ID is isolated from other sessions. Session state is appropriate for tracking things like prompt count within this session, tools used in this session, or temporary flags that should reset on new sessions.
+Session-scoped state ties to a specific Claude Code session. When Claude Code starts a new session, that session gets a unique ID. State stored with that session ID stays isolated from other sessions. Session state is appropriate for tracking things like prompt count within this session, tools used in this session, or temporary flags that should reset on new sessions.
 
-Project-scoped state is shared across all sessions in a project. The session_id is set to an empty string, and entries are identified by their project directory. Project state is appropriate for persistent data like cumulative statistics, configuration that persists across sessions, or flags that should survive session restarts.
+Project-scoped state spans all sessions in a project. The session_id defaults to an empty string, and the project directory identifies each entry. Project state is appropriate for persistent data like cumulative statistics, configuration that persists across sessions, or flags that should survive session restarts.
 
 ## Interface
 
@@ -45,15 +45,15 @@ A `StateEntry` contains the key, value, creation and update timestamps, and opti
 
 Basic operations include `get_value(session_id, key)` to get a value (returning `None` if not found), `get(session_id, key)` to get the full entry with metadata, `set(session_id, key, value, author)` to set or update a value, `delete(session_id, key)` to remove an entry, `contains(session_id, key)` to check existence, and `keys(session_id)` to list all keys for a session.
 
-The `atomic_increment(session_id, key, amount, author)` method atomically increments a counter. If the key doesn't exist, it's initialized to the amount. If it exists but isn't numeric, it's treated as 0. This is implemented as a single SQL statement to ensure atomicity.
+The `atomic_increment(session_id, key, amount, author)` method atomically increments a counter. If the key doesn't exist, the method initializes it to the amount. If it exists but isn't numeric, the method treats it as 0. A single SQL statement handles this to ensure atomicity.
 
 ## Usage in policies
 
-Policies access the state store through the `$session_get(key)` and `$project_get(key)` built-in functions in CEL expressions. These functions return the value for the key, or can be combined with the `??` operator to provide defaults when not found.
+Policies access the state store through the `$session_get(key)` and `$project_get(key)` built-in functions in CEL expressions. These functions return the value for the key, and you can combine them with the `??` operator to provide defaults when not found.
 
 ### Reading state
 
-State is typically read in policy-level or rule-level variables, making the values available to conditions and validation expressions:
+Policies typically read state in policy-level or rule-level variables, making the values available to conditions and validation expressions:
 
 ```yaml
 version: 1
@@ -84,7 +84,7 @@ The `??` operator provides a default value when the key doesn't exist. This patt
 
 ### Writing state
 
-State is written using effects with `type: setState`. Effects run after the admission decision is determined, so state updates reflect the current evaluation regardless of whether the tool call proceeds:
+Effects with `type: setState` write state. Effects run after the engine determines the admission decision, so state updates reflect the current evaluation regardless of whether the tool call proceeds:
 
 ```yaml
 rules:
@@ -97,7 +97,7 @@ rules:
         when: always
 ```
 
-The `scope` field is either `session` (isolated per conversation) or `project` (persists across sessions). The `key` and `value` fields support template expressions for dynamic values.
+The `scope` field is either `session` (isolated per conversation) or `project` (persists across sessions). The `key` and `value` fields support template expressions for computed values.
 
 ### Escalating enforcement pattern
 
@@ -134,9 +134,9 @@ rules:
         when: always
 ```
 
-The `attempts` variable reads the current count before any rules evaluate. The validation blocks when the threshold is reached, and the effect always increments the counter for subsequent evaluations.
+The `attempts` variable reads the current count before any rules evaluate. The validation blocks when the count reaches the threshold, and the effect always increments the counter for subsequent evaluations.
 
-For more sophisticated escalation with different messages at each level, use multiple rules with conditions:
+For more advanced escalation with different messages at each level, use multiple rules with conditions:
 
 ```yaml
 rules:
@@ -169,11 +169,11 @@ rules:
       action: warn
 ```
 
-The condition on each warning rule ensures only the appropriate message is shown based on the current attempt count.
+The condition on each warning rule ensures only the appropriate message appears based on the current attempt count.
 
 ### Script effects for complex logic
 
-For state logic that cannot be expressed declaratively, use script effects with Starlark. Script effects run after the admission decision and have access to state functions:
+For state logic that you cannot express declaratively, use script effects with Starlark. Script effects run after the admission decision and have access to state functions:
 
 ```yaml
 version: 1
@@ -221,11 +221,11 @@ Starlark scripts have access to state functions:
 - `project_get(key)` - read project-scoped state (returns None if not found)
 - `project_set(key, value)` - write project-scoped state
 
-Scripts run in a sandbox with no filesystem, network, or environment access unless explicitly provided. They cannot influence the admission decision since they execute after that decision is made.
+Scripts run in a sandbox with no filesystem, network, or environment access unless explicitly granted. They cannot influence the admission decision since they execute after the engine makes that decision.
 
 ## Built-in state tracking
 
-arci can optionally track common state automatically. This is configurable and includes things like `arci.prompts.count` for total prompts in the session, `arci.tools.total_count` for total tool invocations, `arci.tools.<name>.count` for per-tool invocation counts, `arci.session.started_at` for session start timestamp, and similar metrics.
+ARCI can optionally track common state automatically. This is configurable and includes things like `arci.prompts.count` for total prompts in the session, `arci.tools.total_count` for total tool invocations, `arci.tools.<name>.count` for per-tool invocation counts, `arci.session.started_at` for session start timestamp, and similar metrics.
 
 These built-in state updates happen after rule evaluation, so rules see the state from before the current event. This avoids confusion about whether the count includes the current event.
 
@@ -241,13 +241,13 @@ The daemon manages database connections using `database/sql`'s built-in connecti
 
 Session state naturally becomes orphaned when sessions end. The state store does not automatically clean up old session data. A periodic cleanup task or explicit cleanup command can remove state for sessions that haven't been active for a configurable period.
 
-Project state persists indefinitely until explicitly deleted.
+Project state persists indefinitely until someone explicitly deletes it.
 
 ## Concurrency
 
 SQLite handles concurrency through its built-in locking. The `database/sql` connection pool manages multiple connections, allowing concurrent read access while serializing writes. The daemon coordinates writes to avoid contention.
 
-The `atomic_increment` operation uses a single INSERT...ON CONFLICT statement to ensure atomicity even under concurrent access.
+The `atomic_increment` operation uses a single `INSERT ON CONFLICT` statement to ensure atomicity even under concurrent access.
 
 ## Dashboard integration
 

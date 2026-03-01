@@ -1,6 +1,6 @@
 # Match schema design
 
-arci separates structural matching from conditional logic following patterns established by Kubernetes admission control. Unlike Kubernetes, arci uses a unified `Policy` type that can contain both mutations and validations.
+ARCI separates structural matching from conditional logic following patterns established by Kubernetes admission control. Unlike Kubernetes, ARCI uses a unified `Policy` type that can contain both mutations and validations.
 
 ## Schema
 
@@ -86,7 +86,7 @@ spec:
 
 ## Matching semantics
 
-arci follows Kubernetes ValidatingAdmissionPolicy matching semantics closely. Understanding the AND/OR logic at each level is essential for predictable policy behavior.
+ARCI follows Kubernetes ValidatingAdmissionPolicy matching semantics closely. Understanding the AND/OR logic at each level is essential for predictable policy behavior.
 
 ### Within array fields: OR logic
 
@@ -108,6 +108,8 @@ events:
 
 All specified structural fields must match (AND logic). Omitted fields match everything.
 
+```
+
 ```yaml
 matchConstraints:
   # Must match ALL of these:
@@ -121,9 +123,9 @@ matchConstraints:
       - "src/**" # AND path must be under src/
 ```
 
-### Include/exclude: exclude takes precedence
+### Include/exclude: Exclude takes precedence
 
-When both `include` and `exclude` are specified, exclude patterns always take precedence. This matches Kubernetes `excludeResourceRules` behavior.
+When both `include` and `exclude` lists contain patterns, exclude patterns always take precedence. This matches Kubernetes `excludeResourceRules` behavior.
 
 ```yaml
 paths:
@@ -138,9 +140,9 @@ The evaluation order is:
 
 1. If only `include` specified: only those patterns match
 2. If only `exclude` specified: everything except those patterns matches
-3. If both specified: include is evaluated first, then exclude removes from that set
+3. If both specified: the system evaluates include first, then exclude removes from that set
 
-### matchConditions: AND with short-circuit
+### matchConditions: AND with short circuit
 
 All matchConditions must evaluate to true (AND logic). Evaluation short-circuits on first false.
 
@@ -157,13 +159,13 @@ matchConditions:
 
 The exact matching logic follows Kubernetes semantics:
 
-1. If ANY matchCondition evaluates to FALSE → policy is skipped
-2. If ALL matchConditions evaluate to TRUE → policy is evaluated
+1. If ANY matchCondition evaluates to FALSE → the system skips the policy
+2. If ALL matchConditions evaluate to TRUE → the system evaluates the policy
 3. If any evaluates to error (but none FALSE):
-   - If failurePolicy=Fail → hook request fails
-   - If failurePolicy=Ignore → policy is skipped
+   - If failurePolicy=Fail → the hook request fails
+   - If failurePolicy=Ignore → the system skips the policy
 
-### Binding narrowing: intersection only
+### Binding narrowing: Intersection only
 
 A binding's `matchResources` intersects with (never widens) the policy's `matchConstraints`. The binding can only further restrict what the policy matches.
 
@@ -209,7 +211,7 @@ matchConstraints:
 
 ## Structural fields
 
-### events
+### Events
 
 Hook event types. Most policies only care about `pre_tool_call`.
 
@@ -221,7 +223,7 @@ events:
   - session_end # Session ended
 ```
 
-### tools
+### Tools
 
 Claude Code tool names.
 
@@ -237,7 +239,7 @@ tools:
   - LS # List directory
 ```
 
-### paths
+### Paths
 
 File path patterns using glob syntax. Only relevant for tools that operate on files.
 
@@ -254,7 +256,7 @@ paths:
 
 See "Include/exclude: exclude takes precedence" in the Matching Semantics section for detailed evaluation logic.
 
-### branches
+### Branches
 
 Git branch patterns. Useful for varying enforcement by branch. Same include/exclude semantics as paths.
 
@@ -277,7 +279,7 @@ branches:
 CEL expressions evaluated at runtime after structural matching succeeds. Have access to:
 
 - `params.*` - from the binding's paramRef
-- `object.*` - the tool call being evaluated
+- `object.*` - the tool call under evaluation
 - `tool_name`, `tool_input` - current hook event
 - `session.*` - session context
 - `project.*` - project context
@@ -295,7 +297,7 @@ matchConditions:
     expression: 'params.workflowPhase != "review"'
 ```
 
-All conditions must pass (AND logic) with short-circuit on first false. See the "matchConditions: AND with short-circuit" section above for detailed evaluation semantics including error handling.
+All conditions must pass (AND logic) with short-circuit on first false. See the matchConditions short-circuit section for detailed evaluation semantics including error handling.
 
 ## Binding narrowing rules
 
@@ -338,13 +340,13 @@ For each (policy, binding, params) combination:
    - If ALL conditions return true → proceed to policy logic
    - If any condition errors (but none false) → apply failurePolicy
 7. **Collect mutations**: If `mutationsEnabled` is true, collect mutations from matching policies
-8. **Apply mutations**: Mutations are applied in priority order (higher priority first), then declaration order within a policy
+8. **Apply mutations**: The system applies mutations in priority order (higher priority first), then declaration order within a policy
 9. **Run validations**: Execute validation expressions against the (possibly mutated) state
 10. **Apply actions**: Enforce based on binding's `actions` (deny, warn, audit)
 
 ## Defaults
 
-When fields are omitted:
+When the user omits fields:
 
 - `events`: defaults to `[pre_tool_call]`
 - `tools`: defaults to all tools
@@ -449,15 +451,15 @@ spec:
   actions: [warn]
 ```
 
-In the second binding, the policy's matchConditions will fail because `params.strictMode` is false, so the policy won't apply to experiments/\*\*.
+In the second binding, the policy's matchConditions fail because `params.strictMode` is false, so the policy does not apply to experiments/\*\*.
 
 ## Future considerations
 
-Kubernetes ValidatingAdmissionPolicy includes additional matching properties that arci may adopt in future versions:
+Kubernetes ValidatingAdmissionPolicy includes additional matching properties that ARCI may adopt in future versions:
 
 ### resourceNames
 
-Whitelist specific resource names within matched types. In arci's context, this could allow matching specific tool invocations by name or specific file names (not just patterns).
+Allowlist specific resource names within matched types. In ARCI's context, this could allow matching specific tool invocations by name or specific file names (not just patterns).
 
 ```yaml
 # Hypothetical future syntax
@@ -469,9 +471,9 @@ matchConstraints:
     - "npm run build"
 ```
 
-### scope
+### Scope
 
-Constrain to different scopes. In arci's context, this could distinguish session-scoped vs project-scoped operations.
+Constrain to different scopes. In ARCI's context, this could distinguish session-scoped vs project-scoped operations.
 
 ```yaml
 # Hypothetical future syntax
@@ -481,7 +483,7 @@ matchConstraints:
 
 ### Label selectors
 
-Kubernetes uses `namespaceSelector` and `objectSelector` for label-based filtering. In arci, this could enable matching based on project metadata or file labels.
+Kubernetes uses `namespaceSelector` and `objectSelector` for label-based filtering. In ARCI, this could enable matching based on project metadata or file labels.
 
 ```yaml
 # Hypothetical future syntax
@@ -492,4 +494,4 @@ matchConstraints:
       environment: production
 ```
 
-These extensions would be added only if real-world usage patterns demonstrate clear need.
+ARCI adds these extensions only if real-world usage patterns demonstrate clear need.

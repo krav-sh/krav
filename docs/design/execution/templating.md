@@ -2,21 +2,21 @@
 
 ## Overview
 
-Templates provide reusable patterns for common workflows. Rather than manually constructing task DAGs for every feature, fix, or review, templates encode proven patterns that can be instantiated with project-specific context.
+Templates provide reusable patterns for common workflows. Rather than manually constructing task DAGs for every feature, fix, or review, templates encode proven patterns that users instantiate with project-specific context.
 
 Two template types serve different scopes:
 
-- **Task templates**: Single-task patterns (a code review, an architecture exploration, a test implementation)
+- **Task templates**: single-task patterns (a code review, an architecture exploration, a test build)
 - **Decomposition templates**: Multi-task DAG patterns (full feature lifecycle, RFC process, quick fix)
 
-Templates are extensible. arci ships with built-in templates for common patterns, while projects define their own in `.arci/templates/`. Project templates override built-ins with the same id.
+Templates are extendable. ARCI ships with built-in templates for common patterns, while projects define their own in `.arci/templates/`. Project templates override built-ins with the same id.
 
 ## Template resolution
 
 Templates resolve in order:
 
 1. `.arci/templates/tasks/` and `.arci/templates/decompositions/` (project-specific)
-2. Built-in templates bundled with arci
+2. Built-in templates bundled with ARCI
 
 A project template with `id: full-feature` shadows the built-in `full-feature` template.
 
@@ -75,7 +75,7 @@ deliverables:
 | id           | yes      | Unique identifier for the template                                                          |
 | name         | yes      | Human-readable name                                                                         |
 | description  | no       | Longer description of what this template does                                               |
-| phase        | yes      | Process phase (architecture, design, implementation, integration, verification, validation) |
+| phase        | yes      | Process phase (architecture, design, `implementation`, integration, verification, validation) |
 | task_type    | yes      | Task type within the phase                                                                  |
 | parameters   | no       | Declared parameters with defaults and validation                                            |
 | title        | no       | Task title template (interpolated)                                                          |
@@ -179,7 +179,7 @@ module:                          # The target module
   parent: MOD-OAPSROOT
 
   needs:                         # Needs owned by this module
-    - id: NED-B7G3M9K2
+    - id: NEED-B7G3M9K2
       statement: "..."
       status: validated
 
@@ -194,12 +194,12 @@ module:                          # The target module
       title: Lexer
 
   findings:                      # Open findings for this module
-    - id: FND-F1L4T7W5
+    - id: DEF-F1L4T7W5
       type: issue
       status: open
 
 task:                            # Current task (when in task template context)
-  id: TSK-E3K8S6V2
+  id: TASK-E3K8S6V2
   phase: implementation
 
 graph:                           # Graph query helpers
@@ -221,7 +221,7 @@ params:                          # Caller-provided parameters
 
 ### Graph query helpers
 
-The `graph` object provides query helpers that can be used in templates:
+The `graph` object provides query helpers for templates:
 
 ```yaml
 # Get ancestors of a specific module
@@ -266,7 +266,7 @@ parameters:
     type: array
 ```
 
-Declared parameters appear in `arci template show <id>` output and can be validated at invocation time.
+Declared parameters appear in `arci template show <id>` output and the system validates them at invocation time.
 
 ### Arbitrary parameters
 
@@ -461,7 +461,7 @@ skip_if: "{{ module.requirements | length == 0 }}"
 
 ## Built-in templates
 
-arci ships with built-in templates for common patterns:
+ARCI ships with built-in templates for common patterns:
 
 ### Task templates
 
@@ -472,8 +472,8 @@ arci ships with built-in templates for common patterns:
 | interface-identification | architecture   | Define interaction points between modules  |
 | api-design               | design         | Design API contracts and data types         |
 | data-model               | design         | Design data schemas and relationships       |
-| feature-implementation   | implementation | Implement a feature                         |
-| test-implementation      | verification   | Write tests for requirements                |
+| `feature-implementation`   | `implementation` | Build a feature                         |
+| `test-implementation`      | verification   | Write tests for requirements                |
 | quick-review             | verification   | Single-pass code review                     |
 | thorough-review          | verification   | Multi-aspect deep review                    |
 | stakeholder-demo         | validation     | Demo to stakeholders for sign-off           |
@@ -482,10 +482,10 @@ arci ships with built-in templates for common patterns:
 
 | Id           | Description                                                                            |
 |--------------|----------------------------------------------------------------------------------------|
-| full-feature | Complete lifecycle: architecture → design → implementation → verification → validation |
-| quick-fix    | Fast path: implementation → quick review                                               |
+| full-feature | Complete lifecycle: architecture, design, coding, verification, validation |
+| quick-fix    | Fast path: coding, then quick review                                               |
 | rfc          | RFC process: exploration → formalization → stakeholder review                          |
-| tech-debt    | Technical debt: analysis → design → implementation → verification                      |
+| tech-debt    | Technical debt: analysis, design, coding, verification                      |
 | spike        | Time-boxed exploration with findings                                                   |
 
 ## CLI commands
@@ -507,7 +507,7 @@ arci task create --template quick-review --module MOD-A4F8R2X1 --param focus=sec
 # Decompose using template
 arci module decompose MOD-A4F8R2X1 --template full-feature
 arci module decompose MOD-A4F8R2X1 --template full-feature --param skip_architecture=true
-arci module decompose MOD-A4F8R2X1 --template quick-fix --param finding=FND-X1Y2Z3A4
+arci module decompose MOD-A4F8R2X1 --template quick-fix --param finding=DEF-X1Y2Z3A4
 
 # Validate a template
 arci template validate .arci/templates/tasks/my-custom-review.yaml
@@ -518,7 +518,7 @@ arci module decompose MOD-A4F8R2X1 --template full-feature --dry-run
 
 ## Project template structure
 
-```
+```text
 .arci/
   templates/
     tasks/
@@ -539,7 +539,7 @@ arci module decompose MOD-A4F8R2X1 --template full-feature --dry-run
 | Built-in templates | ○ Not yet | None of the listed built-in templates exist |
 | CLI commands | ○ Not yet | No `arci template` command group |
 
-This document describes the target architecture for the templating system. Implementation is planned but not yet started.
+This document describes the target architecture for the templating system. The team plans to build this but has not yet started.
 
 ## Summary
 
@@ -550,6 +550,6 @@ The templating system provides reusable patterns for task and decomposition work
 - **Template inheritance** via Jinja2 extends/block allows composing workflows without duplication
 - **Rich context** gives templates access to module data, graph queries, and project info
 - **Arbitrary parameters** allow callers to pass any data for interpolation
-- **Extensible resolution** lets project templates override built-ins
+- **Extendable resolution** lets project templates override built-ins
 
 Templates encode proven patterns while remaining flexible through inheritance, parameterization, and context interpolation.

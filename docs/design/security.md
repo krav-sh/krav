@@ -1,20 +1,20 @@
 # Security model
 
-This document describes arci's security model, including trust relationships, threat scenarios, and the guardrails around rule execution and extension loading.
+This document describes ARCI's security model, including trust relationships, threat scenarios, and the guardrails around rule execution and extension loading.
 
 ## Trust model overview
 
-arci operates in a privileged position: it intercepts Claude Code operations and can execute code through shell and script actions. Understanding who trusts whom is essential for reasoning about security.
+ARCI operates in a privileged position: it intercepts Claude Code operations and can execute code through shell and script actions. Understanding who trusts whom is essential for reasoning about security.
 
-The trust relationships form a chain: the user trusts their Claude Code to execute code on their behalf. The Claude Code trusts arci (via configured hooks) to evaluate operations. arci trusts its configuration sources to define legitimate rules. arci trusts installed extensions to provide safe rule packs and Starlark scripts.
+The trust relationships form a chain: the user trusts their Claude Code to execute code on their behalf. The Claude Code trusts ARCI (via configured hooks) to evaluate operations. ARCI trusts its configuration sources to define legitimate rules. ARCI trusts installed extensions to provide safe rule packs and Starlark scripts.
 
 Breaking any link in this chain has security implications. A malicious rule can exfiltrate data via shell actions. A malicious extension can ship rules that execute arbitrary commands. A compromised daemon can intercept all hook traffic.
 
-Starlark scripts provide a safer alternative to shell actions because they are sandboxed by default. Scripts cannot access the filesystem or network directly; they can only interact with the outside world through APIs that arci explicitly exposes, such as the state store functions.
+Starlark scripts provide a safer alternative to shell actions because the runtime sandboxes them by default. Scripts cannot access the filesystem or network directly; they can only interact with the outside world through APIs that ARCI explicitly exposes, such as the state store functions.
 
 ## Threat scenarios
 
-TODO: Enumerate and analyze threat scenarios.
+Enumerate and analyze threat scenarios.
 
 Topics to cover:
 
@@ -57,7 +57,7 @@ Topics to cover:
 
 ## Security controls
 
-TODO: Document existing and planned security controls.
+Document existing and planned security controls.
 
 Topics to cover:
 
@@ -84,11 +84,11 @@ Topics to cover:
 
 ### Action execution security
 
-arci provides multiple layers of security for action execution, with different guarantees for each action type.
+ARCI provides multiple layers of security for action execution, with different guarantees for each action type.
 
-**Script actions (Starlark)** are sandboxed by default. The Starlark runtime provides built-in isolation with no filesystem access, no network access, and instruction counting to prevent infinite loops. Scripts can only interact with the outside world through APIs that arci explicitly exposes: the state store functions (`session_get`, `session_set`, `project_get`, `project_set`), git context functions, and path helper functions. Memory limits prevent unbounded allocation. This makes script actions fundamentally safer than shell actions for complex logic.
+**Script actions (Starlark)** run in a sandbox by default. The Starlark runtime provides built-in isolation with no filesystem access, no network access, and instruction counting to prevent infinite loops. Scripts can only interact with the outside world through APIs that ARCI explicitly exposes: the state store functions (`session_get`, `session_set`, `project_get`, `project_set`), git context functions, and path helper functions. Memory limits prevent unbounded allocation. This makes script actions inherently safer than shell actions for complex logic.
 
-**Shell actions** execute commands in the user's environment. By default, shell actions run with user privileges and have full system access. For security-sensitive deployments, arci provides optional sandboxing that constrains filesystem access, network connectivity, and resource consumption.
+**Shell actions** execute commands in the user's environment. By default, shell actions run with user privileges and have full system access. For security-sensitive deployments, ARCI provides optional sandboxing that constrains filesystem access, network connectivity, and resource consumption.
 
 Shell action sandboxing uses platform-native technologies:
 
@@ -100,13 +100,13 @@ Predefined sandbox profiles simplify configuration: `restricted` (strong isolati
 
 For complete sandbox configuration options including per-rule overrides, fail-open versus fail-closed behavior, and platform-specific details, see [Shell action sandboxing](sandboxing.md).
 
-Timeout enforcement applies to both shell and script actions. Actions that exceed their timeout are terminated and fail open, contributing no directives to the evaluation.
+Timeout enforcement applies to both shell and script actions. ARCI stops actions that exceed their timeout and fails open, contributing no directives to the evaluation.
 
-Template substitution in action messages and commands uses Go's `text/template` configured with `missingkey=zero` for safe defaults. Unknown variables resolve to zero values rather than causing errors.
+Template substitution in action messages and commands uses Go's `text/template` with `missingkey=zero` for safe defaults. Unknown variables resolve to zero values rather than causing errors.
 
 ## Sensitive data handling
 
-TODO: Document how sensitive data should be handled.
+Document how to handle sensitive data.
 
 Topics to cover:
 
@@ -118,18 +118,18 @@ Topics to cover:
 
 ## Audit logging
 
-TODO: Document audit capabilities.
+Document audit capabilities.
 
 Topics to cover:
 
-- What events are logged
+- What events the system logs
 - Log retention and rotation
 - Tamper-evident logging (future)
 - Integration with external audit systems
 
 ## Security recommendations
 
-TODO: Provide security guidance for different deployment scenarios.
+Provide security guidance for different deployment scenarios.
 
 Topics to cover:
 
@@ -156,7 +156,7 @@ Topics to cover:
 
 ## Known limitations
 
-TODO: Document security limitations that users should understand.
+Document security limitations that users should understand.
 
 Topics to cover:
 
@@ -167,7 +167,7 @@ Topics to cover:
 
 ## Future security enhancements
 
-TODO: Document planned security improvements.
+Document planned security improvements.
 
 Topics to cover:
 
@@ -179,4 +179,4 @@ Topics to cover:
 
 ---
 
-This document will be expanded as the security model is refined. Security is a process, not a feature, and this document should evolve as new threats are identified and mitigations are implemented.
+This document expands as the security model matures. Security is a process, not a feature, and this document should evolve as the team identifies new threats and deploys mitigations.

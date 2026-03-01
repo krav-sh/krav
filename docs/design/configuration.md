@@ -8,7 +8,7 @@ Configuration loading is a shell-layer concern. The config loader handles all fi
 
 The loader performs four operations. Discovery determines which paths to check using platform-appropriate directory resolution, project root detection, and the cascade rules described in [config-cascade.md](config-cascade.md). Loading reads file contents from disk, handling missing files and permission errors gracefully. Parsing deserializes YAML and validates against the configuration schema. Materialization transforms validated structures into typed domain objects that the core can use.
 
-This separation keeps the core pure and testable. The core has no knowledge of YAML, file paths, or precedence layers—it operates on domain types like `Rule`, `Policy`, and `Config`.
+This separation keeps the core pure and testable. The core has no knowledge of YAML, file paths, or precedence layers; it operates on domain types like `Rule`, `Policy`, and `Config`.
 
 ## File format
 
@@ -28,7 +28,7 @@ default:
 
 ## Schema versioning
 
-The `$schema` field is required in all `arci.yaml` files. It identifies the configuration schema version and enables tooling support (editor autocompletion, validation).
+Every `arci.yaml` file requires the `$schema` field. It identifies the configuration schema version and enables tooling support (editor autocompletion, validation).
 
 ```yaml
 $schema: https://arci.dev/schemas/arci/v1.yaml
@@ -40,7 +40,7 @@ Schema versions follow semantic versioning. Breaking changes increment the major
 
 The configuration file uses a `default` section containing all settings:
 
-### default section
+### Default section
 
 The `default` section contains all configuration settings:
 
@@ -80,11 +80,11 @@ default:
   log_level: debug # Overrides anything from extended files
 ```
 
-Extended files are processed in order. Each file's settings merge on top of the previous result. Finally, the current file's settings merge on top. This allows building configuration from composable pieces.
+The loader processes extended files in order. Each file's settings merge on top of the previous result. Finally, the current file's settings merge on top. This allows building configuration from composable pieces.
 
 Paths in `extends` are relative to the file containing the `extends` field. Absolute paths are also supported but discouraged for portability.
 
-Extended files can themselves extend other files. Circular references are detected and cause a validation error.
+Extended files can themselves extend other files. The loader detects circular references and raises a validation error.
 
 ## Settings reference
 
@@ -106,9 +106,9 @@ default:
   failure_policy: allow
 ```
 
-This is a critical safety property. With `allow`, configuration errors never block Claude Code from operating. Only explicit deny decisions from successfully-evaluated policies block operations.
+This is a critical safety property. With `allow`, configuration errors never block Claude Code from operating. Only explicit deny decisions from successfully evaluated policies block operations.
 
-### daemon
+### Daemon
 
 Controls the optional daemon process that caches configuration and serves an HTTP API.
 
@@ -135,7 +135,7 @@ default:
 
 When `daemon.enabled` is `false`, the CLI performs direct evaluation by loading configuration on each invocation.
 
-### state
+### State
 
 Configures the persistent state store used for session and project state.
 
@@ -149,11 +149,11 @@ default:
 | Field     | Description                | Default                  |
 | --------- | -------------------------- | ------------------------ |
 | `backend` | Storage backend (`sqlite`) | `sqlite`                 |
-| `path`    | Database file path         | Platform state directory |
+| `path`    | Database path              | Platform state directory |
 
 The state store enables patterns like rate limiting ("warn on first occurrence, block on third") with data that persists across sessions.
 
-### providers
+### Providers
 
 Named parameter providers that policies can reference.
 
@@ -189,7 +189,7 @@ Settings can be overridden via environment variables. The mapping follows these 
 
 1. Prefix with `ARCI_`
 2. Convert to uppercase
-3. Replace dots and nested keys with double underscores
+3. Replace dots and nested keys with double-underscore separators
 
 Examples:
 
@@ -222,15 +222,15 @@ arci config show
 
 ## Error handling
 
-Parse errors in configuration files result in warnings, not hard failures. The file is skipped and loading continues with remaining sources. This fail-open behavior ensures that a typo in a project config doesn't prevent Claude Code from operating.
+Parse errors in configuration files produce warnings, not hard failures. The loader skips the file and continues with remaining sources. This fail-open behavior ensures that a typo in a project config doesn't prevent Claude Code from operating.
 
-Errors are logged and reported through:
+The system logs and reports errors through:
 
 - CLI output when running commands
 - Daemon dashboard status panel
 - The `arci config validate` command
 
-The exception is managed/required configuration. Errors in required managed config cause a hard failure, as proceeding without enterprise security policies would violate the security model.
+Managed/required configuration is the exception. Errors in required managed config cause a hard failure, as proceeding without enterprise security policies would violate the security model.
 
 ## Hot reloading
 
@@ -266,7 +266,7 @@ default:
     hot_reload: true
 ```
 
-### Enterprise configuration with arci specs integration
+### Enterprise configuration with ARCI specs integration
 
 ```yaml
 $schema: https://arci.dev/schemas/arci/v1.yaml

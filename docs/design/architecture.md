@@ -1,310 +1,358 @@
 # Architecture
 
-arci follows a functional core/imperative shell architecture. The core evaluation engine is a pure library with no I/O or side effects—it takes data in and returns data out. Multiple imperative shells handle the messy real-world concerns: the CLI loads configuration and executes directly, the daemon caches configuration and serves an API, and the dashboard provides a diagnostic interface.
+This document describes the ARCI architecture following the [arc42](https://arc42.org/) template. Each section links to detail docs for depth.
 
-This document describes the major components and how they interact.
+## 1. Introduction and goals
 
-## Design philosophy
+ARCI is a tool for Claude Code that structures software development around an INCOSE-inspired knowledge graph, enforces process integrity through declarative hook policies, and encodes development methods as agent skills and subagents. The knowledge graph is the source of truth for what the team must build and why. Hook policies control what the agent can do and ensure it follows the process. Skills and subagents are how the agent actually does the work.
 
-The functional core/imperative shell pattern separates pure computation from side effects. The core contains all the interesting logic—policy matching, expression evaluation, action resolution—but performs no I/O. It receives configuration and input as arguments, returns results as data structures. This makes the core easy to test, reason about, and reuse.
+### Knowledge graph
 
-The shells handle everything else: reading files, managing processes, opening sockets, writing output. Each shell is a thin adapter that translates between the outside world and the core's pure interface. Because the shells are thin, they're easy to write and maintain. Because the core is pure, it's easy to test and debug.
+The knowledge graph stores typed nodes (CON, MOD, NEED, REQ, TC, TASK, DEF, BSL) connected by semantic predicates. A formal transformation chain runs concept → need → requirement → task → deliverable. Phase-gated execution constrains module advancement. Suspect link propagation surfaces downstream impacts of upstream changes.
 
-arci has three shells that all use the same core:
+See [Graph overview](graph/index.md) for the full graph documentation.
 
-The CLI direct execution shell loads configuration from disk, calls the core, and writes output. This is the simplest path and requires no external processes.
+### Hook policies
 
-The daemon shell keeps configuration cached in memory, exposes the core via HTTP API, and handles concerns like hot-reloading and metrics. The CLI can delegate to the daemon for better performance.
+The hook system intercepts Claude Code lifecycle events through declarative policies. Policies match events, check conditions, and produce admission decisions (allow, deny, warn) or mutations. A six-stage evaluation pipeline processes policies efficiently; fail-open semantics ensure hooks never block the assistant unexpectedly. Hooks also inject graph context into the agent's conversation and steer the agent toward correct next steps when blocking an action.
 
-The dashboard shell provides a web interface for diagnostics, policy testing, and state inspection. It reads from the daemon's cached state and renders HTML.
+See [Hooks overview](hooks/index.md) for the full hook documentation.
 
-```mermaid
-flowchart TB
-    subgraph shells["Imperative Shells"]
-        subgraph config_shell["Config Loader"]
-            discovery["Path Discovery"]
-            loader["File Loading"]
-            parser["YAML Parsing"]
-            merger["Precedence Merging"]
-        end
+### Skills and subagents
 
-        subgraph cli_shell["CLI Shell"]
-            cli_direct["Direct Execution"]
-            cli_client["Daemon Client"]
-        end
+Skills encode ARCI's development method as structured instructions that Claude Code follows during execution. Each skill maps to a workflow (formalization, review, task execution) and combines preprocessing commands that inject graph context at load time with instructed commands the agent runs during execution. Subagents provide isolated execution contexts for workflows that benefit from a fresh context window, restricted tool access, or a different posture (a review subagent shouldn't carry the build context). The project stores skills and subagents as files (`.claude/skills/`, `.claude/agents/`) and bundles them with the ARCI plugin.
 
-        subgraph daemon_shell["Daemon Shell"]
-            api["HTTP/WS API"]
-            watcher["File Watcher"]
-            cache["Config Cache"]
-            pool["Connection Pool"]
-        end
+See [Workflows](workflows/index.md) for the agent interaction layer documentation.
 
-        subgraph dashboard_shell["Dashboard Shell"]
-            templates["Go Templates"]
-            htmx["htmx Handlers"]
-        end
-    end
+### Quality goals
 
-    subgraph core["Functional Core"]
-        types["Domain Types"]
-        policy_compiler["Policy Compiler"]
-        engine["Evaluation Engine"]
-        action_resolver["Action Resolver"]
-    end
+| Priority | Goal | Description |
+|----------|------|-------------|
+| 1 | Safety | Fail-open semantics; errors never block Claude Code |
+| 2 | Traceability | Unbroken derivation chain from concept through need to requirement to task to deliverable |
+| 3 | Queryability | Project questions reduce to graph queries, not document searches |
+| 4 | Low latency | Hook evaluation completes within agent-invisible time budgets |
+| 5 | Extensibility | Extension system for policies, custom functions, and effect handlers |
 
-    subgraph external["External World"]
-        fs["Filesystem"]
-        sqlite["SQLite"]
-        stdin["stdin/stdout"]
-        http["HTTP"]
-    end
+### Stakeholders
 
-    config_shell <--> fs
-    config_shell -->|"Policies"| policy_compiler
+| Stakeholder | Role | Concern |
+|-------------|------|---------|
+| Developer using Claude Code | Primary user | Policies don't block workflow; graph provides useful context |
+| Policy author | Writes hook policies | Policies are debuggable, testable, and composable |
+| Team lead / security | Governs agent behavior | Deny-wins aggregation, audit trail, managed config |
+| Extension author | Distributes reusable policies | Extension packaging, trust model, capability tiers |
+| ARCI contributor | Develops ARCI itself | Clean architecture, testability, clear boundaries |
 
-    cli_direct --> engine
-    cli_direct <--> stdin
-    cli_direct --> config_shell
+## 2. Architecture constraints
 
-    cli_client <--> http
+### Integration constraints
 
-    api --> engine
-    api <--> http
-    cache --> config_shell
-    watcher <--> fs
-    pool <--> sqlite
+- **Claude Code hook protocol.** stdin/stdout JSON with exit codes; ARCI cannot change this interface.
+- **Claude Code skills and subagents.** Markdown files with YAML frontmatter, following the [Agent Skills](https://agentskills.io) open standard with Claude Code extensions. ARCI's skills and subagents must conform to Claude Code's loading model, frontmatter schema, and execution semantics.
+- **MCP protocol.** stdio-based Model Context Protocol for diagnostics and graph queries.
+- **Single-binary distribution.** No external runtime dependencies for core operation.
+- **No external dependencies for state storage.** Embedded relational store, no separate database process.
 
-    templates --> engine
-    htmx <--> http
-```
+### Standards alignment
 
-## Functional core
+- **INCOSE NRM.** Needs/requirements distinction (expectation vs. obligation).
+- **ISO/IEC/IEEE 15288.** Lifecycle process phases for task organization and phase gating.
+- **W3C RDF/JSON-LD.** Graph serialization format.
+- **PROV-O.** Provenance tracking for graph modifications.
 
-The core is a pure library that performs policy evaluation. It has no dependencies on I/O, no global state, and no side effects. All inputs are explicit function arguments; all outputs are return values.
+### Design constraints
 
-### Domain types
+- **Fail-open non-negotiable.** Errors in policy evaluation always result in allow.
+- **Deny-wins aggregation.** When two or more policies match, the most restrictive action wins.
+- **Pre-1.0 instability.** Schema and API may change; see [Versioning](versioning.md).
 
-The core defines the domain types that matter for policy evaluation: `Policy`, `Rule`, `Match`, `Condition`, `Parameter`, `Variable`, `Macro`, and related structures. These are the atoms of the policy system—plain data structures with no knowledge of where they came from or how they were serialized.
+## 3. System scope and context
 
-The core has no knowledge of YAML, file paths, precedence layers, or configuration merging. It receives domain objects and operates on them. Where those objects came from is not its concern.
+### Business context
 
-A `Policy` is a self-contained unit that declares its own matching, parameters, and enforcement. It contains structural match constraints declaring what event types, tools, paths, and branches it handles; conditions as CEL expressions that must all return true for the policy to apply; parameter definitions for bringing external data into evaluation; variable definitions for computed values; macros for reusable expression fragments; and rules that contain the actual validations, mutations, and effects.
+| Actor | Interaction with ARCI | Direction |
+|-------|----------------------|-----------|
+| Developer | Authors policies, manages modules and graph nodes, reviews traceability, runs diagnostics | Bidirectional |
+| Claude Code | Sends hook events for policy evaluation, issues graph queries, executes skill-driven workflows | Bidirectional |
+| Git | Provides branch context; stores graph and policies in version control | ARCI reads and writes |
+| GitHub | CI/CD integration, repository context, OSS contributor intake | ARCI reads |
+| Parameter providers | Supply policy parameters at evaluation time | ARCI reads |
 
-Match constraints use OR-within-arrays, AND-across-fields logic for structural matching. Parameters can come from static values, named providers, inline providers, or environment variables. Variables are computed in declaration order and can reference parameters and earlier variables. Macros are invoked with a `$` prefix in CEL expressions.
+### Technical context
 
-A `Rule` is the unit within a policy that performs validation, mutation, or side effects. Each rule has its own optional match constraints (which intersect with the policy's match), conditions, and variables. A rule must contain at least one of `validate`, `mutate`, or `effects`. The `validate` block checks a CEL expression and produces an action (deny, warn, audit) on failure. The `mutate` block transforms the hook event using CEL's immutable update syntax. The `effects` list contains fire-and-forget actions like state updates, notifications, and logging.
+| Interface | Protocol / format | Purpose |
+|-----------|------------------|---------|
+| Hook evaluation | stdin/stdout JSON + exit codes | Claude Code → ARCI policy evaluation |
+| Skills | Markdown + YAML frontmatter (Agent Skills standard) | ARCI workflow instructions for Claude Code |
+| Subagents | Markdown + YAML frontmatter | Isolated agent contexts with preloaded skills |
+| Command-line tool | Terminal invocation | Developer and agent → ARCI graph management, diagnostics |
+| Daemon API | HTTP REST + WebSocket on localhost | Command-line delegation, live events, dashboard |
+| MCP server | stdio (Model Context Protocol) | Claude Code → ARCI diagnostics and graph queries |
+| State store | Embedded relational DB | Session-scoped and project-scoped persistent state |
+| Knowledge graph | JSON-LD compact form (JSONLT) | Typed nodes with embedded relationships |
+| Configuration | Cascading config files | Policies, settings, managed config layers |
 
-This self-contained design prioritizes clarity: a policy file should be readable top to bottom and understandable without cross-referencing other documents. Reuse is handled through variables and macros for expression reuse, parameter providers for external data, and the config cascade for layered overrides.
+![System context diagram](diagrams/arci-c4-context.puml)
 
-### Policy compilation
+## 4. Solution strategy
 
-The policy compiler takes policies and returns compiled structures with pre-parsed CEL expressions. Compilation validates CEL syntax in conditions (both policy-level and rule-level), validate expressions, and mutate expressions. It also validates macro definitions, checks variable reference ordering, and prepares policies for efficient evaluation through the six-stage pipeline. Compilation is deterministic and cacheable—the same input always produces the same output.
+Key architectural decisions with rationale:
 
-The shell materializes `Policy` objects from configuration files. The core's `CompilePolicies` function takes these as input and returns compiled structures with pre-parsed expressions and indexed match constraints for fast structural filtering.
+1. **Shared infrastructure.** The knowledge graph, hook policies, and agent interaction layer are separate concerns that share the command-line tool, daemon, state store, and config cascade. The CLI is the common interface: hooks call it to check graph state, skills instruct the agent to call it for graph mutations, and the developer calls it directly for management and diagnostics.
 
-Compilation is also where semantic validation happens. If an expression has invalid syntax, references unknown functions, contains circular variable dependencies, or a rule's match tries to widen rather than narrow the policy's constraints, compilation fails with a clear error. This keeps validation close to usage—the core validates what it needs to operate correctly.
+2. **Single binary, three modes.** Command-line direct execution, daemon delegation, and dashboard all share one binary. No version skew, simple distribution.
 
-### Evaluation engine
+3. **Knowledge graph over document management.** The graph stores requirements, test cases, and tasks as typed nodes with semantic relationships. Views (graph queries) replace documents (SRS, test plans, traceability matrices).
 
-The evaluation engine is the heart of arci. It takes a hook event, compiled policies, and current state; returns matched policies, mutations to apply, validation results, effects to execute, and resolved actions. No I/O happens here—state is passed in and results are returned as data.
+4. **Method encoded as skills and subagents.** The INCOSE-inspired development process isn't just enforced by hooks; it's taught to the agent through skills that contain step-by-step workflow instructions and subagents that provide isolated execution contexts. Skills use `!`command`` preprocessing to inject graph context at load time and instructed commands for interactive graph queries during execution. Subagents preload relevant skills and operate with restricted tool access. See [Workflows](workflows/index.md).
 
-The evaluation pipeline has six stages:
+5. **Formal transformation chain.** Concept → need → requirement → task with unbroken `derivesFrom` edges. Each transformation has preconditions and postconditions. See [Transformations](graph/transformations.md).
 
-**Stage 1: structural matching.** The engine filters policies using indexable criteria that can be evaluated without CEL. For each policy, it checks whether the event satisfies the policy's `match` block (events, tools, paths, branches) using OR-within-arrays, AND-across-fields logic. For policies that pass, it further filters rules by checking each rule's optional `match` block against the event. This stage is fast—the engine can scan hundreds of policies in microseconds using precomputed indexes.
+6. **Phase-gated execution.** Modules track lifecycle phases independently; phase gates enforce quality criteria per module. See [Lifecycle coordination](graph/lifecycle-coordination.md).
 
-**Stage 2: condition evaluation.** For policies that pass structural matching, the engine evaluates policy-level conditions in declaration order. Conditions are CEL expressions that must all return true (AND logic with short-circuit evaluation). If any condition returns false, the policy is skipped for this event. For rules that pass structural matching, rule-level conditions are similarly evaluated.
+7. **Six-stage evaluation pipeline.** Progressive narrowing: structural match → conditions → parameters → variables → rules → effects. Unidirectional data flow with no cycles. See [Execution model](hooks/execution-model.md).
 
-**Stage 3: parameter resolution.** Before evaluating rules, the engine resolves all parameters declared in the policy. Parameters can come from static values, named providers, inline providers, or environment variables. If resolution fails and no defaults are provided, behavior depends on `config.failurePolicy`: with `allow` (the default) the policy is skipped; with `deny` the policy errors and blocks the tool call.
+8. **Cascading configuration.** Seven precedence layers from built-in defaults through managed/required. Same model for settings, policies, and state. See [Configuration](configuration/configuration.md).
 
-**Stage 4: variable computation.** Policy-level variables are computed in declaration order. Variables can reference parameters, built-in functions, and earlier variables. They are evaluated once per policy and cached for use by all rules. Rule-level variables are computed when the rule evaluates and can shadow policy-level variables.
+9. **Fail-open by default.** Errors never block Claude Code. Only an explicit deny from a policy that evaluated without error blocks operations.
 
-**Stage 5: rule evaluation.** For each matching rule in declaration order, the engine executes the rule's `validate` or `mutate` block. Validation rules produce a result (pass or fail with an action). Mutation rules produce a transformation that is applied to the event state. Mutations from higher-priority policies are applied before lower-priority policies evaluate, allowing high-priority policies to transform requests in ways that affect lower-priority policy evaluation.
+## 5. Building block view
 
-**Stage 6: effect execution.** After all rules have been evaluated and the admission decision is determined, queued effects are executed. Effects are fire-and-forget actions like state updates, notifications, and logging. Each effect has a `when` condition (`always`, `on_pass`, `on_fail`) that controls whether it runs. Effect execution failures are logged but don't affect the tool call decision.
+### Level 2: Containers
 
-The `Evaluate` function takes a hook event, compiled policies, parameter context, and current state as arguments, and returns a result containing matched policies, mutations to apply, validation results, effects to execute, resolved actions, state mutations, and output data. No I/O happens in this function.
+**ARCI command-line tool.** Unified entry point for hook evaluation, graph management, developer commands, and daemon/dashboard/MCP control. Operates in direct execution mode (loads config, evaluates locally) or daemon delegation mode (forwards to daemon API). See [command-line tool](cli/index.md).
 
-### Action resolution
+**Daemon.** Long-running process with config cache, compiled policies, connection pooling, REST API, WebSocket events, and hot-reload. Amortizes expensive operations (config loading, policy compilation, parameter resolution) across many requests. See [Daemon](daemon/index.md).
 
-The action resolver determines what happens based on validation results from all matching policies. Each validation rule specifies its own action on failure: `deny` blocks the tool call, `warn` allows it with a warning, `audit` logs silently.
+**Dashboard.** Web diagnostics interface for live event streaming, policy testing, state browsing, coverage reports, and graph browsing. Reads from the daemon's cached state for consistency. See [Dashboard](dashboard/index.md).
 
-When multiple policies match, their results combine using most-restrictive-wins logic: `deny > warn > audit > allow`. If any validation from any policy produces a `deny`, the overall result is deny. If no denies but some warns, the overall result is warn. Messages from all failures accumulate in the response.
+**MCP Server.** Exposes policy diagnostics and graph queries to Claude Code via the Model Context Protocol. Delegates to the daemon API.
 
-The `ResolveActions` function takes validation results as input and returns data describing the aggregated action, originating policies and rules, and collected messages for both users and the Claude Code.
+**State Store.** Embedded relational store with session-scoped and project-scoped persistent state for hook evaluations and graph operations. See [State store](state-store.md).
 
-## Config loader
+**Knowledge Graph.** JSON-LD graph file (`graph.jsonlt`) containing all typed nodes with embedded relationships. Single source of truth for structured metadata. Inline prose uses the `summary` field; extended prose lives in `.arci/` markdown files at convention-derived paths (no frontmatter). See [Graph overview](graph/index.md).
 
-The config loader is a shared shell component used by both CLI direct execution and the daemon. It handles all the I/O and transformation needed to turn configuration files into domain objects the core can use.
+**Policies + Settings.** Configuration across cascade layers (built-in defaults, user, project, local, managed/recommended, managed/required, command-line flags). See [Configuration](configuration/configuration.md).
 
-The loader performs four distinct operations. Discovery determines which configuration paths to check, using platform-appropriate directories. Loading reads file contents from disk, handling missing files, permission errors, and encoding issues gracefully. Parsing deserializes YAML content into untyped structures and validates them against the configuration schema. Materialization transforms validated structures into typed domain objects—`Policy` instances with their embedded rules, parameters, variables, and macros—that the core can compile.
+**Skills.** Markdown files (`.claude/skills/` in the project, `~/.claude/skills/` personal, or bundled with the ARCI plugin) that encode ARCI's development workflows as structured instructions for Claude Code. Each skill has YAML frontmatter (tool restrictions, invocation control, hooks, model overrides) and a markdown body with the workflow steps. Skills use `!`command`` preprocessing to inject live graph data at load time (task context, module requirements, domain context) and instructed commands that tell the agent to run `arci` CLI commands during execution. Claude Code loads skill descriptions into context at session start; full skill content loads on invocation. See [Workflows](workflows/index.md).
 
-The loader also handles precedence merging. When the same policy name appears in multiple configuration sources, the loader resolves which definition wins based on the precedence chain. The core never sees these conflicts—it receives clean vectors of policies with no duplicates.
+**Subagents.** Markdown files (`.claude/agents/` in the project, `~/.claude/agents/` personal, or bundled with the ARCI plugin) that define specialized agents with their own context window, system prompt, tool access, and optionally their own model. Subagents preload specified skills at startup (full content, not just descriptions) and can define lifecycle-scoped hooks in their frontmatter. ARCI uses subagents for workflows that benefit from isolation: code review, security audit, focused analysis. The subagent's restricted tool access and fresh context window prevent the reviewing agent from carrying build context. See [Workflows](workflows/index.md).
 
-The config loader orchestrates all shell-layer work. Its `DiscoverSources` method finds all relevant config paths for a given project root. Its `Load` method reads files and resolves precedence, producing a configuration struct that contains both shell-layer settings (like log level and daemon configuration) and materialized domain objects (policies and parameter provider configurations). The policies are then passed to the core's `CompilePolicies` function.
+**CLAUDE.md and hooks configuration.** CLAUDE.md provides session-level instructions and project context that Claude Code reads at startup. The hooks configuration (`.claude/hooks.json` or managed settings) registers ARCI's hook handlers for Claude Code lifecycle events. Together with skills and subagents, these files form the agent interaction layer that sits between the developer's intent and ARCI's CLI/graph operations.
 
-This separation means the core stays dependency-free—no YAML parsing, no schema validation, no filesystem access. Testing the core requires only constructing `Policy` values directly. Supporting new configuration formats (TOML, JSON) requires only shell changes.
+![Container diagram](diagrams/arci-c4-container.puml)
 
-## CLI shell
+### Level 3: components (within the ARCI binary)
 
-The CLI shell (`arci`) is invoked by Claude Code's hook system. It can operate in two modes: direct execution or daemon delegation.
+#### Domain logic
 
-### Direct execution
+**Policy Engine.** Policy compilation and six-stage evaluation pipeline (structural match, conditions, parameters, variables, rules, effects). Action resolution with deny-wins aggregation. See [Execution model](hooks/execution-model.md).
 
-In direct execution mode, the CLI is a complete imperative shell around the functional core:
+**Graph Engine.** Eight typed nodes (CON, MOD, NEED, REQ, TC, TASK, DEF, BSL). Graph algorithms, traversal, validation, lifecycle state machines, phase constraints, and transformation chain enforcement. See [Schema](graph/schema.md).
 
-1. Read hook input from stdin (I/O)
-2. Discover and load configuration via the config loader (I/O)
-3. Compile policies (core)
-4. Resolve parameters from param providers (I/O)
-5. Read current state from SQLite (I/O)
-6. Evaluate the hook event against policies (core)
-7. Apply mutations and run validations (core)
-8. Persist state mutations to SQLite (I/O)
-9. Write output to stdout (I/O)
-10. Exit with appropriate code (I/O)
+**Template Engine.** Task and decomposition template resolution with context interpolation, inheritance, and parameter handling. DAG construction from patterns. See [Templating](execution/templating.md).
 
-This mode requires no external processes. The tradeoff is that configuration loading and policy compilation happen on every invocation—typically 10-50ms of overhead.
+#### Persistence and integration
 
-### Daemon delegation
+**Config Loader.** Discovery, loading, parsing, precedence merging, and materialization of domain objects. See [Configuration](configuration/configuration.md).
 
-In daemon delegation mode, the CLI is a thin HTTP client:
+**Graph Store.** JSONLT persistence (append, compact, load) and JSON-LD serialization to/from typed nodes. Prose file handling.
 
-1. Read hook input from stdin (I/O)
-2. POST to daemon's `/evaluate` endpoint (I/O)
-3. Write response to stdout (I/O)
-4. Exit with code from response (I/O)
+**State Manager.** Embedded relational store with connection pooling, session/project scoping. Hook effects (setState, counters) use this component.
 
-The daemon handles configuration caching and state management. Evaluation overhead drops to single-digit milliseconds. See the daemon documentation for details on when to use this mode.
+**Parameter Resolver.** Resolves policy parameters from named providers, inline definitions, env vars, and static values. Cacheable with TTL.
 
-### Mode selection
+**Git Context.** Reads current branch, dirty state, and staged files. Provides context for policy conditions and graph operations.
 
-The CLI checks `daemon.enabled` in configuration. When enabled, it attempts to connect to the daemon. The `daemon.auto_start.on_unavailable` setting controls fallback behavior: spawn the daemon, fall back to direct execution, or fail with an error.
+#### Daemon API
 
-```mermaid
-flowchart TD
-    start["arci evaluate"] --> check_enabled{"daemon.enabled?"}
+**REST API.** Evaluation endpoint, state queries, configuration status, and graph queries.
 
-    check_enabled -->|"false"| direct["Direct Execution"]
-    check_enabled -->|"true"| try_connect["Try Daemon Connection"]
+**Event Stream.** WebSocket endpoint for live hook evaluations, policy matches, and state changes.
 
-    try_connect --> connected{"Connected?"}
-    connected -->|"yes"| delegate["Delegate to Daemon"]
-    connected -->|"no"| check_fallback{"on_unavailable?"}
+**Config Cache.** In-memory cache of compiled policies and materialized graph. File watcher triggers atomic hot-reload.
 
-    check_fallback -->|"start"| spawn["Spawn Daemon"]
-    check_fallback -->|"fallback"| direct
-    check_fallback -->|"fail"| error["Exit with Error"]
+**Metrics.** Policy match counts, evaluation timing, and validation results. Exposed via API and dashboard.
 
-    spawn --> retry["Retry Connection"]
-    retry --> delegate
+![Component diagram](diagrams/arci-c4-component.puml)
 
-    direct --> result["Return Result"]
-    delegate --> result
-```
+### Domain model: Knowledge graph
 
-## Daemon shell
+Nine node types form the knowledge graph, organized by semantic category:
 
-The daemon (started via `arci daemon start`) is an optional performance optimization. It wraps the functional core with caching, connection pooling, and a network API.
+| Category | Node types | Purpose |
+|----------|-----------|---------|
+| Intent | CON (Concept), NEED (Need) | Capture exploration and stakeholder expectations |
+| Structure | MOD (Module) | Architectural containers with hierarchy and phase tracking |
+| Obligation | REQ (Requirement) | Design obligations with verification criteria |
+| Evidence | TC (Test Case) | Verification case specifications |
+| Execution | TASK (Task) | Atomic work units in a dependency DAG |
+| Quality | DEF (Defect) | Identified problems with disposition and resolution |
+| Configuration | BSL (Baseline) | Named graph state snapshots anchored to commits |
 
-### Responsibilities
+The formal transformation chain: concept → need → requirement → task → deliverable. Each step produces `derivesFrom` edges maintaining full traceability. Test cases link to requirements via `verifiedBy`. Defects link to any node via `subject` and generate remediation tasks.
 
-The daemon's job is to amortize expensive operations across many requests:
+![Knowledge graph domain model](diagrams/arci-knowledge-graph.puml)
 
-Configuration is loaded once per project and cached. The file watcher triggers cache invalidation when files change. Hot reload is atomic—requests in flight use the old config, new requests get the new config.
+See also [Schema](graph/schema.md) · [Predicates](graph/predicates.md) · [Constraints](graph/constraints.md)
 
-Policies are compiled once when configuration loads. The compiled representations—CEL expressions for conditions, validations, mutations, and variable computations—are reused for every evaluation. Match constraints are indexed for fast structural filtering in stage 1 of the pipeline.
+## 6. Runtime view
 
-Parameter providers are queried and results cached with configurable TTL. This avoids repeated HTTP calls for dynamic parameters from external sources.
+### Scenario 1: intent capture and formalization
 
-SQLite connections are pooled rather than opened per-request. The connection pool handles concurrent access from evaluation requests and the dashboard.
+1. Developer (or agent) explores a problem area, creates a concept (CON-\*) in `draft` state
+2. Concept progresses through `exploring` as the team evaluates options and decisions crystallize
+3. Concept reaches `crystallized`, meaning thinking is complete and ready for formalization
+4. Formalization extracts stakeholder expectations as needs (NEED-\*), each with `derivesFrom` edges back to the concept
+5. Different stakeholders yield different needs from the same concept (1:N relationship)
+6. Each need belongs to a module (MOD-\*) via the `module` property
+7. Concept transitions to `formalized` and becomes reference material
 
-Metrics accumulate in memory across requests. Policy match counts, validation results, mutation statistics, and timing histograms are available via the API and dashboard.
+See [Concepts](graph/nodes/concepts.md), [Needs](graph/nodes/needs.md), [Transformations](graph/transformations.md).
 
-### API layer
+### Scenario 2: requirements derivation and flow-down
 
-The daemon exposes the core via HTTP endpoints. Each endpoint is a thin wrapper that translates HTTP to core function calls. The endpoint handler is mostly I/O orchestration. The actual policy evaluation logic lives in the core.
+1. Stakeholders confirm needs as real expectations → `validated` status
+2. Derivation transforms each need into one or more requirements (REQ-\*) with `derivesFrom` edges
+3. Requirements are more specific and constrained than needs, stated as binding obligations that must be verifiable
+4. Requirements link to modules; parent requirements flow down to child modules via `allocatesTo`
+5. Test cases (TC-\*) link to requirements via `verifiedBy`, specifying what to verify, which method, and acceptance criteria
+6. Requirements progress through `draft` → `approved`, at which point they become binding obligations
 
-### Event streaming
+See [Requirements](graph/nodes/requirements.md), [Modules](graph/nodes/modules.md), [Transformations](graph/transformations.md).
 
-The daemon provides a WebSocket endpoint at `/events` for live event streaming. When evaluations happen, the daemon publishes events to connected clients. The dashboard uses this for real-time updates.
+### Scenario 3: Building via phase-gated task execution
 
-Events are derived from core evaluation results—the core doesn't know about WebSockets or streaming, it just returns data that the shell can choose to broadcast.
+1. Requirements decompose into tasks (TASK-\*) in a DAG with `dependsOn` edges
+2. Each task has a `processPhase` (architecture, design, coding, integration, verification, validation) aligning with the module's lifecycle
+3. Tasks become `ready` when all dependencies complete; agents or developers execute ready tasks
+4. Task completion produces deliverables (commits, files, test results, documents)
+5. When all tasks for a phase complete and no blocking defects (critical/major) remain open, the module can advance to the next phase
+6. Each module's phase is independent. Cross-module coordination uses task dependencies and baseline policies.
+7. "Plans" are not stored entities. They are graph queries over the task DAG for a given module scope.
 
-## Dashboard shell
+See [Tasks](graph/nodes/tasks.md), [Modules](graph/nodes/modules.md), [Lifecycle coordination](graph/lifecycle-coordination.md).
 
-The dashboard is a web interface for diagnostics, testing, and state inspection. It's another imperative shell around the functional core, focused on human interaction rather than programmatic access.
+### Scenario 4: verification, defects, and upward propagation
 
-### Responsibilities
+1. Verification tasks execute test cases; `currentResult` on TC-\* nodes updates to pass/fail/skip
+2. Reviews (architecture-review, design-review, code-review) produce defects (DEF-\*) as deliverables
+3. Each defect has `subject` (what's wrong) and `detectedBy` (which review found it); defects `generate` remediation tasks
+4. Defect lifecycle: `open` → `confirmed` → `resolved` (fix complete) → `verified` (fix confirmed) → `closed`
+5. Blocking defects (critical/major, open/confirmed) prevent module phase advancement
+6. When all test cases for a requirement pass, the requirement can transition to `verified`
+7. When all requirements derived from a need reach `verified`, the need can transition to `satisfied`
+8. When upstream nodes change, ARCI marks downstream traceability links (`derivesFrom`, `verifiedBy`, `allocatesTo`) as suspect for reviewer triage
+9. Baselines (BSL-\*) freeze the graph state at milestones, anchored to git commits; semantic diff between baselines produces structured changelogs
 
-The dashboard provides visibility into arci's operation:
+See [Verifications](graph/nodes/test-cases.md), [Defects](graph/nodes/defects.md), [Baselines](graph/nodes/baselines.md), [Lifecycle coordination](graph/lifecycle-coordination.md).
 
-Live event streaming shows hook invocations, policy matches, and action executions as they happen. This uses the daemon's WebSocket API.
+### Scenario 5: skill-driven task execution
 
-Policy statistics display match counts, validation results, execution times, and error rates aggregated from the daemon's metrics.
+1. Developer says "work on TASK-42" → Claude Code recognizes this as a task execution request and invokes the `arci:task` skill with `TASK-42` as the argument
+2. Skill preprocessing runs `` !`arci taskcontext TASK-42` ``, which queries the graph and injects the task's requirements, deliverables, dependencies, module domain context, and current status into the skill content before Claude sees it
+3. Claude receives the rendered skill with full task context and begins following the workflow instructions
+4. Skill instructions tell Claude to build the task's requirements, running `arci` CLI commands during execution to record deliverables (`arci task update TASK-42 --add-deliverable src/parser.ts`) and check coverage (`arci reqcoverage --module MOD-3`)
+5. PostToolUse hooks fire after each `arci` CLI command, injecting updated graph state as `additionalContext` ("deliverable recorded, 2 of 4 requirements now have deliverables")
+6. If Claude tries to write to a baselined file, a PreToolUse hook denies the write and steers the agent: "this module is baselined; create a defect or run `arci moduleunlock` with justification"
+7. When Claude finishes, a TaskCompleted hook checks whether all required deliverables exist and graph mutations are complete; if not, it blocks with a `reason` that tells Claude exactly what's missing
+8. For review tasks, the skill delegates to a review subagent with `context: fork` and `agent: arci-review`. The subagent starts with the `arci:review` skill preloaded (full content, including preprocessed requirements data) and operates with read-only tool access
 
-Configuration status shows which projects have loaded configs, when they were last reloaded, and any validation errors.
+See [Workflows](workflows/index.md).
 
-State browser lets you inspect session and project state stored in SQLite.
+### Scenario 6: hook evaluation (direct execution)
 
-Policy tester provides an interactive interface to test policies against sample inputs. This is particularly useful for debugging complex expressions.
+1. Claude Code fires hook event → invokes ARCI with JSON on stdin
+2. Config Loader discovers and loads configuration, materializes policies
+3. Policy Engine compiles policies, resolves parameters
+4. Six-stage evaluation pipeline runs (structural match → conditions → parameters → variables → rules → effects)
+5. Action resolution aggregates results (deny > warn > audit > allow)
+6. ARCI persists state mutations and writes JSON response to stdout
 
-### Architecture
+See [Execution model](hooks/execution-model.md).
 
-The dashboard is server-rendered HTML with htmx for interactivity. Go templates generate HTML; htmx handles dynamic updates without a JavaScript build system.
+### Scenario 7: hook evaluation (daemon delegation)
 
-```mermaid
-flowchart LR
-    browser["Browser"] -->|"HTTP GET"| routes["Dashboard Routes"]
-    routes --> templates["Go Templates"]
-    templates --> html["HTML Response"]
-    html --> browser
+1. ARCI detects daemon enabled and delegates to the daemon's evaluate endpoint
+2. Daemon uses cached compiled policies and pooled connections
+3. Core evaluates, daemon returns JSON response
+4. The command-line tool forwards response to stdout; latency drops because the daemon avoids per-invocation config loading and policy compilation
 
-    browser -->|"htmx request"| routes
-    browser -->|"WebSocket"| events["Event Stream"]
-    events -->|"HTML fragments"| browser
-```
+See [Daemon](daemon/index.md).
 
-The dashboard reads from the daemon's cached state rather than hitting the filesystem or SQLite directly. This ensures consistency—the dashboard shows the same view of configuration and state that evaluation uses.
+## 7. Deployment view
 
-### Policy tester
+**Single-binary deployment.** One binary serves all roles: command-line tool, daemon, dashboard, and MCP server. No version skew between components.
 
-The policy tester deserves special mention because it demonstrates the core/shell separation nicely. When you submit a test input through the dashboard:
+**Installation methods.** See [Installation](installation.md) for supported installation workflows.
 
-1. The dashboard route parses the form submission (shell)
-2. It constructs a synthetic hook event (shell)
-3. It resolves any parameter references (shell)
-4. It calls `evaluate()` with the current config (core)
-5. It renders the result as HTML (shell)
+**Daemon options.** Manual foreground, system service, auto-start on unavailable, container deployment. See [Daemon auto-spawn](daemon/auto-spawn.md).
 
-The core doesn't know it's being called from a web form vs. a real hook invocation. It just evaluates policies against the input it receives.
+**Platform considerations.** Sandboxing capabilities vary by platform (see [Sandboxing](sandboxing.md)). Configuration and state directories follow platform conventions.
 
-## Testing strategy
+**Enterprise deployment.** Managed configuration via MDM for organization-wide policy distribution. See [Managed config](configuration/config-managed.md).
 
-The core/shell separation enables a clean testing strategy.
+## 8. Cross-cutting concepts
 
-Core tests are fast unit tests with no mocking. Pass in domain objects, assert on return values. These tests verify policy compilation, expression evaluation, action resolution, and the six-stage evaluation pipeline works correctly. Because the core has no I/O, tests can construct arbitrary scenarios by building `Policy` values directly.
+**Fail-open semantics.** Every error path has a permissive fallback. Evaluation errors, config parse failures, and parameter resolution failures all result in allow.
 
-Core tests construct policies as Go values, compile them, create synthetic hook events, and assert on evaluation results. For example, a test for blocking dangerous rm commands would create a policy with match constraints for `pre_tool_call` events on the `Bash` tool, add a rule with a validation expression checking for the `-rf` flag and `action: deny`, compile the policy, evaluate against a synthetic event containing `rm -rf /`, and assert that one policy matched with a deny action.
+**Cascading configuration.** Seven-layer precedence chain from built-in defaults through managed/required. See [Config cascade](configuration/config-cascade.md).
 
-Shell tests are integration tests that exercise I/O paths. They verify the CLI correctly reads stdin and writes stdout, the daemon correctly handles HTTP requests, the dashboard correctly renders templates. These tests may use fixtures, temporary directories, or test servers.
+**Deny-wins aggregation.** The most restrictive action wins across all matching policies. If any policy denies, the result is deny regardless of other policies.
 
-Shell tests use `os/exec` to run the CLI binary with fixture configuration, pipe hook input through stdin, and assert on the JSON output and exit code.
+**Knowledge graph as single source of truth.** All structured metadata lives in the graph. Prose lives in markdown files at derived paths or inline via `summary`. Views (queries) replace documents.
 
-End-to-end tests verify the full system works together: CLI talks to daemon, daemon evaluates correctly, state persists across requests. These are slower and run less frequently. Use `go test ./...` for unit and integration tests.
+**Formal transformation chain.** Concept → need → requirement → task with unbroken `derivesFrom` edges. Each transformation has preconditions and postconditions. See [Transformations](graph/transformations.md).
 
-## Technology choices
+**Phase-gated execution.** Modules track lifecycle phases independently; phase gates enforce quality criteria per module (no blocking defects, tasks complete). Cross-module synchronization uses task dependencies and baseline policies. See [Lifecycle coordination](graph/lifecycle-coordination.md).
 
-The core uses only the Go standard library plus `cel-go` for condition expression evaluation, `text/template` with Sprig for template rendering, and the chosen scripting engine for embedded scripting. CEL provides type-safe boolean expressions for rule conditions, while Go's `text/template` with Sprig handles dynamic string output in action messages and content. Keeping dependencies minimal makes the core easy to understand and test.
+**Suspect link propagation.** Node changes mark downstream traceability links as suspect for reviewer triage. Suspect links don't auto-generate defects; reviewers clear the flag, create a defect, or update the downstream node.
 
-The CLI shell uses `cobra` for command parsing and `net/http` for HTTP. Both are well-maintained, widely-used libraries in the Go ecosystem.
+**Agent interaction through skills, subagents, and hooks.** The agent doesn't interact with the knowledge graph by accident or by reading documentation alone. Skills encode each development workflow as structured instructions with live graph context. Subagents provide isolated execution for workflows like review where context separation matters. Hooks enforce invariants and inject ambient graph state. All three use ARCI CLI commands as the interface to the graph: skills instruct the agent to run them, hooks call them to check preconditions, and hook denial output steers the agent toward the right command when blocking an action. See [Workflows](workflows/index.md).
 
-The daemon shell uses `net/http` with the `chi` router for the HTTP API and `nhooyr.io/websocket` for WebSocket support. Go's built-in concurrency model with goroutines and channels replaces the need for a separate async runtime.
+**Change discipline through layered enforcement.** Hooks, skills, subagents, pre-commit hooks, CI, and the CLI all protect baselined content. Defense in depth rather than a single enforcement point. Hook PreToolUse policies deny writes to baselined files. Skills include instructions to check baseline status before modifying files. Review subagents verify changes against requirements. Each layer catches what the others miss.
 
-The dashboard shell uses Go's `html/template` with Sprig for templates and htmx for interactivity. Server-side rendering keeps things simple—no JavaScript build system, no client-side state management. The dashboard uses `html/template` rather than `text/template` for automatic XSS protection.
+**Unidirectional data flow in evaluation.** Parameters → variables → conditions → validate/mutate → effects → state. No cycles in the evaluation pipeline.
 
-File watching uses the `fsnotify` package, which provides cross-platform filesystem event notifications.
+## 9. Architecture decisions
 
-State storage uses SQLite via `database/sql` with `modernc.org/sqlite` (a pure-Go driver). SQLite is robust, requires no external process, and handles the concurrency patterns arci needs. The `database/sql` package provides built-in connection pooling.
+Key design decisions live inline across the design docs today. See [Design documentation index](index.md) for the current catalog.
 
-Configuration parsing uses `gopkg.in/yaml.v3` for YAML deserialization. Struct tags make schema definition straightforward while providing clear error messages.
+## 10. Quality requirements
+
+| Category | Attribute | Scenario |
+|----------|-----------|----------|
+| Safety | Fail-open | Any internal error results in allow; Claude Code is never blocked by ARCI failures |
+| Performance | Evaluation latency | Hook evaluation within agent-invisible time budget (direct and daemon modes) |
+| Testability | Domain logic | Domain logic testable with plain data, no mocking required |
+| Testability | Policy testing | Policy authors can dry-run and test configurations before deployment |
+| Reliability | Config resilience | Parse errors skip the file; system continues with remaining config |
+| Reliability | Hot reload atomicity | Config reload is atomic; no partial state visible to evaluation |
+| Security | Sandbox isolation | Platform-native sandboxing constrains shell actions |
+| Security | Extension trust | Extension trust model with tiered capabilities |
+| Traceability | Requirements chain | Unbroken `derivesFrom` chain from concept to requirement |
+| Traceability | Suspect propagation | Changes to upstream nodes surface downstream for review |
+| Extensibility | Extension system | New policies and custom functions without modifying core |
+
+See [Testing strategy](testing.md), [Security model](security.md).
+
+## 11. Risks and technical debt
+
+### Risks
+
+- **Daemon authentication.** The daemon API currently has no authentication; localhost binding provides minimal protection.
+- **Platform sandbox variation.** Sandbox capabilities vary across platforms.
+- **Pre-1.0 instability.** Schema and API may change; see [Versioning](versioning.md).
+- **Expression debugging.** Complex expressions may be hard for policy authors to debug.
+
+### Technical debt
+
+- Security model has placeholder sections (threat scenarios, controls, audit logging)
+- Versioning guarantees unspecified
+- Test plans (TP-\*) not yet designed
+- Performance characteristics not yet documented
+
+## 12. Glossary
+
+> See [Glossary](glossary.md) for terms used throughout ARCI documentation.

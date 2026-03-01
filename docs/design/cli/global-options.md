@@ -1,6 +1,6 @@
 # Global options
 
-Several options apply to all commands. These are registered as persistent flags on the root Cobra command and inherited by all subcommands.
+Six options apply to all commands. The root Cobra command registers them as persistent flags, and all subcommands inherit them.
 
 ## Persistent flags
 
@@ -15,9 +15,9 @@ func addGlobalFlags(cmd *cobra.Command) {
 
 ## Flag reference
 
-`--project <path>` — Sets the project root explicitly instead of detecting it from the current directory.
+`--project <path>`: sets the project root explicitly instead of detecting it from the current directory.
 
-`--scope <scope>` — Specifies which configuration layer to target for commands that modify files. Valid values are:
+`--scope <scope>`: specifies which configuration layer to target for commands that change files. Valid values are:
 
 - `worktree_assistant`, `worktree`
 - `local_assistant`, `local`
@@ -25,16 +25,16 @@ func addGlobalFlags(cmd *cobra.Command) {
 - `user_assistant`, `user`
 - `site_assistant`, `site`
 
-Note that `cli`, `env`, and `default*` scopes are read-only and cannot be targeted for modifications.
+The `cli`, `env`, and `default*` scopes only support reading. You cannot target them for modifications.
 
-`--socket <path>` — Specifies the Unix socket path for daemon communication.
+`--socket <path>`: specifies the Unix socket path for daemon communication.
 
-`--url <url>` — Specifies the HTTP URL for daemon communication.
+`--url <url>`: specifies the HTTP URL for daemon communication.
 
-`--verbose` (`-v`) — Increases output verbosity. Can be repeated for more detail (`-v`, `-vv`, `-vvv`).
+`--verbose` (`-v`): increases output verbosity. You can repeat it for more detail (`-v`, `-vv`, `-vvv`).
 
-`--quiet` (`-q`) — Suppresses non-essential output. Can be repeated for less output (`-q`, `-qq`, `-qqq`). Mutually exclusive with `--verbose`.
+`--quiet` (`-q`): suppresses non-essential output. You can repeat it for less output (`-q`, `-qq`, `-qqq`). Mutually exclusive with `--verbose`.
 
 ## See also
 
-- [environment-variables](environment-variables.md) — environment variable equivalents for common options
+- [environment-variables](environment-variables.md): environment variable equivalents for common options

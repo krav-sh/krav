@@ -4,7 +4,9 @@ The dashboard command starts the diagnostics dashboard server in the foreground.
 
 ## Synopsis
 
-    arci dashboard [options]
+```text
+arci dashboard [options]
+```
 
 ## Description
 
@@ -12,8 +14,8 @@ The dashboard connects to the daemon as a client, so the daemon must be running 
 
 ## Options
 
-- `--port <port>` — HTTP port for the dashboard server (default: `7681`).
-- `--open` — Automatically open a browser to the dashboard URL.
+- `--port <port>`: HTTP port for the dashboard server (default: `7681`).
+- `--open`: automatically open a browser to the dashboard URL.
 
 ## Examples
 

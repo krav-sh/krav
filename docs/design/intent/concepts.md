@@ -4,41 +4,41 @@
 
 Concepts (CON-*) are explorations of how something could work. They capture design thinking, architectural options, decisions made and their rationale, research findings, and any other crystallized thinking that informs the project.
 
-In INCOSE terms, concepts are "lifecycle concepts"—the raw material from which needs are derived through formal transformation. A concept represents exploration and understanding; a need represents a formalized stakeholder expectation extracted from that understanding.
+In INCOSE terms, concepts are "lifecycle concepts," the raw material from which the team derives needs through formal transformation. A concept represents exploration and understanding; a need represents a formalized stakeholder expectation extracted from that understanding.
 
 ## Purpose
 
-Concepts serve several roles:
+Concepts serve these roles:
 
-**Exploration space**: Before committing to requirements, teams explore options. Concepts provide a place to think through alternatives, tradeoffs, and implications without the formality of requirements.
+**Exploration space**: before committing to requirements, teams explore options. Concepts provide a place to think through alternatives, tradeoffs, and implications without the formality of requirements.
 
-**Decision capture**: When architectural or design decisions are made, concepts record what was decided, what alternatives were considered, and why the decision was made. This prevents relitigating settled questions.
+**Decision capture**: when the team makes architectural or design decisions, concepts record what the team decided, what alternatives the team considered, and why. This prevents relitigating settled questions.
 
-**Research repository**: Technical research, spike findings, proof-of-concept results, and external reference material can be captured as concepts.
+**Research repository**: technical research, spike findings, proof-of-concept results, and external reference material can live as concepts.
 
-**Transformation source**: When a concept crystallizes, it becomes the source for formal transformation into needs. The derivesFrom relationship maintains traceability from needs back to the concepts that informed them.
+**Transformation source**: when a concept crystallizes, it becomes the source for formal transformation into needs. The derivesFrom relationship maintains traceability from needs back to the concepts that informed them.
 
 ## Lifecycle
 
 Concepts progress through states:
 
-```
+```text
 draft → exploring → crystallized → formalized → superseded
 ```
 
 | State        | Description                                            |
 |--------------|--------------------------------------------------------|
 | draft        | Initial capture, incomplete thinking                   |
-| exploring    | Active exploration, options being evaluated            |
+| exploring    | Active exploration, the team evaluates options         |
 | crystallized | Thinking complete, ready to formalize into needs       |
-| formalized   | Needs have been derived; concept is reference material |
+| formalized   | The team derived needs; concept is reference material  |
 | superseded   | Replaced by newer understanding                        |
 
 State transitions:
 
 - `draft → exploring`: Work begins on fleshing out the concept
 - `exploring → crystallized`: Exploration complete, understanding settled
-- `crystallized → formalized`: `arci conceptformalize` has been run
+- `crystallized → formalized`: the user ran `arci conceptformalize`
 - `* → superseded`: New concept replaces this one (via supersedes relationship)
 
 ## Concept types
@@ -47,16 +47,16 @@ The `conceptType` field categorizes the nature of the exploration:
 
 | Type          | Description                                             | Examples                                              |
 |---------------|---------------------------------------------------------|-------------------------------------------------------|
-| architectural | System structure, module boundaries, decomposition      | "Parser subsystem architecture", "Service boundaries" |
-| operational   | How stakeholders use, operate, or experience the system | "CLI user workflows", "Error recovery experience"     |
-| technical     | Internal mechanisms, algorithms, data structures        | "Tokenization algorithm", "Graph storage format"      |
-| interface     | Contracts between components, APIs, protocols           | "Parser-CLI interface", "Plugin API design"           |
-| process       | Workflows, procedures, ways of working                  | "Release process", "Code review workflow"             |
-| integration   | Connections with external systems and standards         | "INCOSE alignment", "Git integration"                 |
+| architectural | System structure, module boundaries, decomposition      | `Parser subsystem architecture`, `Service boundaries` |
+| operational   | How stakeholders use, operate, or experience the system | `CLI user workflows`, `Error recovery experience`     |
+| technical     | Internal mechanisms, algorithms, data structures        | `Tokenization algorithm`, `Graph storage format`      |
+| interface     | Contracts between components, APIs, protocols           | `Parser-CLI interface`, `Plugin API design`           |
+| process       | Workflows, procedures, ways of working                  | `Release process`, `Code review workflow`             |
+| integration   | Connections with external systems and standards         | `INCOSE alignment`, `Git integration`                 |
 
 ## Storage model
 
-Concept metadata is stored in `graph.jsonlt` as JSON-LD compact form. There is no frontmatter in prose files—`graph.jsonlt` is the single source of truth for all structured data.
+ARCI stores concept metadata in `graph.jsonlt` as JSON-LD compact form. Prose files have no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
 
 ```json
 {"@context": "context.jsonld", "@id": "CON-C0NC3PT5", "@type": "Concept", "title": "Parser architecture", "status": "exploring", "conceptType": "architectural", "content": "concepts/20260103164500-C0NC3PT5-parser-architecture.md", "informs": {"@id": "MOD-P4RS3R01"}}
@@ -132,7 +132,7 @@ What should we do based on this?
 
 ## Relationships
 
-Relationships are embedded in the concept's JSON-LD record using `{"@id": "..."}` values.
+The concept's JSON-LD record embeds relationships using `{"@id": "..."}` values.
 
 ### Outgoing relationships
 
@@ -175,7 +175,7 @@ A single concept may produce multiple needs for different stakeholders or differ
 
 ## Implementation architecture
 
-Concept functionality follows the three-layer architecture (see CON-GR4PH4RC).
+Concept features follow the three-layer architecture (see CON-GR4PH4RC).
 
 ### Typed node
 
@@ -197,7 +197,7 @@ class ConceptNode:
 
 All fields use proper types. The IO layer creates ConceptNode directly from JSON-LD records, preserving all type-specific fields.
 
-### Core layer (arci.core.concept)
+### Core layer (`arci.core.concept`)
 
 Pure functions and typed data structures:
 
@@ -237,7 +237,7 @@ def informs(graph: Graph, concept_id: str) -> str | None: ...  # Returns module 
 def derived_needs(graph: Graph, concept_id: str) -> frozenset[str]: ...  # Returns need IDs
 ```
 
-### Service layer (arci.service.concept)
+### Service layer (`arci.service.concept`)
 
 Orchestrates core and IO:
 
@@ -300,7 +300,7 @@ arci conceptlink CON-C0NC3PT5 --informs MOD-P4RS3R01
 
 Concepts can have an informal `informs` relationship to modules, indicating which module the concept is primarily about. This is distinct from the formal derivation chain (CON → NED → REQ).
 
-```
+```text
 CON-parser-arch (informs: MOD-parser)
     ↓ formalize
 NED-parser-performance (module: MOD-parser)

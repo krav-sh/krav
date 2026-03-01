@@ -1,32 +1,32 @@
-# GritQL structural code analysis
+# Structural code analysis with GritQL
 
-GritQL is a query language for structural code search and transformation. Unlike regex, which operates on text, GritQL understands syntax trees and can match code patterns regardless of formatting, whitespace, or superficial differences. arci integrates GritQL as an optional capability for policies that need to analyze code structure rather than raw text.
+GritQL is a query language for structural code search and transformation. Unlike regular expressions, which operate on text, GritQL understands syntax trees and can match code patterns regardless of formatting, whitespace, or superficial differences. ARCI integrates GritQL as an optional feature for policies that need to analyze code structure rather than raw text.
 
 The key insight of GritQL is that any valid code snippet in backticks is a valid pattern. Policy authors don't need to understand abstract syntax trees or parser internals. Writing `` `console.log($msg)` `` matches any console.log call and captures the argument as `$msg`. This makes structural matching accessible without requiring deep language knowledge.
 
-arci delegates to the grit CLI rather than embedding TreeSitter grammars directly. This keeps the arci package lightweight and ensures users get the latest GritQL features and language support without arci releases. If the grit CLI is not installed, GritQL functionality logs a warning and is skipped entirely, maintaining fail-open semantics.
+ARCI delegates to the grit command-line tool rather than embedding TreeSitter grammars directly. This keeps the ARCI package lightweight and ensures users get the latest GritQL features and language support without ARCI releases. If the grit command-line tool is not installed, GritQL support logs a warning and the engine skips it entirely, maintaining fail-open semantics.
 
 ## Use cases
 
-GritQL is valuable when regex-based matching is fragile or insufficient. Common scenarios include detecting specific API usage patterns (finding all calls to a deprecated function regardless of how arguments are formatted), matching code constructs that span multiple lines (function definitions with specific signatures), and identifying unsafe patterns that require understanding code structure (SQL injection via string concatenation rather than parameterized queries).
+GritQL is valuable when regular expression matching is fragile or insufficient. Common scenarios include detecting specific API usage patterns (finding all calls to a deprecated function regardless of how the code formats arguments), matching code constructs that span many lines (function definitions with specific signatures), and identifying unsafe patterns that require understanding code structure (SQL injection via string concatenation rather than parameterized queries).
 
-For simple substring or pattern matching, CEL's `.contains()` and `.matches()` methods remain appropriate. GritQL adds value when you need to distinguish between syntactically different uses of the same text. A regex matching `console.log` will also match comments containing the text, variable names like `console_log_enabled`, or strings containing `"console.log"`. GritQL matches only actual console.log function calls.
+For simple substring or pattern matching, CEL's `.contains()` and `.matches()` methods remain appropriate. GritQL adds value when you need to distinguish between syntactically different uses of the same text. A regular expression matching `console.log` also matches comments containing the text, variable names like `console_log_enabled`, or strings containing `"console.log"`. GritQL matches only actual console.log function calls.
 
 ## Integration with the policy model
 
-GritQL integrates with the policy model through CEL functions that can be used in conditions, variables, and validate expressions. There is no separate "gritql action type"—instead, GritQL functions participate in the standard policy evaluation pipeline.
+GritQL integrates with the policy model through CEL functions that work in conditions, variables, and check expressions. No separate "GritQL action type" exists. GritQL functions plug into the standard policy evaluation pipeline.
 
 The primary functions are:
 
 `$gritql_matching(content, pattern)` returns true if the content contains at least one match for the pattern. Use this for boolean conditions.
 
-`$gritql_matches(content, pattern)` returns detailed match information including count and matched text. Use this when you need to inspect what was matched or count occurrences.
+`$gritql_matches(content, pattern)` returns detailed match information including count and matched text. Use this when you need to inspect the matches or count occurrences.
 
 Both functions accept an optional third parameter for language specification when auto-detection is insufficient.
 
-### Using GritQL in validate expressions
+### Using GritQL in check expressions
 
-The most common use of GritQL is in validate expressions, where you check whether code matches a problematic pattern:
+The most common use of GritQL is in check expressions, where you test whether code matches a problematic pattern:
 
 ```yaml
 version: 1
@@ -47,7 +47,7 @@ rules:
       action: warn
 ```
 
-The validate expression returns true when the code is acceptable (no matches) and false when it contains the pattern. When validation fails, the specified action and message apply.
+The check expression returns true when the code is acceptable (no matches) and false when it contains the pattern. When the check fails, the specified action and message apply.
 
 For blocking dangerous patterns, use `action: deny`:
 
@@ -106,13 +106,13 @@ This rule only applies to code containing await expressions (checked in conditio
 
 ## Pattern syntax
 
-GritQL patterns use a concise syntax that closely resembles the target language. The official GritQL documentation at grit.io provides comprehensive coverage; this section highlights the most useful features for policy authors.
+GritQL patterns use a concise syntax that closely resembles the target language. The official GritQL documentation at grit.io provides full coverage; this section highlights the most useful features for policy authors.
 
 ### Backtick patterns
 
 The simplest patterns are code snippets in backticks. The pattern `` `function $name() { }` `` matches any function declaration and captures its name. The pattern `` `import $module from "$path"` `` matches ES6 imports and captures both the imported binding and the module path.
 
-Backtick patterns match structurally, ignoring whitespace and formatting differences. A pattern written on one line matches code formatted across multiple lines. This is one of GritQL's key advantages over regex.
+Backtick patterns match structurally, ignoring whitespace and formatting differences. A pattern written on one line matches code formatted across many lines. This is one of GritQL's key advantages over regular expressions.
 
 ### Metavariables
 
@@ -122,7 +122,7 @@ The pattern `` `function $name($...params) { $...body }` `` matches any function
 
 ### Where clauses
 
-Where clauses add constraints to patterns. The syntax `where { $var <: "pattern" }` requires the captured variable to match an additional pattern.
+Where clauses add constraints to patterns. The syntax `where { $var <: "pattern" }` requires the captured variable to match a further pattern.
 
 The pattern `` `fetch($url, $options)` where { $url <: `"http://$_"` } `` matches fetch calls where the URL is a string literal starting with `http://` rather than `https://`.
 
@@ -140,11 +140,11 @@ Matching variable declarations: `` `const $name = $value` `` or `` `let $name = 
 
 ## GritQL functions
 
-arci provides two CEL functions for GritQL pattern matching.
+ARCI provides two CEL functions for GritQL pattern matching.
 
 ### $gritql_matching
 
-The `$gritql_matching(content, pattern)` function returns true if the content matches the pattern, false otherwise. Use this for boolean conditions and validate expressions.
+The `$gritql_matching(content, pattern)` function returns true if the content matches the pattern, false otherwise. Use this for boolean conditions and check expressions.
 
 ```yaml
 version: 1
@@ -170,7 +170,7 @@ rules:
 
 ### $gritql_matches
 
-The `$gritql_matches(content, pattern)` function returns detailed match information. Use this when you need to inspect what was matched, count occurrences, or extract captured values.
+The `$gritql_matches(content, pattern)` function returns detailed match information. Use this when you need to inspect the results, count occurrences, or extract captured values.
 
 The function returns an object with:
 
@@ -212,7 +212,7 @@ GritQL infers language from file extensions in most cases, but explicit specific
 
 ## Performance considerations
 
-GritQL parses source files to build syntax trees before pattern matching. For small files this overhead is negligible, but for very large files or high-frequency policies, consider scoping GritQL checks appropriately.
+GritQL parses source files to build syntax trees before pattern matching. For small files this overhead is negligible, but for large files or high-frequency policies, consider scoping GritQL checks appropriately.
 
 Pre-filter with fast checks (file extension, simple string contains) before invoking GritQL:
 
@@ -244,19 +244,19 @@ This policy first applies structural matching via the `paths` field, then uses a
 
 ## Fail-open behavior
 
-GritQL integration follows arci's fail-open semantics. If the grit CLI is not installed, GritQL functions return false (for `$gritql_matching`) or an empty result (for `$gritql_matches`) and log a warning. Policy evaluation continues, and operations are not blocked due to missing tooling.
+GritQL integration follows ARCI's fail-open semantics. If the grit command-line tool is not installed, GritQL functions return false (for `$gritql_matching`) or an empty result (for `$gritql_matches`) and log a warning. Policy evaluation continues, and missing tooling does not block operations.
 
 Specific fail-open scenarios:
 
-When the grit CLI is not found in PATH, all GritQL operations log a warning like "grit CLI not found; skipping GritQL pattern matching" and return no-match results. The warning appears once per daemon startup, not on every evaluation.
+When the grit command-line tool is not found in PATH, all GritQL operations log a warning like "grit not found; skipping GritQL pattern matching" and return no-match results. The warning appears once per daemon startup, not on every evaluation.
 
 When a GritQL pattern has syntax errors, the function logs the error and returns a no-match result. The policy continues evaluating with GritQL checks effectively skipped.
 
-When the grit CLI times out (default 5 seconds), the function returns a no-match result. The timeout is configurable via runtime settings.
+When the grit command-line tool times out (default 5 seconds), the function returns a no-match result. The timeout is configurable via runtime settings.
 
 When file content is not valid source code for the detected language, GritQL parsing may fail. The function logs the error and returns a no-match result.
 
-To verify grit CLI availability:
+To verify grit availability:
 
 ```bash
 # Check if grit is installed
@@ -269,11 +269,11 @@ brew install grit
 npm install -g @getgrit/cli
 ```
 
-The `arci doctor` command includes a check for grit availability and reports whether GritQL features will function.
+The `arci doctor` command includes a check for grit availability and reports whether GritQL features work.
 
 ## Example policies
 
-These examples demonstrate common uses of GritQL in arci policies.
+These examples show common uses of GritQL in ARCI policies.
 
 ### Warn about console.log in production code
 
@@ -300,7 +300,7 @@ rules:
       action: warn
 ```
 
-### Track TODO comments
+### Track to-do comments
 
 ```yaml
 version: 1
@@ -415,12 +415,12 @@ rules:
 
 ## Relationship to other tools
 
-GritQL complements rather than replaces other pattern matching capabilities in arci.
+GritQL complements rather than replaces other pattern matching capabilities in ARCI.
 
 CEL's `.contains()` and `.matches()` methods remain the primary tools for simple text matching. They're faster, require no external dependencies, and handle most validation needs.
 
-Shell effects can invoke any external tool, including dedicated linters or analyzers. Use these for complex analysis that GritQL doesn't cover or when you need to leverage existing tool configurations.
+Shell effects can invoke any external tool, including dedicated linters or analyzers. Use these for complex analysis that GritQL does not cover or when you need to use existing tool configurations.
 
-GritQL fills the gap between simple regex and full static analysis. When you need to understand code structure but don't need a complete type system or data flow analysis, GritQL provides the right level of power without the complexity of embedding a full analyzer.
+GritQL fills the gap between simple regular expressions and full static analysis. When you need to understand code structure but do not need a complete type system or data flow analysis, GritQL provides the right level of power without the complexity of embedding a full analyzer.
 
-For teams already using GritQL for code transformation (via grit's rewrite capabilities), the integration allows reusing patterns between arci policies and standalone grit workflows. A pattern developed for arci can be promoted to a grit transformation, or vice versa.
+For teams already using GritQL for code transformation (via grit's rewrite capabilities), the integration allows reusing patterns between ARCI policies and standalone grit workflows. You can promote a pattern developed for ARCI to a grit transformation, or vice versa.

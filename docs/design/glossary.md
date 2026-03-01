@@ -1,14 +1,14 @@
 # Glossary
 
-This document defines key terms used throughout arci's documentation.
+This document defines key terms used throughout ARCI's documentation.
 
 ## Core concepts
 
-**Hook.** A point in Claude Code's execution flow where external code can intercept and influence behavior. arci receives hook invocations and evaluates policies against them. See [Hook schema](hooks/hook-schema.md) for the full list of event types.
+**Hook.** A point in Claude Code's execution flow where external code can intercept and influence behavior. ARCI receives hook invocations and evaluates policies against them. See [Hook schema](hooks/hook-schema.md) for the full list of event types.
 
 **Hook event.** A specific type of hook invocation. Examples include pre_tool_call (before a tool executes), post_tool_call (after a tool executes), session_start (when a conversation begins), and pre_prompt (when the user sends a message). See [Hook schema](hooks/hook-schema.md) for event mapping.
 
-**Policy.** A self-contained unit of hook logic in arci. A policy declares its matching criteria, conditions, parameters, variables, macros, and rules all in one YAML document. See [Policy model](hooks/policy-model.md) for details.
+**Policy.** A self-contained unit of hook logic in ARCI. A policy declares its matching criteria, conditions, parameters, variables, macros, and rules all in one YAML document. See [Policy model](hooks/policy-model.md) for details.
 
 **Rule.** A component within a policy that defines a specific check, mutation, or side effect. Rules contain one of validate (for admission decisions), mutate (for transforming input), or effects (for fire-and-forget actions), plus optional match constraints and conditions.
 
@@ -20,37 +20,39 @@ This document defines key terms used throughout arci's documentation.
 
 **Mutate.** A rule component that transforms the hook event before it proceeds to Claude Code. Mutate blocks contain a CEL expression that receives the current event state as `object` and returns the modified state.
 
-**Effects.** Fire-and-forget side actions that run after the admission decision is determined. Effects include setState, log, and notify. Effects cannot influence whether the tool call proceeds.
+**Effects.** fire-and-forget side actions that run after the evaluator reaches an admission decision. Effects include setState, log, and notify. Effects cannot influence whether the tool call proceeds.
 
 **Condition.** A CEL expression used in a `conditions` array within a policy or rule. All conditions in the array must return true (AND logic with short-circuit evaluation).
 
 ## Spec-driven development
 
-**Concept.** A high-level exploration of how something could work. Concepts capture design thinking, architectural options, and crystallized decisions. They are the raw material from which needs are derived through formal transformation.
+**Concept.** a high-level exploration of how something could work. Concepts capture design thinking, architectural options, and crystallized decisions. They are the raw material from which the agent derives needs through formal transformation.
 
-**Module.** A named, addressable architectural container in the spec knowledge graph. Modules represent systems, subsystems, or components being built. They form a hierarchy, own needs and requirements, and track lifecycle phase.
+**Module.** a named, addressable architectural container in the spec knowledge graph. Modules represent systems, subsystems, or components under construction. They form a hierarchy, own needs and requirements, and track lifecycle phase.
 
-**Need.** A stakeholder expectation — what stakeholders need an module to do or be. Needs are validated against stakeholder intent and serve as the source for deriving requirements.
+**Stakeholder.** a named party with expectations about the system under construction. Stakeholders are project-defined STK-* nodes representing actual people, roles, organizations, or communities. No fixed taxonomy of stakeholder types exists; each project defines its own stakeholders during initialization.
 
-**Requirement.** A precise, testable design obligation derived from a need. Requirements are stated as "shall" statements and must be verifiable. They are verified by verifications.
+**Need.** a stakeholder expectation: what stakeholders need a module to do or be. Each need references one or more stakeholders via the `stakeholder` object property. The agent validates needs against stakeholder intent, and needs serve as the source for deriving requirements.
 
-**Verification.** A test or check that validates a requirement is satisfied. Verifications use one of four methods: test, inspection, demonstration, or analysis. They link to requirements via verifiedBy relationships.
+**Requirement.** a precise, testable design obligation derived from a need. Requirements use "shall" statements and must be verifiable. Test cases verify them.
 
-**Task.** A unit of work to implement a requirement. Tasks form a DAG with dependency relationships and are organized by process phase (architecture through validation).
+**Test case.** a verification specification that defines what to check and how. Test cases use one of four methods: test, inspection, demonstration, or analysis. They follow their own lifecycle (draft, specified, built, executable, obsolete), while ARCI tracks execution results separately via `currentResult` (pass/fail/skip/unknown). Test cases link to requirements via verifies/verifiedBy relationships.
 
-**Finding.** An issue, risk, or observation discovered during development. Findings have their own lifecycle (open → acknowledged → addressed → closed) and may generate tasks for resolution.
+**Task.** a unit of work to satisfy a requirement. Tasks form a DAG with dependency relationships and follow a process phase (architecture through validation).
+
+**Defect.** An identified problem requiring action, discovered during reviews, testing, or analysis. Defects have a severity (critical, major, minor, trivial) and category (missing, incorrect, ambiguous, etc.). Their lifecycle runs open → confirmed → resolved → verified → closed. Defects may generate remediation tasks and link to the subject node (requirement, test case, etc.) where the reviewer discovered the problem.
 
 **Spec.** A structured specification document containing modules. Specs use INCOSE-inspired systems engineering practices to organize requirements and traceability.
 
-**Knowledge graph.** The interconnected graph of spec modules and their relationships. Stored in `graph.jsonlt` using JSON-LD compact form, the knowledge graph provides full traceability from concepts through verified implementations.
+**Knowledge graph.** The interconnected graph of spec modules and their relationships. Stored in `graph.jsonlt` using JSON-LD compact form, the knowledge graph provides full traceability from concepts through verified implementations. Inline prose uses the `summary` field; extended prose lives in markdown files at convention-derived paths under `.arci/`.
 
 ## Configuration
 
 **Project configuration.** Policies and settings that apply to a specific project, stored in the project's `.arci/` directory. Project policies have higher precedence than user-level policies.
 
-**Drop-in directory.** A `policies.d/` directory containing individual YAML files that are merged into configuration. Local variants (`policies.local.d/`) are gitignored and take precedence over non-local policies at the same cascade layer.
+**Drop-in directory.** a `policies.d/` directory containing individual YAML files that the loader merges into configuration. Local variants (`policies.local.d/`) are gitignored and take precedence over non-local policies at the same cascade layer.
 
-**Precedence.** The order in which configuration sources are merged. Later sources override earlier ones. See [Config cascade](config-cascade.md) for details.
+**Precedence.** the order in which the loader merges configuration sources. Later sources override earlier ones. See [Config cascade](configuration/config-cascade.md) for details.
 
 ## Expression and scripting languages
 
@@ -64,13 +66,13 @@ This document defines key terms used throughout arci's documentation.
 
 **GritQL.** A query language for structural code analysis using syntax tree patterns. See [GritQL](hooks/gritql.md) for details.
 
-**Custom function.** An extension to CEL for policy evaluation. Custom functions are invoked with a `$` prefix (e.g., `$file_exists(path)`, `$current_branch()`).
+**Custom function.** an extension to CEL for policy evaluation. Policies invoke custom functions with a `$` prefix (such as `$file_exists(path)`, `$current_branch()`).
 
-**Macro.** A reusable CEL expression fragment defined in a policy's `macros` array. Macros can be called from other CEL expressions with a `$` prefix.
+**Macro.** a reusable CEL expression fragment defined in a policy's `macros` array. Other CEL expressions can call macros with a `$` prefix.
 
 **jsonPointer function.** A custom CEL function for accessing values in untyped JSON using RFC 6901 JSON Pointer syntax.
 
-**Path expression.** CEL's dot notation for navigating nested data structures (e.g., `tool_input.command`).
+**Path expression.** CEL's dot notation for traversing nested data structures (such as `tool_input.command`).
 
 **Sandbox.** An isolated execution environment for shell effects. On Linux/WSL2, uses bubblewrap; on macOS, uses sandbox-exec with Seatbelt profiles. See [Sandboxing](sandboxing.md) for details.
 
@@ -102,7 +104,7 @@ This document defines key terms used throughout arci's documentation.
 
 **Imperative shell.** Code that handles real-world concerns like reading files, managing connections, and executing side effects.
 
-**Daemon.** An optional long-running process that caches configuration, pools connections, and serves an HTTP API. See [Daemon](daemon.md) for details.
+**Daemon.** An optional long-running process that caches configuration, pools connections, and serves an HTTP API. See [Daemon](daemon/index.md) for details.
 
 **Direct execution.** Running `arci hook apply` without a daemon, where configuration loading happens on every invocation.
 
@@ -112,7 +114,7 @@ This document defines key terms used throughout arci's documentation.
 
 **Variable.** A computed value derived from parameters, the hook event, built-in functions, or other variables.
 
-**Provider.** A source of parameter values. Named providers are defined in arci configuration. Inline providers include file, http, and env.
+**Provider.** a source of parameter values. The ARCI configuration defines named providers. Inline providers include file, http, and env.
 
 ## Extensions
 
@@ -126,7 +128,7 @@ This document defines key terms used throughout arci's documentation.
 
 ## Claude Code terms
 
-**Matcher.** A pattern that filters which tools trigger a hook. An empty matcher matches all tools. arci's policy match constraints provide more powerful filtering.
+**Matcher.** a pattern that filters which tools trigger a hook. An empty matcher matches all tools. ARCI's policy match constraints provide more powerful filtering.
 
 **Tool.** An operation Claude Code can perform, like executing shell commands (Bash), writing files (Write), or reading files (Read). See [Hook schema](hooks/hook-schema.md) for canonical tool names.
 
@@ -134,4 +136,4 @@ This document defines key terms used throughout arci's documentation.
 
 ---
 
-This glossary will expand as arci evolves. Terms should be added when they appear frequently in documentation or when vocabulary needs disambiguation.
+This glossary expands as ARCI evolves. Add terms when they appear frequently in documentation or when vocabulary needs disambiguation.

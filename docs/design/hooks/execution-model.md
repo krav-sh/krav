@@ -1,47 +1,47 @@
 # Execution model
 
-This document describes how arci evaluates policies when a hook event arrives. It covers the evaluation pipeline, priority cascading, result aggregation, and the data flow through the system.
+This document describes how ARCI evaluates policies when a hook event arrives. It covers the evaluation pipeline, priority cascading, result aggregation, and the data flow through the system.
 
 ## Overview
 
-When Claude Code fires a hook (for example, before executing a Bash command), arci receives the event and evaluates all matching policies to produce a response. The response determines whether the tool call proceeds, any mutations to apply, warnings to surface, and side effects to execute.
+When Claude Code fires a hook (such as before executing a Bash command), ARCI receives the event and evaluates all matching policies to produce a response. The response determines whether the tool call proceeds, any mutations to apply, warnings to surface, and side effects to execute.
 
-The evaluation pipeline has several stages: structural matching filters policies quickly using indexable criteria, condition evaluation applies dynamic CEL expressions, rule evaluation runs the actual validations and mutations, effect execution handles side actions, and result aggregation combines outcomes from all matching policies into a single response.
+The evaluation pipeline has these stages: structural matching filters policies quickly using indexable criteria, condition evaluation applies CEL expressions with runtime context, rule evaluation runs the actual validations and mutations, effect execution handles side actions, and result aggregation combines outcomes from all matching policies into a single response.
 
 ## Enforcement state handling
 
-Before the evaluation pipeline runs, policies are filtered by their enforcement state. Each policy exists in one of three states: enabled, disabled, or audit. The enforcement state is determined by the policy cascade during loading, as described in [policy-loading.md](policy-loading.md).
+Before the evaluation pipeline runs, the engine filters policies by their enforcement state. Each policy exists in one of three states: enabled, turned off, or audit. The policy cascade during loading determines the enforcement state, as described in [policy-loading.md](policy-loading.md).
 
-Enabled policies are evaluated normally. They participate fully in structural matching, condition evaluation, validation, mutation, and effects. Their actions have full force: deny blocks tool calls, mutations are applied, effects are executed.
+The engine evaluates enabled policies normally. They take part fully in structural matching, condition evaluation, validation, mutation, and effects. Their actions have full force: deny blocks tool calls, the engine applies mutations, and it executes effects.
 
-Disabled policies are completely skipped. They are not matched, evaluated, or logged. They don't appear in the audit trail. Disabling a policy is equivalent to removing it from the configuration entirely, except that it remains visible in diagnostic commands.
+The engine skips turned-off policies entirely. It does not match, check, or log them. They don't appear in the audit trail. Turning off a policy is the same as removing it from the configuration, except that it remains visible in diagnostic commands.
 
-Audit policies are evaluated in a "dry-run" mode. The policy is matched and evaluated normally, but its actions are downgraded. Deny actions become warnings (the tool call proceeds with a warning). Mutations are computed but not applied to the event (the original event continues through the pipeline). Effects are logged but not executed. Audit results appear in the audit trail with an `enforcement: audit` marker. This enables teams to test new policies in production without risk.
+The engine evaluates audit policies in a "dry-run" mode. It matches and evaluates the policy normally, but downgrades its actions. Deny actions become warnings (the tool call proceeds with a warning). The engine computes mutations but does not apply them to the event (the original event continues through the pipeline). It logs effects but does not execute them. Audit results appear in the audit trail with an `enforcement: audit` marker.
 
-The enforcement state filter happens before Stage 1 (structural matching). Disabled policies are removed from consideration before any evaluation begins. Audit policies proceed through evaluation with their state tracked for action downgrading.
+The enforcement state filter happens before Stage 1 (structural matching). The engine removes turned-off policies from consideration before any evaluation begins. Audit policies proceed through evaluation with their state tracked for action downgrading.
 
 ### Terminology note
 
-This document uses "audit" for two distinct concepts. The validation action `audit` (appearing in `validate.action: audit`) describes what happens when a specific rule's validation fails: it logs silently without user notification. The enforcement state `audit` describes how an entire policy is evaluated: in dry-run mode with all actions downgraded. Context disambiguates since validation actions apply per-rule while enforcement states apply per-policy.
+This document uses "audit" for two distinct concepts. The validation action `audit` (appearing in `validate.action: audit`) describes what happens when a specific rule's validation fails: it logs silently without user notification. The enforcement state `audit` describes how the engine evaluates an entire policy: in dry-run mode with all actions downgraded. Context disambiguates since validation actions apply per-rule while enforcement states apply per-policy.
 
 ## Evaluation pipeline
 
-### Stage 1: structural matching
+### Stage 1: Structural matching
 
-The first stage filters policies using structural criteria that can be indexed and evaluated without CEL. This is fast—the engine can scan hundreds of policies in microseconds.
+The first stage filters policies using structural criteria that the engine can index and check without CEL. This is fast; the engine can scan hundreds of policies in microseconds.
 
-For each policy, the engine checks whether its `match` block is satisfied by the current event:
+For each policy, the engine checks whether its `match` block matches the current event:
 
-```
+```text
 event.type ∈ policy.match.events (or events is empty)
 AND event.tool ∈ policy.match.tools (or tools is empty)
 AND event.path matches policy.match.paths (include/exclude)
 AND event.branch matches policy.match.branches (include/exclude)
 ```
 
-Policies that don't match structurally are eliminated. No CEL evaluation happens for these policies, and they don't appear in audit logs.
+The engine eliminates policies that don't match structurally. No CEL evaluation happens for these policies, and they don't appear in audit logs.
 
-### Stage 2: condition evaluation
+### Stage 2: Condition evaluation
 
 For policies that pass structural matching, the engine evaluates their `conditions` in declaration order. Conditions are CEL expressions that must all return true.
 
@@ -53,11 +53,11 @@ conditions:
     expression: '$current_branch() in params.protectedBranches'
 ```
 
-Evaluation short-circuits: if the first condition returns false, subsequent conditions are not evaluated. This is both an optimization and a way to guard expensive expressions behind cheap checks.
+Evaluation short-circuits: if the first condition returns false, the engine does not check later conditions. This is both an optimization and a way to guard expensive expressions behind cheap checks.
 
-If any condition returns false, the policy is skipped for this event. Skipped policies don't contribute to the final decision and appear in audit logs only if verbose logging is enabled.
+If any condition returns false, the engine skips the policy for this event. Skipped policies don't contribute to the final decision and appear in audit logs only if the user enables verbose logging.
 
-### Stage 3: parameter resolution
+### Stage 3: Parameter resolution
 
 Before evaluating rules, the engine resolves all parameters declared in the policy. Parameters can come from static values, named providers, inline providers, or environment variables.
 
@@ -68,16 +68,16 @@ parameters:
     defaults: []
 ```
 
-Parameter resolution may involve I/O (file reads, HTTP calls) and is cached where possible. If resolution fails and no defaults are provided, behavior depends on `config.failurePolicy`:
+Parameter resolution may involve I/O (file reads, HTTP calls) and the engine caches results where possible. If resolution fails and defaults do not exist, behavior depends on `config.failurePolicy`:
 
-- `allow` (default): The policy is skipped, tool call proceeds
-- `deny`: The policy errors, tool call is blocked
+- `allow` (default): The engine skips the policy, tool call proceeds
+- `deny`: The policy errors, tool call blocks
 
-Resolved parameters are available in all subsequent expressions as `params.paramName`.
+The engine makes resolved parameters available in all later expressions as `params.paramName`.
 
-### Stage 4: variable computation
+### Stage 4: Variable computation
 
-Policy-level variables are computed in declaration order. Variables can reference parameters, built-in functions, and earlier variables.
+The engine computes policy-level variables in declaration order. Variables can reference parameters, built-in functions, and earlier variables.
 
 ```yaml
 variables:
@@ -87,19 +87,19 @@ variables:
     expression: 'params.blockedCommands.exists(b, command.contains(b))'
 ```
 
-Variables are evaluated once per policy and cached for use by all rules in that policy.
+The engine evaluates variables once per policy and caches them for use by all rules in that policy.
 
-### Stage 5: rule evaluation
+### Stage 5: Rule evaluation
 
 For each rule in the policy, the engine:
 
 1. Checks structural match (rule's `match` intersected with policy's `match`)
 2. Evaluates rule conditions
 3. Computes rule-local variables
-4. Executes validate or mutate
+4. Runs validation or mutation
 5. Queues effects for later execution
 
-Rules are evaluated in declaration order within a policy.
+The engine evaluates rules in declaration order within a policy.
 
 ```yaml
 rules:
@@ -117,16 +117,16 @@ rules:
       action: deny
 ```
 
-Validation rules produce a result (pass or fail with action). Mutation rules produce a transformation to apply. Effects are collected but not executed until stage 6.
+Validation rules produce a result (pass or fail with action). Mutation rules produce a transformation to apply. The engine collects effects but does not execute them until stage 6.
 
-### Stage 6: effect execution
+### Stage 6: Effect execution
 
-After all rules have been evaluated, queued effects are executed. Effects run after the admission decision is determined, so they can't influence whether the tool call proceeds.
+After the engine evaluates all rules, it executes queued effects. Effects run after the engine decides on admission, so they can't influence whether the tool call proceeds.
 
 Each effect has a `when` condition:
 
 - `always` (default): Effect runs regardless of rule outcome
-- `on_pass`: Effect runs only if the rule passed (or was skipped)
+- `on_pass`: Effect runs only if the rule passed (or the engine skipped it)
 - `on_fail`: Effect runs only if the rule's validation failed
 
 ```yaml
@@ -143,13 +143,13 @@ effects:
     when: on_fail
 ```
 
-Effects from all matching rules across all matching policies are collected and executed. Effect execution failures are logged but don't affect the tool call decision.
+The engine collects effects from all matching rules across all matching policies and executes them. Effect execution failures appear in logs but don't affect the tool call decision.
 
 ## Priority cascading
 
-Policies are grouped by priority level: critical, high, medium, low. Within each level, policies are ordered by config cascade: universal, then project-specific.
+The engine groups policies by priority level: critical, high, medium, low. Within each level, policies follow config cascade order: universal, then project-specific.
 
-```
+```text
 critical/universal → critical/project
 high/universal → high/project
 medium/universal → medium/project
@@ -158,9 +158,9 @@ low/universal → low/project
 
 ### Mutation visibility
 
-Mutations from higher priority levels are applied before lower priority levels evaluate. This allows high-priority policies to transform requests in ways that affect lower-priority policy evaluation.
+The engine applies mutations from higher priority levels before lower priority levels run. Higher-priority policies can then transform requests in ways that affect lower-priority policy evaluation.
 
-```
+```text
 1. Evaluate all critical-priority policies
 2. Apply mutations from critical policies
 3. Evaluate all high-priority policies (seeing mutated state)
@@ -168,33 +168,33 @@ Mutations from higher priority levels are applied before lower priority levels e
 5. Continue through medium and low
 ```
 
-Within a priority level, mutations are applied in config cascade order. If two policies at the same priority and cascade level mutate the same field, last-write-wins with a warning in the audit trail.
+Within a priority level, the engine applies mutations in config cascade order. If two policies at the same priority and cascade level mutate the same field, last-write-wins with a warning in the audit trail.
 
 ### Validation aggregation
 
-Validation results from all priority levels are collected. The most restrictive action wins:
+The engine collects validation results from all priority levels. The most restrictive action wins:
 
-```
+```text
 deny > warn > audit > allow
 ```
 
-If any rule from any policy produces a `deny`, the overall result is deny. If no denies but some warns, the overall result is warn. Messages from all failures accumulate in the response.
+If any rule from any policy produces a `deny`, the result is deny. If no denies but some warns, the result is warn. Messages from all failures accumulate in the response.
 
 ## Data flow
 
 The data flow through evaluation is unidirectional:
 
-```
+```text
 parameters → variables → conditions → validate/mutate → effects → state
 ```
 
-Parameters are resolved first and are immutable during evaluation. Variables are computed from parameters and the hook event. Conditions and validation expressions read variables but don't modify them. Effects run last and can persist state for future evaluations.
+The engine resolves parameters first and they remain immutable during evaluation. Variables derive from parameters and the hook event. Conditions and validation expressions read variables but don't change them. Effects run last and can persist state for future evaluations.
 
-This unidirectional flow makes evaluation predictable. There are no cycles—a variable can't depend on an effect's outcome, and effects can't modify variables that validations read.
+This unidirectional flow makes evaluation predictable. A variable can't depend on an effect's outcome, and effects can't change variables that validations read.
 
 ## Result aggregation
 
-After all policies have been evaluated, the engine aggregates results into a single response:
+After the engine evaluates all policies, it aggregates results into a single response:
 
 ```yaml
 action: deny | warn | allow
@@ -221,18 +221,18 @@ audit:
 
 ### Action determination
 
-The overall action is the most restrictive action from any failing validation:
+The most restrictive action from any failing validation determines the final action:
 
-1. If any validation failed with `action: deny`, overall action is `deny`
-2. Else if any validation failed with `action: warn`, overall action is `warn`
-3. Else overall action is `allow`
+1. If any validation failed with `action: deny`, the action is `deny`
+2. Else if any validation failed with `action: warn`, the action is `warn`
+3. Else the action is `allow`
 
 ### Message collection
 
-Messages are collected from all failing validations and categorized:
+The engine collects messages from all failing validations and categorizes them:
 
-- `user` messages are shown to the human operator
-- `assistant` messages are injected into Claude's context
+- `user` messages appear to the human operator
+- `assistant` messages feed into Claude's context
 
 A validation can specify which audience receives its message, or it can go to both by default.
 
@@ -240,47 +240,47 @@ A validation can specify which audience receives its message, or it can go to bo
 
 Mutations accumulate across all matching policies. Later mutations (lower priority or later in cascade) see and can override earlier mutations.
 
-The final mutated event is what Claude receives if the action is `allow` or `warn`. For `deny`, mutations are still recorded in the audit trail but not applied.
+The final mutated event is what Claude receives if the action is `allow` or `warn`. For `deny`, the engine still records mutations in the audit trail but does not apply them.
 
 ### Audit trail
 
-Every policy evaluation is recorded in the audit trail, regardless of outcome:
+The engine records every policy evaluation in the audit trail, regardless of outcome:
 
 - Which policies matched structurally
 - Which policies passed conditions
 - Which rules fired
 - What validations passed or failed
-- What mutations were applied
+- What mutations the engine applied
 - What effects executed
 
 The audit trail is available through the dashboard, API, and log output.
 
 ## Fail-open semantics
 
-arci is designed as a guardrail, not a gate. Errors in the policy system should not block Claude from operating. Only explicit deny decisions block tool calls.
+ARCI operates as a guardrail, not a gate. Errors in the policy system should not block Claude from operating. Only explicit deny decisions block tool calls.
 
 ### Error handling
 
 When errors occur during evaluation:
 
-- Parameter resolution failure: Policy skipped (with `failurePolicy: allow`) or denied (with `failurePolicy: deny`)
-- Variable computation error: Rule skipped with warning
-- Condition evaluation error: Condition treated as false, policy skipped
-- Validation expression error: Validation treated as passed with warning
-- Mutation expression error: Mutation skipped with warning
+- Parameter resolution failure: The engine skips the policy (with `failurePolicy: allow`) or denies it (with `failurePolicy: deny`)
+- Variable computation error: The engine skips the rule with warning
+- Condition evaluation error: The engine treats the condition as false, skips the policy
+- Validation expression error: The engine treats the validation as passed with warning
+- Mutation expression error: The engine skips the mutation with warning
 - Effect execution error: Logged, does not affect tool call
 
 The principle is: uncertainty defaults to allowing the operation. Users must explicitly configure denial to block tool calls.
 
 ### Daemon unavailability
 
-When the CLI can't reach the daemon:
+When the ARCI command-line tool can't reach the daemon:
 
-- `daemon.on_unavailable: fallback` — CLI falls back to direct execution
-- `daemon.on_unavailable: start` — CLI attempts to spawn the daemon
-- `daemon.on_unavailable: fail` — CLI fails (still doesn't block Claude; the assistant's hook system handles CLI failures)
+- `daemon.on_unavailable: fallback`: the command-line tool falls back to direct execution
+- `daemon.on_unavailable: start`: the command-line tool attempts to spawn the daemon
+- `daemon.on_unavailable: fail`: the command-line tool fails (still doesn't block Claude; the assistant's hook system handles command-line tool failures)
 
-Even if arci fails entirely, Claude continues operating. The assistant's native hook system treats hook script failures as non-blocking by default.
+Even if ARCI fails entirely, Claude continues operating. The assistant's native hook system treats hook script failures as non-blocking by default.
 
 ## Performance considerations
 
@@ -295,7 +295,7 @@ When an event arrives, the engine uses these indexes to find candidate policies 
 
 ### Expression caching
 
-CEL expressions are compiled once when configuration loads. The compiled representations are reused for every evaluation. This avoids parsing overhead on the hot path.
+The engine compiles CEL expressions once when configuration loads. It reuses the compiled representations for every evaluation. This avoids parsing overhead on the hot path.
 
 ### Parameter caching
 
@@ -310,7 +310,7 @@ parameters:
 
 ### Parallel evaluation
 
-Within a priority level, policies without dependencies can evaluate in parallel. The engine uses a work-stealing scheduler to maximize throughput while respecting ordering constraints for mutations.
+Within a priority level, policies without dependencies can run in parallel. The engine uses a work-stealing scheduler to increase throughput while respecting ordering constraints for mutations.
 
 ## Evaluation flow
 

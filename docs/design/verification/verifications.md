@@ -2,21 +2,21 @@
 
 ## Overview
 
-Verifications (VRF-*) provide evidence that requirements are satisfied. Each verification has a method (inspection, demonstration, test, analysis) and links to the requirements it verifies via verifiedBy relationships.
+Verifications (VRF-*) provide evidence that the system satisfies requirements. Each verification has a method (inspection, demonstration, test, analysis) and links to the requirements it verifies via verifiedBy relationships.
 
 Verifications exist at different levels corresponding to the module hierarchy. Component-level verifications verify component requirements; integration verifications verify interface requirements; system verifications verify system-level requirements.
 
 ## Purpose
 
-Verifications serve several roles:
+Verifications serve multiple roles:
 
-**Verification evidence**: Verifications provide evidence that requirements are satisfied. When verifications pass, the linked requirements can transition to "verified" status.
+**Verification evidence**: verifications provide evidence that the system satisfies requirements. When verifications pass, the linked requirements can transition to "verified" status.
 
-**Regression protection**: Automated verifications (those using the test method) catch regressions when changes break previously-verified requirements.
+**Regression protection**: automated verifications (those using the test method) catch regressions when changes break previously verified requirements.
 
-**Coverage tracking**: The verifiedBy relationship enables coverage analysis—which requirements are verified, which are not, which have gaps.
+**Coverage tracking**: the verifiedBy relationship enables coverage analysis: which requirements have verification, which do not, which have gaps.
 
-**Documentation**: Verifications demonstrate expected behavior. They're executable specifications.
+**Documentation**: verifications demonstrate expected behavior. They're executable specifications.
 
 ## Verification methods
 
@@ -33,13 +33,13 @@ From INCOSE, verifications use one of four verification methods:
 
 Verifications progress through states:
 
-```
+```text
 draft → ready → passing → failing → skipped → obsolete
 ```
 
 | State    | Description                         |
 |----------|-------------------------------------|
-| draft    | Verification being developed        |
+| draft    | Someone is developing the verification |
 | ready    | Verification implemented, not yet executed |
 | passing  | Last execution passed               |
 | failing  | Last execution failed               |
@@ -59,11 +59,11 @@ Verifications align with the module hierarchy:
 | System      | Root         | End-to-end verifications        |
 | Acceptance  | Root         | Stakeholder validation          |
 
-A component module's requirements are verified by unit-level verifications. A subsystem's interface requirements are verified by integration verifications. System-level requirements need system verifications.
+Unit-level verifications verify a component module's requirements. Integration verifications verify a subsystem's interface requirements. System-level requirements need system verifications.
 
 ## Storage model
 
-Verification metadata is stored in `graph.jsonlt` as JSON-LD compact form. There is no frontmatter in prose files—`graph.jsonlt` is the single source of truth for all structured data.
+The graph stores verification metadata in `graph.jsonlt` as JSON-LD compact form. Prose files have no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
 
 ```json
 {"@context": "context.jsonld", "@id": "VRF-D9J5Q1R3", "@type": "Verification", "title": "Parser error latency benchmark", "module": {"@id": "MOD-A4F8R2X1"}, "description": "Verifies error reporting meets 50ms requirement", "method": "test", "level": "unit", "status": "passing", "implementation": "tests/parser/error_latency_test.ts"}
@@ -87,7 +87,7 @@ Fields:
 
 ## Relationships
 
-Relationships are embedded in the verification's JSON-LD record using `{"@id": "..."}` values.
+The verification's JSON-LD record embeds relationships using `{"@id": "..."}` values.
 
 ### Outgoing relationships
 
@@ -163,7 +163,7 @@ Coverage analysis considers:
 
 ## Implementation architecture
 
-Verification functionality follows the three-layer architecture (see CON-GR4PH4RC).
+Verification capability follows the three-layer architecture (see CON-GR4PH4RC).
 
 ### Typed node
 
@@ -188,7 +188,7 @@ class VerificationNode:
 
 All fields use proper types. The IO layer creates VerificationNode directly from JSON-LD records, preserving all type-specific fields like `method`, `level`, and `implementation`.
 
-### Core layer (arci.core.verification)
+### Core layer (`arci.core.verification`)
 
 Pure functions and typed data structures:
 
@@ -319,13 +319,13 @@ arci verificationuntested
 
 ## Relationship to tasks
 
-Verifications are created and executed by verification-phase tasks:
+Verification-phase tasks create and execute verifications:
 
 ```json
 {"@context": "context.jsonld", "@id": "TSK-V3R1FY01", "@type": "Task", "title": "Implement parser verifications", "module": {"@id": "MOD-A4F8R2X1"}, "processPhase": "verification", "taskType": "verification-implementation"}
 ```
 
-Verification execution results can be recorded as task deliverables.
+Tasks can record verification execution results as deliverables.
 
 ## Implementation status
 

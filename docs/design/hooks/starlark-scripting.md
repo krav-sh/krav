@@ -1,26 +1,26 @@
 # Starlark scripting
 
-arci uses CEL (Common Expression Language) for all policy expressions: conditions, validations, mutations, and variables. For situations requiring more complex logic than CEL provides, arci supports Starlark as an embedded scripting language. Starlark serves two roles: implementing complex macros that CEL expressions can call, and running as script effects for sophisticated side actions.
+ARCI uses CEL (Common Expression Language) for all policy expressions: conditions, validations, mutations, and variables. For situations requiring more complex logic than CEL provides, ARCI supports Starlark as an embedded scripting language. Starlark serves two roles: building complex macros that CEL expressions can call, and running as script effects for advanced side actions.
 
 ## Why Starlark
 
-Starlark complements CEL's declarative expressions with imperative scripting capabilities. While CEL excels at succinct boolean checks and simple transformations, some logic benefits from multi-step computation, loops, or accumulating intermediate results. Starlark handles these cases without requiring external shell commands or compromising the security model.
+Starlark complements CEL's declarative expressions with imperative scripting. While CEL excels at succinct boolean checks and simple transformations, some logic benefits from multi-step computation, loops, or accumulating intermediate results. Starlark handles these cases without requiring external shell commands or compromising the security model.
 
-Starlark provides Python-like syntax that most developers already know. There is no new language to learn, no unfamiliar operators or sigils. Anyone who has written a Python function can write a Starlark script. This dramatically lowers the barrier to writing custom hook logic compared to domain-specific languages with novel syntax.
+Starlark uses Python-like syntax that most developers already know. No new language to learn, no unfamiliar operators or sigils. Anyone who has written a Python function can write a Starlark script. This lowers the barrier to writing custom hook logic compared to domain-specific languages with novel syntax.
 
-The language is deterministic and hermetic by default. Starlark programs cannot access the filesystem, network, or environment unless the host application explicitly provides those capabilities. There is no `import` statement, no `open()` call, no `os` module. A misconfigured shell script might delete files or exfiltrate data; a Starlark script can only return values or call APIs that arci explicitly exposes. This hermetic property is not bolted on through sandboxing but is fundamental to the language design.
+The language is deterministic and hermetic by default. Starlark programs cannot access the filesystem, network, or environment unless the host app explicitly provides those capabilities. No `import` statement, no `open()` call, no `os` module. A misconfigured shell script might delete files or exfiltrate data; a Starlark script can only return values or call APIs that ARCI explicitly exposes. This hermetic property is not bolted on through sandboxing but is fundamental to the language design.
 
-Starlark runs natively in Go via `go.starlark.net` without FFI or external interpreters. There is no Python runtime to initialize, no subprocess to spawn. Scripts execute in the same process as arci with minimal overhead. This matters for hook evaluation latency, where every millisecond of delay is felt by the AI assistant and its user.
+Starlark runs natively in Go via `go.starlark.net` without FFI or external interpreters. No Python runtime to initialize, no subprocess to spawn. Scripts execute in the same process as ARCI with minimal overhead. This matters for hook evaluation latency, where every millisecond of delay affects the AI assistant and its user.
 
-The `go.starlark.net` implementation provides resource limits through step counting and memory bounds. Scripts that loop too long or allocate unbounded memory are terminated before they can cause problems. Combined with timeouts, this ensures that a poorly written script cannot hang the hook evaluation pipeline.
+The `go.starlark.net` library provides resource limits through step counting and memory bounds. Scripts that loop too long or use unbounded memory stop before they can cause problems. Combined with timeouts, this ensures that a poorly written script cannot hang the hook evaluation pipeline.
 
 ## Starlark macros
 
-Macros provide reusable logic that CEL expressions can call. While simple macros are defined directly as CEL expressions, complex macros that require loops, multiple steps, or sophisticated string manipulation can be implemented in Starlark.
+Macros provide reusable logic that CEL expressions can call. While you define simple macros directly as CEL expressions, complex macros that require loops, many steps, or advanced string manipulation work best in Starlark.
 
 ### Macro definition
 
-Starlark macros are defined in the policy's `macros` section with `language: starlark`:
+Define Starlark macros in the policy's `macros` section with `language: starlark`:
 
 ```yaml
 version: 1
@@ -85,9 +85,9 @@ rules:
 
 ### Macro context
 
-Starlark macros receive their arguments as function parameters. They do not have direct access to the evaluation context (tool_input, params, etc.). All required data must be passed explicitly as arguments.
+Starlark macros receive their arguments as function parameters. They do not have direct access to the evaluation context (tool_input, params, etc.). You must pass all required data explicitly as arguments.
 
-This design is intentional. Macros are pure functions that transform inputs to outputs. They cannot access or modify external state. This makes macros predictable, testable, and safe to call from any context.
+This design is intentional. Macros are pure functions that transform inputs to outputs. They cannot access or change external state. This makes macros predictable, testable, and safe to call from any context.
 
 ```yaml
 # Correct: pass required data as arguments
@@ -140,7 +140,7 @@ rules:
 
 ## Script effects
 
-For side actions that require complex logic beyond what the built-in effect types provide, policies can define script effects. Unlike macros, script effects have access to state functions and run after the admission decision is determined.
+Policies can define script effects for side actions that require complex logic beyond what the built-in effect types provide. Unlike macros, script effects have access to state functions and run after the engine determines the admission decision.
 
 ### Script effect syntax
 
@@ -187,7 +187,7 @@ rules:
 
 ### Script effect context
 
-Script effects have access to several context variables and functions. The hook context provides information about the current evaluation:
+Script effects have access to context variables and functions. The hook context provides information about the current evaluation:
 
 ```python
 # The canonical tool name (for tool events)
@@ -242,9 +242,9 @@ log("error", "Failed to parse input")
 
 ### Script effect constraints
 
-Script effects are fire-and-forget. They cannot influence the admission decision (allow, warn, deny) because they run after that decision is made. They cannot return values that policies use. Their purpose is purely side effects: updating state, logging, sending notifications via state that other systems watch.
+Script effects are fire-and-forget. They cannot influence the admission decision (allow, warn, deny) because they run after the engine reaches that decision. They cannot return values that policies use. Their purpose is purely side effects: updating state, logging, sending notifications via state that other systems watch.
 
-Script effects should not perform long-running operations. The timeout_ms setting enforces a maximum execution time. Effects that exceed their timeout are terminated, and evaluation continues normally. The default timeout is 5000 milliseconds.
+Script effects should not perform long-running operations. The timeout_ms setting enforces a time cap on execution. The engine stops effects that exceed their timeout, and evaluation continues normally. The default timeout is 5000 milliseconds.
 
 ```yaml
 effects:
@@ -286,9 +286,9 @@ effects:
 
 ## Starlark language basics
 
-Starlark uses Python syntax with a restricted feature set. Developers familiar with Python will feel immediately at home. This section covers the essentials; the [Starlark specification](https://github.com/bazelbuild/starlark/blob/master/spec.md) provides comprehensive coverage.
+Starlark uses Python syntax with a restricted feature set. Developers familiar with Python can start immediately. This section covers the essentials; the [Starlark specification](https://github.com/bazelbuild/starlark/blob/master/spec.md) provides full coverage.
 
-Variables use simple assignment and are dynamically typed:
+Variables use simple assignment and are loosely typed:
 
 ```python
 name = "test.py"
@@ -315,14 +315,14 @@ for item in items:
     process(item)
 ```
 
-The `go.starlark.net` implementation supports `while` loops and recursion with configurable limits, though many Starlark implementations intentionally restrict these to guarantee termination. arci enables both but enforces step limits to prevent runaway execution.
+The `go.starlark.net` library supports `while` loops and recursion with configurable limits, though many Starlark implementations intentionally restrict these to guarantee termination. ARCI enables both but enforces step limits to prevent runaway execution.
 
 ```python
 while count > 0:
     count -= 1
 ```
 
-Functions are defined with `def`:
+Define functions with `def`:
 
 ```python
 def is_sensitive_path(path):
@@ -331,7 +331,7 @@ def is_sensitive_path(path):
 result = is_sensitive_path(tool_input["path"])
 ```
 
-String methods provide text manipulation without regex complexity:
+String methods provide text manipulation without regular expression complexity:
 
 ```python
 path = "/home/user/project/.env"
@@ -359,15 +359,15 @@ files[1:]                               # ["lib.rs", "test.rs", "mod.rs"]
 
 Scripts execute with strict resource constraints to prevent runaway execution from blocking hook evaluation.
 
-The `timeout_ms` setting controls maximum wall-clock execution time. When a script exceeds its timeout, execution is terminated and the script fails open: macros return a default value (null/false), and effects are skipped. Evaluation continues as if the script completed normally. The default timeout is 5000 milliseconds.
+The `timeout_ms` setting caps wall-clock execution time. When a script exceeds its timeout, the engine stops execution and the script fails open: macros return a default value (null/false), and the engine skips effects. Evaluation continues as if the script completed normally. The default timeout is 5000 milliseconds.
 
-Step counting limits CPU usage independently of wall-clock time. The `go.starlark.net` `Thread` object supports a step counter that increments with each Starlark operation. A tight loop that would run forever is terminated after the step limit is reached, even if wall-clock time has not expired. The default step limit is 1,000,000 steps.
+Step counting limits CPU usage independently of wall-clock time. The `go.starlark.net` `Thread` object supports a step counter that increments with each Starlark operation. A tight loop that would run forever stops after reaching the step limit, even if wall-clock time has not expired. The default step limit is 1,000,000 steps.
 
-Memory limits prevent scripts from allocating unbounded data structures. The default memory limit is 10 megabytes. Scripts that exceed this limit are terminated.
+Memory limits prevent scripts from allocating unbounded data structures. The default memory limit is 10 megabytes. The engine stops scripts that exceed this limit.
 
-When any limit is exceeded, script execution stops immediately. For macros, a default value is returned to the calling CEL expression. For effects, the effect is skipped. An error is logged with details about which limit was exceeded. Evaluation continues with remaining rules and effects. The policy evaluation succeeds, preserving fail-open semantics.
+When any limit trips, script execution stops immediately. For macros, the engine returns a default value to the calling CEL expression. For effects, the engine skips the effect. The engine logs an error with details about which limit tripped. Evaluation continues with remaining rules and effects. The policy evaluation succeeds, preserving fail-open semantics.
 
-These limits can be configured globally or per-script:
+You can configure these limits globally or per-script:
 
 ```yaml
 macros:
@@ -393,11 +393,11 @@ effects:
 
 ## Error handling
 
-Script errors follow arci' fail-open philosophy. A broken script never blocks the AI assistant; macros return default values and effects are skipped.
+Script errors follow ARCI's fail-open philosophy. A broken script never blocks the AI assistant; macros return default values and the engine skips effects.
 
-When a script fails, arci logs the error with context for debugging:
+When a script fails, ARCI logs the error with context for debugging:
 
-```
+```text
 [WARN] Starlark macro 'is_destructive_command' failed:
   Error: name 'patterns' is not defined (line 3, column 15)
   Returning: false (default for boolean context)
@@ -411,15 +411,15 @@ When a script fails, arci logs the error with context for debugging:
 
 Common error categories include the following.
 
-Syntax errors occur when the script contains invalid Starlark code. These are caught during policy loading, before any evaluation begins. Missing colons, incorrect indentation, and unmatched parentheses all fall in this category.
+Syntax errors occur when the script contains invalid Starlark code. The loader catches these during policy loading, before any evaluation begins. Missing colons, incorrect indentation, and unmatched parentheses all fall in this category.
 
 Runtime errors occur during execution, such as accessing undefined variables, calling methods on wrong types, indexing beyond list bounds, or dividing by zero. The error message includes the line number and column.
 
-Type errors occur when operations are applied to incompatible types, like adding a string to an integer without explicit conversion. Starlark is stricter than Python here and does not perform implicit type coercion.
+Type errors occur when you apply operations to incompatible types, like adding a string to an integer without explicit conversion. Starlark is stricter than Python here and does not perform implicit type coercion.
 
 Resource exhaustion occurs when scripts exceed their timeout, step count, or memory limit.
 
-To debug script failures, start by checking the arci log for the specific error message and line number. Then test the script in isolation using `arci script test` with sample context. Adding intermediate `print()` calls can help trace execution, as output appears in logs. When the error is not obvious, simplify the script to isolate the failing logic.
+To debug script failures, start by checking the ARCI log for the specific error message and line number. Then test the script in isolation using `arci script test` with sample context. Adding intermediate `print()` calls can help trace execution, as output appears in logs. When the error is not obvious, simplify the script to isolate the failing logic.
 
 The `arci script test` command provides an interactive environment for script development:
 
@@ -442,11 +442,11 @@ This command executes the script with the provided context and displays the retu
 
 ## Practical examples
 
-This section demonstrates common patterns for Starlark macros and effects.
+The following examples show common patterns for Starlark macros and effects.
 
 ### Complex pattern matching macro
 
-A macro that performs sophisticated command analysis beyond simple substring matching:
+A macro that performs detailed command analysis beyond simple substring matching:
 
 ```yaml
 macros:

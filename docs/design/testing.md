@@ -1,16 +1,16 @@
 # Testing strategy
 
-This document describes how to test arci at different levels: unit testing the core engine, integration testing the shells, end-to-end testing the complete system, and—importantly—how policy authors can test their configurations before deploying them.
+This document describes how to test ARCI at different levels: unit testing the core engine, integration testing the shells, end-to-end testing the complete system, and how policy authors can test their configurations before deploying them.
 
 ## Testing philosophy
 
-arci's functional core/imperative shell architecture enables a clean testing strategy. The core is pure functions operating on data structures, making it trivial to test without mocking. The shells handle I/O and are tested through integration tests that exercise real file systems, HTTP endpoints, and subprocesses.
+ARCI's functional core/imperative shell architecture enables a clean testing strategy. The core is pure functions operating on data structures, making it trivial to test without mocking. The shells handle I/O, and integration tests exercise real file systems, HTTP endpoints, and subprocesses to verify them.
 
-Policy authors face a different challenge: they need to verify their configurations work before an Claude Code triggers them in production. arci provides tooling for this workflow, from quick validation to comprehensive regression testing.
+Policy authors face a different challenge: they need to verify their configurations work before Claude Code triggers them in production. ARCI provides tooling for this workflow, from quick validation to full regression testing.
 
 ## Test organization
 
-Go's testing conventions shape how we organize tests. Test files live alongside the code they test with a `_test.go` suffix. Tests in the same package test internal behavior; tests in a `_test` package exercise the public API. This separation keeps fast unit tests close to the implementation while package-level tests verify the public interface.
+Go's testing conventions shape test organization. Test files live alongside the code they test with a `_test.go` suffix. Tests in the same package test internal behavior; tests in a `_test` package exercise the public API. This separation keeps fast unit tests close to the code while package-level tests verify the public API.
 
 Running all tests uses `go test ./...`. Running tests for a specific package uses `go test ./internal/core/...`. Running a single test by name uses `go test -run TestName ./...`. The `-v` flag shows verbose output during test runs, useful for debugging.
 
@@ -37,7 +37,7 @@ go tool cover -html=coverage.out
 
 ## Core engine tests
 
-The core engine contains pure functions with no I/O, making tests straightforward. Each package includes `_test.go` files with unit tests using standard `func TestXxx(t *testing.T)` signatures. Go tests run concurrently by default when `t.Parallel()` is called.
+The core engine contains pure functions with no I/O, making tests straightforward. Each package includes `_test.go` files with unit tests using standard `func TestXxx(t *testing.T)` signatures. Go runs tests concurrently by default when the test calls `t.Parallel()`.
 
 ### Expression evaluation
 
@@ -45,11 +45,11 @@ Expression tests verify the CEL expression engine and Go template system handle 
 
 ### Policy compilation
 
-Policy compilation tests verify that policies are validated and prepared for efficient evaluation. The engine compiles policies from their YAML representation into optimized structures with pre-parsed CEL expressions.
+Policy compilation tests verify that the engine validates and prepares policies for efficient evaluation. The engine compiles policies from their YAML representation into optimized structures with pre-parsed CEL expressions.
 
 ### Result aggregation
 
-Result aggregation tests verify that validation results from multiple policies are combined correctly, and that mutations are applied in the proper order.
+Result aggregation tests verify that the engine combines validation results from multiple policies correctly and applies mutations in the proper order.
 
 ### Property-based testing
 
@@ -61,7 +61,7 @@ Custom function tests verify that extension functions integrate correctly with t
 
 ## Shell integration tests
 
-Integration tests live in the `tests/` directory and exercise the public API of each shell crate. These tests may touch the filesystem, spawn processes, or make HTTP requests.
+Integration tests live in the `tests/` directory and exercise the public API of each shell crate. These tests may access the filesystem, spawn processes, or make HTTP requests.
 
 ### CLI tests
 
@@ -85,7 +85,7 @@ End-to-end tests verify the complete system from CLI input through daemon proces
 
 ## Policy testing for authors
 
-Policy authors need confidence their configurations work before deployment. arci provides CLI commands and a dashboard interface for testing policies.
+Policy authors need confidence their configurations work before deployment. ARCI provides CLI commands and a dashboard interface for testing policies.
 
 ### Validation
 
@@ -125,7 +125,7 @@ The dashboard provides a policy tester interface where authors can paste hook in
 
 ### Regression testing
 
-For comprehensive testing, authors can maintain a directory of test cases.
+For thorough testing, authors can maintain a directory of test cases.
 
 ```yaml
 # tests/policies/dangerous-commands.yaml
@@ -258,4 +258,4 @@ Anonymized 47 events:
 
 ---
 
-This testing strategy provides confidence at every level: fast unit tests for the core, integration tests for the shells, end-to-end tests for the complete system, and practical tooling for policy authors. Coverage targets are 90% for the core packages and 80% for shell packages, enforced in CI.
+This testing strategy provides confidence at every level: fast unit tests for the core, integration tests for the shells, end-to-end tests for the complete system, and practical tooling for policy authors. Coverage targets are 90% for the core packages and 80% for shell packages, with CI enforcing both.

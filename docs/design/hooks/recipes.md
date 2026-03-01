@@ -1,6 +1,6 @@
 # Recipes and examples
 
-This document collects practical examples of arci policies for common use cases. Each recipe includes complete policy definitions, explanations of the approach, and notes on customization.
+This document collects practical examples of ARCI policies for common use cases. Each recipe includes complete policy definitions, explanations of the approach, and notes on customization.
 
 ## Safety policies
 
@@ -38,7 +38,7 @@ rules:
       action: deny
 ```
 
-The regex pattern matches `rm` followed by any combination of `-r`, `-R`, and `-f` flags, then a path starting with `/`. Critical priority ensures this policy evaluates before lower-priority policies.
+The regular expression pattern matches `rm` followed by any combination of `-r`, `-R`, and `-f` flags, then a path starting with `/`. Critical priority ensures this policy evaluates before lower-priority policies.
 
 To allow deletion of specific paths like `/tmp`, use a more permissive pattern:
 
@@ -209,7 +209,7 @@ rules:
 
 Policies for enforcing git practices and preventing common mistakes.
 
-### Convert --force to --force-with-lease
+### Convert `--force` to `--force-with-lease`
 
 This policy automatically converts dangerous `--force` pushes to the safer `--force-with-lease` variant using a mutation rule.
 
@@ -257,7 +257,7 @@ rules:
         when: always
 ```
 
-The negative lookahead `(?!-with-lease)` in the condition ensures we don't match commands that already use the safer option.
+The negative lookahead `(?!-with-lease)` in the condition avoids matching commands that already use the safer option.
 
 ### Warn on commits to main/master
 
@@ -360,7 +360,7 @@ rules:
 
 For projects that want to run tests automatically, a separate policy can handle test execution and state tracking.
 
-### Ensure commits are signed
+### Require signed commits
 
 This policy adds the GPG signing flag to commits that don't already include it.
 
@@ -453,7 +453,7 @@ The `$file_exists()` function checks for `pyproject.toml` relative to the curren
 
 ### Check import sorting after file writes
 
-This policy checks for unsorted imports after Python files are written.
+This policy checks for unsorted imports after writing Python files.
 
 ```yaml
 version: 1
@@ -529,7 +529,7 @@ rules:
         when: always
 ```
 
-### Validate pyproject.toml changes
+### Check pyproject.toml changes
 
 This policy validates pyproject.toml syntax after modifications.
 
@@ -649,7 +649,7 @@ rules:
 
 ### Warn on package.json dependency changes
 
-This policy alerts when dependencies are modified.
+This policy alerts when someone modifies dependencies.
 
 ```yaml
 version: 1
@@ -749,11 +749,11 @@ rules:
         when: on_pass
 ```
 
-The `setState` effect always runs, tracking the count. The validation blocks after the limit is reached. The notification effect only runs when the validation passes.
+The `setState` effect always runs, tracking the count. The validation blocks once the count exceeds the limit. The notification effect only runs when the validation passes.
 
 ### Rate limiting operations
 
-This policy limits expensive operations like API calls to a maximum rate using a Starlark script effect.
+This policy limits expensive operations like API calls to a fixed rate using a Starlark script effect.
 
 ```yaml
 version: 1
@@ -865,7 +865,7 @@ Policies that integrate with external services.
 
 ### Slack notification on sensitive file access
 
-This policy logs when sensitive files are accessed. For actual Slack notifications, use a native extension with an HTTP client or configure a webhook integration.
+This policy logs when someone reads sensitive files. For actual Slack notifications, use a native extension with an HTTP client or configure a webhook integration.
 
 ```yaml
 version: 1
@@ -995,7 +995,7 @@ rules:
       action: warn
 ```
 
-### PagerDuty on-call checking
+### Check PagerDuty on-call status
 
 This policy blocks production changes when the user isn't on-call. It uses a native extension macro that can make HTTP calls to PagerDuty.
 
@@ -1082,7 +1082,7 @@ rules:
 
 ## Code pattern detection with GritQL
 
-GritQL enables powerful structural code matching beyond regex patterns. Unlike regex which operates on text, GritQL understands syntax trees and can match code patterns regardless of formatting or whitespace. arci integrates GritQL through CEL functions that can be used in conditions and validate expressions.
+GritQL enables structural code matching beyond regular expression patterns. Unlike regular expressions which operate on text, GritQL understands syntax trees and can match code patterns regardless of formatting or whitespace. ARCI integrates GritQL through CEL functions available in conditions and validation expressions.
 
 ### Detect unsafe eval usage
 
@@ -1163,7 +1163,7 @@ rules:
       action: warn
 ```
 
-### Detect SQL injection vulnerabilities
+### Detect SQL injection patterns
 
 ```yaml
 version: 1
@@ -1217,13 +1217,13 @@ rules:
       action: deny
 ```
 
-For comprehensive GritQL documentation, pattern syntax, and more examples, see the [GritQL design document](gritql.md).
+For full GritQL documentation, pattern syntax, and more examples, see the [GritQL design document](gritql.md).
 
 ## Per-project configuration
 
 Examples of project-specific policy sets.
 
-### Monorepo with multiple conventions
+### Monorepo with different conventions
 
 In a monorepo, you might want different policies for different subdirectories. Use path matching to scope policies appropriately:
 
@@ -1378,7 +1378,7 @@ Examples of custom extensions that package and distribute policies.
 
 A policies-only extension contains YAML policy files with no custom code. This is the simplest and most auditable extension type.
 
-```
+```text
 my-company-rules/
 ├── extension.toml
 └── policies/
@@ -1435,7 +1435,7 @@ rules:
 
 Full extensions can provide custom expression macros via Starlark scripts. These macros run in a sandboxed environment and become available in policy expressions using a namespaced syntax.
 
-```
+```text
 my-extension/
 ├── extension.toml
 ├── policies/
@@ -1487,7 +1487,7 @@ def team_owns_path(path, team):
     return False
 ```
 
-Custom macros are namespaced by extension name in expressions. The macros above become `$my_extension.is_business_hours()` and `$my_extension.team_owns_path()`:
+The extension name prefixes custom macros in expressions. The macros from the preceding example become `$my_extension.is_business_hours()` and `$my_extension.team_owns_path()`:
 
 ```yaml
 # my-extension/policies/business-hours.yaml
@@ -1517,9 +1517,9 @@ rules:
 
 ### Extension with native effect handlers
 
-Custom effect handlers require native extensions because they need to perform I/O operations like HTTP requests. Native extensions are Go plugins or gRPC services that implement the Extension interface.
+Custom effect handlers require native extensions because they need to perform I/O operations like HTTP requests. Native extensions are Go plugins or gRPC services that conform to the Extension interface.
 
-```
+```text
 linear-extension/
 ├── extension.toml
 ├── go.mod
@@ -1543,62 +1543,7 @@ min_version = "0.1.0"
 binary = "arci-ext-linear"
 ```
 
-```go
-// linear-extension/main.go
-package main
-
-import (
- "bytes"
- "encoding/json"
- "fmt"
- "net/http"
-
- "github.com/tbhb/arci/pkg/extension"
-)
-
-type LinearIssueHandler struct{}
-
-func (h *LinearIssueHandler) EffectType() string {
- return "linear:create_issue"
-}
-
-func (h *LinearIssueHandler) Execute(params extension.EffectParams, ctx *extension.Context) error {
- query := `mutation CreateIssue($title: String!, $teamId: String!) {
-  issueCreate(input: { title: $title, teamId: $teamId }) {
-   issue { id identifier url }
-  }
- }`
-
- body, _ := json.Marshal(map[string]any{
-  "query": query,
-  "variables": map[string]string{
-   "title":  params.GetString("title"),
-   "teamId": params.GetString("team_id"),
-  },
- })
-
- req, _ := http.NewRequest("POST", "https://api.linear.app/graphql", bytes.NewReader(body))
- req.Header.Set("Authorization", params.GetString("api_key"))
- req.Header.Set("Content-Type", "application/json")
-
- resp, err := http.DefaultClient.Do(req)
- if err != nil {
-  return fmt.Errorf("linear API request failed: %w", err)
- }
- defer resp.Body.Close()
-
- return nil
-}
-
-type LinearExtension struct{}
-
-func (e *LinearExtension) Name() string { return "linear" }
-func (e *LinearExtension) EffectHandlers() []extension.EffectHandler {
- return []extension.EffectHandler{&LinearIssueHandler{}}
-}
-
-var Extension LinearExtension
-```
+The `main.go` file satisfies the extension interface by registering a custom effect handler for the `linear:create_issue` effect type. The handler accepts parameters (such as `title`, `team_id`, and `api_key`), constructs a GraphQL mutation, and sends it to the Linear API. The extension declares its name (`linear`) and the list of effect handlers it provides.
 
 Native extensions require explicit trust when installed. Once trusted, the custom effect type becomes available in policies:
 
@@ -1644,9 +1589,9 @@ rules:
         when: always
 ```
 
-For comprehensive extension documentation, see the [Extensions design document](../extensions.md).
+For full extension documentation, see the [Extensions design document](../extensions.md).
 
-## Claude Code-specific policies
+## Claude Code policy examples
 
 Policies that use Claude Code-specific features like permission_request events.
 
@@ -1770,7 +1715,7 @@ rules:
 
 Only use state when you need to track things across policy evaluations for rate limiting, escalation, or context accumulation. Simple logging doesn't need state.
 
-### Inline Starlark overuse
+### Inline Starlark: when to avoid it
 
 ```yaml
 # BAD: Using Starlark script where declarative expressions suffice
@@ -1792,7 +1737,7 @@ rules:
       action: deny
 ```
 
-Use CEL expressions directly when they're sufficient:
+Use CEL expressions directly when they can handle the logic:
 
 ```yaml
 # GOOD: Declarative CEL expression is clearer and faster
@@ -1889,8 +1834,8 @@ rules:
       # ...
 ```
 
-Structural matching using `match.tools`, `match.events`, and `match.paths` is indexed for fast lookup. CEL conditions in `conditions` require expression evaluation. Put as much filtering as possible in `match` for best performance.
+Structural matching using `match.tools`, `match.events`, and `match.paths` uses indexed lookup. CEL conditions in `conditions` require expression evaluation. Put as much filtering as possible in `match` for best performance.
 
 ---
 
-This document will grow as more patterns emerge from real-world usage. Contributions of useful recipes are welcome.
+This document grows as more patterns emerge from real-world usage. Contributions of useful recipes are welcome.

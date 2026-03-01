@@ -65,7 +65,7 @@ Flatpak
 [Gg]oreleaser
 [Gg]oroutines?
 [Gg]rit[Qq][Ll]
-[Hh]ardcoded
+[Hh]ardcod(ed|ing)
 hoc
 [Hh]ostname
 [Hh]tmx
@@ -94,7 +94,7 @@ matchResources
 [Mm]itigations?
 [Mm]onorepo
 [Mm]utex
-[Nn]amespaces?d?
+[Nn]amespac(es?d?|ing)
 NEDs
 noqa
 npm

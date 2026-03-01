@@ -1,28 +1,28 @@
 # Expression language
 
-arci uses two evaluation engines. CEL (Common Expression Language) provides type-safe evaluation for boolean conditions and data transformations. Go's `text/template` with the Sprig function library handles string interpolation and control flow. This separation matches each engine to its strength: CEL excels at evaluating expressions against structured data, while `text/template` excels at producing dynamic string output.
+ARCI uses two evaluation engines. CEL (Common Expression Language) provides type-safe evaluation for boolean conditions and data transformations. Go's `text/template` with the Sprig function library handles string interpolation and control flow. This separation matches each engine to its strength. CEL excels at evaluating expressions against structured data, while `text/template` excels at producing string output with interpolation.
 
-## Where expressions are used
+## Where expressions appear
 
-CEL expressions appear in several locations within the policy structure:
+CEL expressions appear throughout the policy structure:
 
-Policy-level `conditions` arrays contain expressions that determine whether the entire policy applies to a given event. These are evaluated after structural matching passes.
+Policy-level `conditions` arrays contain expressions that determine whether the entire policy applies to a given event. The engine evaluates these after structural matching passes.
 
-Rule-level `conditions` arrays contain expressions that determine whether a specific rule within the policy applies. These are evaluated after the rule's structural match passes.
+Rule-level `conditions` arrays contain expressions that determine whether a specific rule within the policy applies. The engine evaluates these after the rule's structural match passes.
 
 Rule `validate.expression` fields contain the validation logic that must return true for the rule to pass. If the expression returns false, the validation fails with the specified action (deny, warn, or audit).
 
 Rule `mutate.expression` fields contain transformation logic that receives the current event state as `object` and returns the modified state.
 
-Variable `expression` fields compute values from parameters, the hook event, built-in functions, or other variables. Variables are evaluated in declaration order.
+Variable `expression` fields compute values from parameters, the hook event, built-in functions, or other variables. The engine evaluates variables in declaration order.
 
-Macro `expression` fields define reusable expression fragments that can be called from other CEL expressions using the `$` prefix.
+Macro `expression` fields define reusable expression fragments that other CEL expressions call using the `$` prefix.
 
-Go templates are used in action message fields like `validate.message` and effect templates like `effects[].value` where dynamic string interpolation is needed.
+Go templates appear in action message fields like `validate.message` and effect templates like `effects[].value` where string interpolation requires runtime values.
 
 ## Evaluation modes
 
-arci distinguishes between two evaluation modes based on field semantics in policy definitions.
+ARCI distinguishes between two evaluation modes based on field semantics in policy definitions.
 
 Condition and expression fields contain CEL expressions evaluated for truthiness or transformation. These expressions appear without any delimiters. The `conditions`, `validate.expression`, and `mutate.expression` fields use this mode.
 
@@ -72,7 +72,7 @@ variables:
 
 ### Boolean operators
 
-The boolean operators `&&`, `||`, and `!` combine conditions. Expressions evaluate left to right with standard C precedence: `!` binds tightest, then `&&`, then `||`. Parentheses override precedence when needed.
+The boolean operators `&&`, `||`, and `!` combine conditions. Expressions resolve left to right with standard C precedence: `!` binds tightest, then `&&`, then `||`. Parentheses override precedence when needed.
 
 ```yaml
 conditions:
@@ -94,7 +94,7 @@ conditions:
 
 ### Path navigation
 
-Dot notation navigates nested objects. Bracket notation accesses list elements by index. These can be combined to traverse complex structures.
+Dot notation navigates nested objects. Bracket notation accesses list elements by index. You can combine these to traverse complex structures.
 
 ```yaml
 variables:
@@ -138,9 +138,9 @@ variables:
 
 ### String methods
 
-CEL provides built-in string methods for common operations. These are called as methods on string values and return boolean results suitable for conditions.
+CEL provides built-in string methods for common operations. You call these as methods on string values, and they return boolean results suitable for conditions.
 
-The `startsWith(prefix)` method returns true if the string starts with the given prefix. The `endsWith(suffix)` method returns true if the string ends with the given suffix. The `contains(substring)` method returns true if the string contains the given substring. The `matches(regex)` method returns true if the string matches the regular expression. All of these are case-sensitive.
+The `startsWith(prefix)` method returns true if the string starts with the given prefix. The `endsWith(suffix)` method returns true if the string ends with the given suffix. The `contains(substring)` method returns true if the string contains the given substring. The `matches(regex)` method returns true if the string matches the regular expression. All these methods are case-sensitive.
 
 ```yaml
 conditions:
@@ -183,13 +183,13 @@ The `jsonPointer` function is primarily useful when working with MCP tool inputs
 
 ## Built-in CEL functions and Go template functions
 
-arci extends both CEL and Go templates with domain-specific functions for common hook operations.
+ARCI extends both CEL and Go templates with domain-specific functions for common hook operations.
 
 ### CEL condition functions
 
 CEL provides these built-in methods on strings: `startsWith()`, `endsWith()`, `contains()`, `matches()`, and `size()`. The `has()` macro checks field existence.
 
-arci adds custom CEL functions for domain-specific operations. These are invoked with a `$` prefix to distinguish them from CEL builtins.
+ARCI adds custom CEL functions for domain-specific operations. You invoke these with a `$` prefix to distinguish them from CEL builtins.
 
 Path functions include `$file_exists(path)` which returns true if the path exists as a regular file, and `$matches_glob(path, pattern)` which checks whether a path matches a glob pattern.
 
@@ -231,7 +231,7 @@ conditions:
 
 ### Go template functions
 
-Go templates have access to Sprig functions and custom arci functions. Sprig provides `lower`, `upper`, `trim`, `replace`, `split`, `join`, `contains`, `hasPrefix`, `hasSuffix`, and many more. Custom arci template functions include `env`, `currentBranch`, `gitIsDirty`, `sessionGet`, `projectGet`, and `regexReplace`.
+Go templates have access to Sprig functions and custom ARCI functions. Sprig provides `lower`, `upper`, `trim`, `replace`, `split`, `join`, `contains`, `hasPrefix`, `hasSuffix`, and many more. Custom ARCI template functions include `env`, `currentBranch`, `gitIsDirty`, `sessionGet`, `projectGet`, and `regexReplace`.
 
 ```yaml
 message: "Running in {{ env \"NODE_ENV\" | default \"development\" }} mode"
@@ -241,11 +241,11 @@ message: "Branch: {{ currentBranch }}"
 
 ## Template syntax
 
-Template fields support Go's `text/template` syntax for constructing dynamic content. This mode is used for action messages, effect values, and other string outputs.
+Template fields support Go's `text/template` syntax for constructing interpolated content. Action messages, effect values, and other string outputs use this mode.
 
 ### Variable interpolation
 
-Double braces insert values from the template context. Go templates use dot notation with exported (capitalized) field names. Sprig functions can be chained using the pipe operator.
+Double braces insert values from the template context. Go templates use dot notation with exported (capitalized) field names. You can chain Sprig functions using the pipe operator.
 
 ```yaml
 rules:
@@ -263,7 +263,7 @@ rules:
         })
 ```
 
-Missing variables resolve to zero values rather than raising errors. arci configures templates with `missingkey=zero` for fail-safe behavior, preventing template errors from blocking evaluation.
+Missing variables resolve to zero values rather than raising errors. ARCI configures templates with `missingkey=zero` for fail-safe behavior, preventing template errors from blocking evaluation.
 
 ### Conditionals
 
@@ -282,7 +282,7 @@ effects:
 
 ### Loops
 
-The `{{ range }}` block iterates over sequences. The current element is available as `.` inside the block, or can be assigned to variables.
+The `{{ range }}` block iterates over sequences. The current element is available as `.` inside the block, or you can assign it to variables.
 
 ```yaml
 rules:
@@ -299,7 +299,7 @@ rules:
 
 ### Comments
 
-The `{{/* */}}` syntax creates comments that do not appear in output. Comments can span multiple lines.
+The `{{/* */}}` syntax creates comments that do not appear in output. Comments can span more than one line.
 
 ```yaml
 effects:
@@ -322,17 +322,17 @@ effects:
       {{- end -}}
 ```
 
-The `-` on the opening tag strips preceding whitespace; the `-` on the closing tag strips following whitespace. This is useful for producing compact output from templates with significant structural whitespace.
+The `-` on the opening tag strips preceding whitespace; the `-` on the closing tag strips following whitespace. This helps produce compact output from templates with heavy structural whitespace.
 
 ## Expression context
 
-Policies have access to a set of context variables derived from the hook event. In CEL expressions, variables are accessed directly as top-level names using lowercase with underscores (e.g., `tool_name`, `tool_input.command`). In Go templates, variables use dot notation with exported field names (e.g., `.ToolName`, `.ToolInput.Command`).
+Policies have access to a set of context variables derived from the hook event. CEL expressions access variables directly as top-level snake_case names like `tool_name` and `tool_input.command`. Go templates use dot notation with exported field names like `.ToolName` and `.ToolInput.Command`.
 
 ### Common context variables
 
 The `event_type` variable (CEL) or `.EventType` (template) contains the canonical event type: `pre_tool_call`, `post_tool_call`, `pre_prompt`, `post_response`, `session_start`, `session_end`, or other event types defined in the hook schema.
 
-The `session_id` variable (CEL) or `.SessionID` (template) contains the AI assistant's session identifier. This may be empty for assistants that do not provide session IDs or for specific events where it is unavailable.
+The `session_id` variable (CEL) or `.SessionID` (template) contains the AI assistant's session identifier. This value may be empty for assistants that do not provide session IDs or for specific events where the ID remains unavailable.
 
 The `cwd` variable (CEL) or `.Cwd` (template) contains the current working directory as an absolute path.
 
@@ -340,7 +340,7 @@ The `timestamp` variable (CEL) or `.Timestamp` (template) contains the event tim
 
 ### Tool event context
 
-For `pre_tool_call` and `post_tool_call` events, additional context is available.
+For `pre_tool_call` and `post_tool_call` events, extra context is available.
 
 The `tool_name` variable (CEL) or `.ToolName` (template) contains the canonical tool name: `Bash`, `Write`, `Read`, `Edit`, `Glob`, `Grep`, `Task`, `WebSearch`, `WebFetch`, or `mcp:server:tool` for MCP tools.
 
@@ -350,19 +350,19 @@ For `post_tool_call` events, the `tool_output` variable (CEL) or `.ToolOutput` (
 
 ### Git context
 
-When the current working directory is within a git repository, git-related context is populated.
+When the current working directory is within a git repository, ARCI populates git-related context.
 
 The `git_branch` variable (CEL) or `.GitBranch` (template) contains the current branch name, or empty string in detached HEAD state.
 
-The `git_is_dirty` variable (CEL) or `.GitIsDirty` (template) is true if there are uncommitted changes.
+The `git_is_dirty` variable (CEL) or `.GitIsDirty` (template) is true if the working tree contains uncommitted changes.
 
 The `git_head_commit` variable (CEL) or `.GitHeadCommit` (template) contains the current HEAD commit hash.
 
-The `git_is_detached` variable (CEL) or `.GitIsDetached` (template) is true if HEAD is detached from any branch.
+The `git_is_detached` variable (CEL) or `.GitIsDetached` (template) is true if HEAD does not point to any branch.
 
 ### Raw assistant data
 
-The `raw` variable (CEL) or `.Raw` (template) contains the unmodified hook input from the assistant. This provides access to assistant-specific fields not present in the normalized schema.
+The `raw` variable (CEL) or `.Raw` (template) contains the unmodified hook input from the assistant, including assistant-specific fields not present in the normalized schema.
 
 ```yaml
 # Access Cursor's workspace roots (CEL)
@@ -376,7 +376,7 @@ conditions:
 
 ## Examples
 
-The following examples demonstrate common patterns using the policy structure with conditions and templates.
+The following examples show common patterns using the policy structure with conditions and templates.
 
 ### Blocking dangerous commands
 

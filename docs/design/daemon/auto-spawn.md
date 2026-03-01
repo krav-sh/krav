@@ -6,7 +6,7 @@ This document describes an architectural pattern for CLI tools that benefit from
 
 Many CLI tools perform expensive operations on every invocation: scanning directory trees, parsing configuration files, computing file hashes, maintaining caches, or watching for file changes. When a user runs the CLI repeatedly (common during development), this repeated work creates noticeable latency.
 
-A daemon process can perform these operations once and keep results in memory, responding to CLI queries in milliseconds instead of seconds. However, daemons introduce complexity: they must be started, discovered, connected to, version-matched, and eventually cleaned up.
+A daemon process can perform these operations once and keep results in memory, responding to CLI queries in milliseconds instead of seconds. However, daemons introduce complexity: the user must start, discover, connect to, version-match, and eventually clean them up.
 
 The auto-spawn pattern solves this by making the daemon lifecycle invisible to the user. The CLI automatically starts a daemon if one isn't running, connects to an existing one if it is, and handles version mismatches and stale processes gracefully.
 
@@ -14,7 +14,7 @@ The auto-spawn pattern solves this by making the daemon lifecycle invisible to t
 
 ### Unix domain sockets
 
-A Unix domain socket (UDS) is an inter-process communication mechanism that uses the filesystem namespace. Unlike TCP sockets, UDS don't involve network stack overhead—data passes directly through kernel buffers. They appear as special files on disk (e.g., `/tmp/myapp/daemon.sock`), which provides natural access control via filesystem permissions.
+A Unix domain socket (UDS) is an inter-process communication mechanism that uses the filesystem namespace. Unlike TCP sockets, UDS don't involve network stack overhead, as data passes directly through kernel buffers. They appear as special files on disk (`/tmp/myapp/daemon.sock`), which provides natural access control via filesystem permissions.
 
 ```mermaid
 graph LR
@@ -23,7 +23,7 @@ graph LR
     CLI <-->|bidirectional data| Daemon
 ```
 
-On Windows, the equivalent is named pipes (`\\.\pipe\myapp`), though Windows 10+ also supports UDS with some limitations.
+On Windows, the equivalent uses named pipes (`\\.\pipe\myapp`), though Windows 10+ also supports UDS with some limitations.
 
 ### Process identifiers and PID files
 
@@ -55,9 +55,9 @@ The `kill(pid, 0)` syscall with signal 0 is a standard trick: it performs all pe
 
 When multiple CLI invocations race to start a daemon, you need mutual exclusion. File locking provides this via two mechanisms:
 
-**Advisory locking** (`flock`): A process requests a lock on a file descriptor. Other cooperating processes that also request locks will block or fail. The lock is "advisory" because processes that don't request locks can still access the file.
+**Advisory locking** (`flock`): a process requests a lock on a file descriptor. Other cooperating processes that also request locks block or fail. The lock is "advisory" because processes that don't request locks can still access the file.
 
-**Atomic file creation**: Opening a file with `O_CREAT | O_EXCL` flags atomically creates it only if it doesn't exist. If it exists, the call fails. This provides a simple mutex primitive.
+**Atomic file creation**: opening a file with `O_CREAT | O_EXCL` flags atomically creates it only if it doesn't exist. If it exists, the call fails. This provides a simple mutex primitive.
 
 ```mermaid
 sequenceDiagram
@@ -101,7 +101,7 @@ Go can't do a traditional `fork()` (the runtime doesn't survive it), so the stan
 
 Each project gets a unique identifier derived from its absolute path. This hash becomes the namespace for all daemon-related files:
 
-```
+```text
 $TMPDIR/myapp/<project-hash>/
 ├── daemon.pid      # Contains daemon's PID
 ├── daemon.lock     # Lock file for startup race
@@ -230,7 +230,7 @@ sequenceDiagram
 Semantic versioning ranges allow flexibility:
 
 - **EXACT**: Versions must match exactly
-- **PATCH**: Major.Minor must match, server patch >= client patch
+- **PATCH**: `Major.Minor` must match, server patch >= client patch
 - **MINOR**: Major must match, server minor >= client minor
 - **MAJOR**: Major must match (most lenient)
 
@@ -322,13 +322,13 @@ go func() {
 | Process existence  | `kill(pid, 0)`                | `OpenProcess` + `GetExitCodeProcess` |
 | File locking       | `flock()`                     | `LockFileEx()`                       |
 
-The pattern works on both platforms, but the implementation details differ. Abstract these behind interfaces to keep the core logic platform-agnostic.
+The pattern works on both platforms, but the specific details differ. Abstract these behind interfaces to keep the core logic platform-agnostic.
 
 ## Design decisions and trade-offs
 
 ### Why hash the project path?
 
-1. **Length limits**: Unix socket paths are limited to 104-108 bytes. Absolute paths can easily exceed this.
+1. **Length limits**: Unix socket paths have a limit of 104-108 bytes. Absolute paths can easily exceed this.
 2. **Special characters**: Paths may contain characters invalid in filenames.
 3. **Determinism**: Same path always produces same hash, so any CLI invocation finds the same daemon.
 
@@ -338,7 +338,7 @@ The PID file serves as state (which process is the daemon). The lock file serves
 
 ### Why idle timeout instead of always-running?
 
-For a tool used on dozens of projects, having daemons for all of them running permanently wastes resources. Idle timeout means only actively-used projects have running daemons, while inactive ones clean themselves up.
+For a tool used on dozens of projects, having daemons for all of them running permanently wastes resources. Idle timeout means only actively used projects have running daemons, while inactive ones clean themselves up.
 
 ### Why watch the project root?
 

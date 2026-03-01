@@ -2,35 +2,35 @@
 
 ## Overview
 
-Needs (NED-*) are stakeholder expectations—what stakeholders need an module to do or be. They're expressed from the stakeholder's perspective and validated against stakeholder intent.
+Needs (NED-*) are stakeholder expectations, capturing what stakeholders need a module to do or be. They're expressed from the stakeholder's perspective and validated against stakeholder intent.
 
 The key INCOSE distinction: a need is an "agreed-to expectation" while a requirement is an "agreed-to obligation." Needs express what stakeholders want; requirements express what the system must do to satisfy those needs.
 
 ## Purpose
 
-Needs serve several roles:
+Needs serve these roles:
 
-**Stakeholder voice**: Needs capture expectations in stakeholder terms, not implementation terms. "Users need quick feedback when parsing" rather than "Parser shall complete in 10ms."
+**Stakeholder voice**: needs capture expectations in stakeholder terms, not technical terms. `Users need quick feedback when parsing` rather than `Parser shall complete in 10 ms.`
 
-**Validation target**: Needs are validated—did we capture what stakeholders actually need? This is distinct from verification, which checks whether requirements are met.
+**Validation target**: the team validates needs, confirming they capture what stakeholders actually need. This is distinct from verification, which checks whether requirements hold.
 
-**Derivation source**: Requirements derive from needs. A single need may produce multiple requirements; a requirement may satisfy multiple needs. The derivesFrom relationship maintains traceability.
+**Derivation source**: requirements derive from needs. A single need may produce multiple requirements; a requirement may satisfy multiple needs. The derivesFrom relationship maintains traceability.
 
-**Scope anchor**: When scope questions arise ("do we need this feature?"), needs provide the answer by connecting back to stakeholder expectations.
+**Scope anchor**: when scope questions arise, needs provide the answer by connecting back to stakeholder expectations.
 
-## Needs vs requirements
+## Needs compared to requirements
 
 | Aspect      | Need                                      | Requirement                 |
 |-------------|-------------------------------------------|-----------------------------|
 | Perspective | Stakeholder                               | System                      |
-| Language    | "Users need...", "Contributors expect..." | "The system shall..."       |
+| Language    | `Users need...`, `Contributors expect...` | `The system shall...`       |
 | Validation  | Validated (right thing captured?)         | Verified (built correctly?) |
 | Precision   | May be qualitative                        | Must be verifiable          |
 | INCOSE term | Agreed-to expectation                     | Agreed-to obligation        |
 
 Example transformation:
 
-```
+```text
 Need: "Users need quick feedback when parsing fails"
     ↓ derive
 Requirement: "The parser shall report the first syntax error within 50ms"
@@ -42,7 +42,7 @@ Requirement: "Error messages shall suggest corrections when possible"
 
 Needs progress through states:
 
-```
+```text
 draft → proposed → validated → satisfied → obsolete
 ```
 
@@ -51,19 +51,19 @@ draft → proposed → validated → satisfied → obsolete
 | draft     | Initial capture, not yet reviewed                    |
 | proposed  | Ready for stakeholder validation                     |
 | validated | Stakeholders confirm this captures their expectation |
-| satisfied | Derived requirements are verified; need is met       |
+| satisfied | Derived requirements pass verification; need holds   |
 | obsolete  | No longer relevant (stakeholder needs changed)       |
 
 State transitions:
 
 - `draft → proposed`: Need is ready for validation
 - `proposed → validated`: Stakeholder confirms this is what they need
-- `validated → satisfied`: All derived requirements are verified
+- `validated → satisfied`: All derived requirements pass verification
 - `* → obsolete`: Need is no longer relevant
 
 ## Stakeholder classes
 
-Needs are categorized by stakeholder:
+Needs group by stakeholder:
 
 | Stakeholder | Description                         | Example needs                            |
 |-------------|-------------------------------------|------------------------------------------|
@@ -76,7 +76,7 @@ Needs are categorized by stakeholder:
 
 ## Storage model
 
-Need metadata is stored in `graph.jsonlt` as JSON-LD compact form. There is no frontmatter in prose files—`graph.jsonlt` is the single source of truth for all structured data.
+ARCI stores need metadata in `graph.jsonlt` as JSON-LD compact form. Prose files have no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
 
 ```json
 {"@context": "context.jsonld", "@id": "NED-B7G3M9K2", "@type": "Need", "title": "Quick parsing feedback", "module": {"@id": "MOD-A4F8R2X1"}, "stakeholder": "user", "statement": "Users need quick feedback when parsing fails", "rationale": "Slow error reporting disrupts developer flow", "status": "validated", "priority": "must", "derivesFrom": [{"@id": "CON-K7M3NP2Q"}]}
@@ -104,20 +104,20 @@ Needs use MoSCoW prioritization:
 | Priority | Description                                |
 |----------|--------------------------------------------|
 | must     | Essential; project fails without this      |
-| should   | Important; significant value, not critical |
+| should   | Important; high value, not critical        |
 | could    | Desirable; nice to have if time permits    |
 | wont     | Explicitly out of scope (for this release) |
 
 ## Relationships
 
-Relationships are embedded in the need's JSON-LD record using `{"@id": "..."}` values.
+The need's JSON-LD record embeds relationships using `{"@id": "..."}` values.
 
 ### Outgoing relationships
 
 | Property    | Target | Cardinality | Description                              |
 |-------------|--------|-------------|------------------------------------------|
 | module      | MOD-*  | Single      | Module this need belongs to              |
-| derivesFrom | CON-*  | Multi       | Concept(s) this need was formalized from |
+| derivesFrom | CON-*  | Multi       | Concepts the team formalized into this need |
 
 ### Incoming relationships (queried via graph)
 
@@ -134,7 +134,7 @@ Example with relationships:
 
 ## Derivation
 
-When a need is validated, derivation produces requirements:
+When stakeholders validate a need, derivation produces requirements:
 
 ```bash
 arci needderive NED-B7G3M9K2
@@ -147,7 +147,7 @@ This process:
 3. Creates REQ-* records with derivesFrom relationships back to the need
 4. Each requirement gets verification criteria
 
-A single need typically produces 1-5 requirements. Complex needs may be decomposed into child needs first.
+A single need typically produces 1-5 requirements. The team may decompose complex needs into child needs first.
 
 ## Validation
 
@@ -169,7 +169,7 @@ Validation methods:
 
 ## Implementation architecture
 
-Need functionality follows the three-layer architecture (see CON-GR4PH4RC).
+Need features follow the three-layer architecture (see CON-GR4PH4RC).
 
 ### Typed node
 
@@ -194,7 +194,7 @@ class NeedNode:
 
 All fields use proper types. The IO layer creates NeedNode directly from JSON-LD records, preserving all type-specific fields like `statement`, `rationale`, and `validation_evidence`.
 
-### Core layer (arci.core.need)
+### Core layer (`arci.core.need`)
 
 Pure functions and typed data structures:
 
@@ -245,7 +245,7 @@ def derives_from_concepts(graph: Graph, need_id: str) -> frozenset[str]: ...
 def derived_requirements(graph: Graph, need_id: str) -> frozenset[str]: ...
 ```
 
-### Service layer (arci.service.need)
+### Service layer (`arci.service.need`)
 
 Orchestrates core and IO:
 
@@ -321,7 +321,7 @@ arci needtrace NED-B7G3M9K2  # Show concept → need → requirements chain
 
 Needs sit between concepts and requirements in the formal transformation chain:
 
-```
+```text
 CON-* (exploration)
     ↓ formalize
 NED-* (expectation, validated)
@@ -331,7 +331,7 @@ REQ-* (obligation, verified)
 
 Each transformation produces traceability via derivesFrom relationships:
 
-```
+```text
 CON-K7M3NP2Q "Data model concept"
     ↑ derivesFrom
 NED-B7G3M9K2 "Users need quick feedback"
@@ -354,7 +354,7 @@ This chain answers "why does this requirement exist?" by tracing back through ne
 
 Needs capture stakeholder expectations:
 
-- Expressed in stakeholder terms, not implementation terms
+- Expressed in stakeholder terms, not build terms
 - Validated against stakeholder intent
 - Serve as derivation source for requirements
 - Maintain traceability via derivesFrom relationships
@@ -362,4 +362,4 @@ Needs capture stakeholder expectations:
 - Store metadata in graph.jsonlt with no frontmatter in prose files
 - Implemented following three-layer architecture (core/io/service)
 
-Needs are the bridge between exploration (concepts) and obligation (requirements), ensuring that what we build traces back to what stakeholders actually need.
+Needs are the bridge between exploration (concepts) and obligation (requirements), ensuring that deliverables trace back to what stakeholders actually need.

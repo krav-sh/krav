@@ -8,26 +8,26 @@ The state command group provides access to the state store.
 
 ## Description
 
-The state store holds key-value data scoped to sessions or projects. These commands let you inspect, modify, and clear state entries. By default, commands operate on project-scoped state unless a `--session` flag is provided.
+The state store holds key-value data scoped to sessions or projects. These commands let you inspect, modify, and clear state entries. By default, commands operate on project-scoped state unless the user passes a `--session` flag.
 
 ## Subcommands
 
-### list
+### List
 
 Shows all entries in the state store.
 
 **Flags:**
 
-- `--session <id>` — Filter to a specific session.
-- `--project` — Show project-scoped entries.
+- `--session <id>`: filter to a specific session.
+- `--project`: show project-scoped entries.
 
-### get
+### Get
 
 Retrieves a specific entry, showing its value and metadata (creation time, last update, author).
 
     arci state get <key>
 
-### set
+### Set
 
 Sets a state entry.
 
@@ -35,9 +35,9 @@ Sets a state entry.
 
 **Flags:**
 
-- `--session <id>` — Store as session-scoped entry. Uses project scope by default.
+- `--session <id>`: store as session-scoped entry. Uses project scope by default.
 
-### unset
+### Unset
 
 Removes a specific entry.
 
@@ -45,17 +45,17 @@ Removes a specific entry.
 
 **Flags:**
 
-- `--session <id>` — Remove from session scope. Targets project scope by default.
+- `--session <id>`: remove from session scope. Targets project scope by default.
 
-### clear
+### Clear
 
 Removes multiple entries.
 
 **Flags:**
 
-- `--session <id>` — Clear entries for a specific session.
-- `--project` — Clear project-scoped entries.
-- `--all` — Clear everything.
+- `--session <id>`: clear entries for a specific session.
+- `--project`: clear project-scoped entries.
+- `--all`: clear everything.
 
 ## See also
 

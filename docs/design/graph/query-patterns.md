@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document catalogs canonical graph traversal patterns that realize the [competency questions](competency-questions.md). Each pattern describes the traversal, its starting point, the predicates followed, and complexity characteristics.
+This document catalogs canonical graph traversal patterns that realize the [competency questions](competency-questions.md). Patterns operate over RDF resources and their object properties; pseudocode rather than SPARQL expresses them to remain coding-neutral. Each pattern describes the traversal, its starting point, the predicates followed, and complexity characteristics.
 
 ## Traceability traversals
 
@@ -10,7 +10,7 @@ This document catalogs canonical graph traversal patterns that realize the [comp
 
 Traverse `derivesFrom` edges from a node to its sources, recursively. Answers "why does this exist?"
 
-```
+```text
 ancestry(node) =
   sources = node.derivesFrom
   for each source in sources:
@@ -18,23 +18,23 @@ ancestry(node) =
     yield* ancestry(source)
 ```
 
-**Starting point**: Any NED or REQ
+**Starting point**: any NED or REQ
 **Predicates**: `derivesFrom` (backward through chain)
 **Terminates at**: CON nodes (concepts have no `derivesFrom`)
-**Complexity**: O(n) where n is the length of the derivation chain. Typically short (2–4 hops: REQ → NED → CON).
+**Complexity**: O(n) where n is the length of the derivation chain. Typically short (2-4 hops: REQ, NED, CON).
 
 ### Descendancy (CQ-T2, CQ-T4)
 
-Traverse `derivesFrom` edges in reverse — find all nodes that derive from a given source. Answers "what did this produce?"
+Traverse `derivesFrom` edges in reverse; find all nodes that derive from a given source. Answers "what did this produce?"
 
-```
+```text
 descendancy(node) =
   for each downstream where downstream.derivesFrom contains node:
     yield downstream
     yield* descendancy(downstream)
 ```
 
-**Starting point**: Any CON, NED, or REQ
+**Starting point**: any CON, NED, or REQ
 **Predicates**: `derivesFrom` inverse
 **Complexity**: O(n) where n is the number of nodes in the derivation subgraph. Requires scanning all nodes or maintaining a reverse index.
 
@@ -42,7 +42,7 @@ descendancy(node) =
 
 Combines ancestry and descendancy with related verifications, defects, and tasks. The complete context for a node.
 
-```
+```text
 full_chain(node) =
   ancestors = ancestry(node)
   descendants = descendancy(node)
@@ -60,14 +60,14 @@ full_chain(node) =
 
 Traverse `childOf` edges in reverse to find all descendants of a module.
 
-```
+```text
 subtree(mod) =
   for each child where child.childOf = mod:
     yield child
     yield* subtree(child)
 ```
 
-**Starting point**: Any MOD
+**Starting point**: any MOD
 **Predicates**: `childOf` inverse
 **Complexity**: O(n) where n is the number of modules in the subtree.
 
@@ -75,16 +75,16 @@ subtree(mod) =
 
 All nodes owned by a module subtree. Combines module subtree with `module` predicate.
 
-```
+```text
 scoped_subgraph(mod) =
   modules = {mod} ∪ subtree(mod)
   for each node where node.module ∈ modules:
     yield node
 ```
 
-**Starting point**: Any MOD
+**Starting point**: any MOD
 **Predicates**: `childOf` inverse, then `module` inverse
-**Complexity**: O(n) where n is the total number of nodes in the graph (requires scanning). Can be optimized with a module→nodes index.
+**Complexity**: O(n) where n is the total number of nodes in the graph (requires scanning). A module-to-nodes index speeds this up.
 
 ## Dependency traversals
 
@@ -92,21 +92,21 @@ scoped_subgraph(mod) =
 
 The longest path through incomplete tasks in the `dependsOn` DAG leading to a target task. This is the sequence of tasks that determines the minimum time to completion.
 
-```
+```text
 critical_path(target) =
   longest_path in dependsOn DAG from any root to target
   where all tasks on path have status ≠ complete
 ```
 
-**Starting point**: A milestone TSK
+**Starting point**: a milestone TSK
 **Predicates**: `dependsOn` (reverse traversal from target to roots)
-**Complexity**: O(V + E) where V is the number of tasks and E is the number of dependency edges. Longest path in a DAG is computed via topological sort.
+**Complexity**: O(V + E) where V is the number of tasks and E is the number of dependency edges. A topological sort computes the longest path in a DAG.
 
 ### Blocking set (CQ-P3)
 
 All incomplete tasks that transitively block a given task.
 
-```
+```text
 blocking_set(task) =
   for each dep in task.dependsOn:
     if dep.status ≠ complete:
@@ -114,7 +114,7 @@ blocking_set(task) =
       yield* blocking_set(dep)
 ```
 
-**Starting point**: Any TSK
+**Starting point**: any TSK
 **Predicates**: `dependsOn`
 **Complexity**: O(n) where n is the size of the transitive dependency closure. Typically small relative to total task count.
 
@@ -122,16 +122,16 @@ blocking_set(task) =
 
 Tasks that are not complete and have all dependencies satisfied.
 
-```
+```text
 ready_set() =
   for each task where task.status ≠ complete:
     if all dep in task.dependsOn have dep.status = complete:
       yield task
 ```
 
-**Starting point**: All tasks
+**Starting point**: all tasks
 **Predicates**: `dependsOn`
-**Complexity**: O(V + E) — scan all tasks, check each dependency.
+**Complexity**: O(V + E); scan all tasks, check each dependency.
 
 ## Coverage analysis
 
@@ -139,13 +139,13 @@ ready_set() =
 
 Requirements with no `verifiedBy` edges.
 
-```
+```text
 unverified() =
   for each req where req.verifiedBy is empty:
     yield req
 ```
 
-**Starting point**: All REQ nodes
+**Starting point**: all REQ nodes
 **Predicates**: `verifiedBy`
 **Complexity**: O(n) where n is the number of requirements.
 
@@ -153,7 +153,7 @@ unverified() =
 
 Verification coverage for a module, expressed as a ratio.
 
-```
+```text
 coverage(mod) =
   reqs = all REQ where REQ.module ∈ subtree(mod)
   verified = reqs where REQ.verifiedBy is non-empty
@@ -161,7 +161,7 @@ coverage(mod) =
   return {total: |reqs|, verified: |verified|, passing: |passing|}
 ```
 
-**Starting point**: Any MOD
+**Starting point**: any MOD
 **Predicates**: `module` inverse, `verifiedBy`, VRF status
 **Complexity**: O(n) where n is the number of requirements in the module subtree.
 
@@ -169,9 +169,9 @@ coverage(mod) =
 
 ### Suspect link propagation (CQ-I1, CQ-I2)
 
-When a node is modified, find all edges that become suspect.
+When someone modifies a node, find all edges that become suspect.
 
-```
+```text
 suspect_impact(node) =
   if node is CON:
     yield all NED.derivesFrom edges pointing at node
@@ -183,7 +183,7 @@ suspect_impact(node) =
     yield all REQ.allocatesTo edges
 ```
 
-**Starting point**: The modified node
+**Starting point**: the modified node
 **Predicates**: `derivesFrom` inverse, `verifiedBy`, `allocatesTo`
 **Complexity**: O(d) where d is the out-degree of the modified node's inverse relationships. Non-transitive by default (see [constraints](constraints.md) C-SUSPECT2).
 
@@ -191,7 +191,7 @@ suspect_impact(node) =
 
 Simulate the impact of a proposed change without applying it.
 
-```
+```text
 what_if(node, proposed_change) =
   suspect_edges = suspect_impact(node)
   affected_nodes = targets of suspect_edges
@@ -199,7 +199,7 @@ what_if(node, proposed_change) =
   return {suspect_edges, affected_nodes, affected_verifications}
 ```
 
-**Complexity**: Same as suspect link propagation plus verification lookup.
+**Complexity**: same as suspect link propagation plus verification lookup.
 
 ## Phase gate queries
 
@@ -207,7 +207,7 @@ what_if(node, proposed_change) =
 
 Check whether a module can advance to the next phase.
 
-```
+```text
 can_advance(mod, target_phase) =
   current = mod.phase
   phase_tasks = all TSK where TSK.module = mod and TSK.processPhase = current
@@ -215,28 +215,28 @@ can_advance(mod, target_phase) =
   blocking_defects = all DEF where DEF.module = mod
     and DEF.severity ∈ {critical, major}
     and DEF.status ∈ {open, confirmed}
-  parent = mod.childOf
-  parent_ok = parent is null or parent.phase ≥ target_phase
-  return |incomplete_tasks| = 0 and |blocking_defects| = 0 and parent_ok
+  return |incomplete_tasks| = 0 and |blocking_defects| = 0
 ```
 
-**Starting point**: Any MOD
-**Predicates**: `module` inverse (for tasks and defects), `childOf`
+**Starting point**: any MOD
+**Predicates**: `module` inverse (for tasks and defects)
 **Complexity**: O(t + d) where t is the number of tasks for this module/phase and d is the number of defects for this module.
 
-### Behind-phase modules (CQ-PH2)
+### Phase comparison across siblings (CQ-PH2)
 
-Find modules whose phase is behind their parent's phase.
+Find modules at an earlier phase than their siblings, useful for spotting modules that may need attention.
 
+```text
+sibling_phase_comparison() =
+  for each parent in all MOD nodes:
+    siblings = all MOD where childOf = parent
+    max_phase = max(s.phase for s in siblings)
+    for each s in siblings:
+      if s.phase < max_phase:
+        yield {s, s.phase, parent, max_phase}
 ```
-behind_phase() =
-  for each mod where mod.childOf is set:
-    parent = mod.childOf
-    if mod.phase < parent.phase:
-      yield {mod, mod.phase, parent, parent.phase}
-```
 
-**Starting point**: All MOD nodes with parents
+**Starting point**: all MOD nodes with children
 **Predicates**: `childOf`
 **Complexity**: O(n) where n is the number of modules.
 
@@ -246,7 +246,7 @@ behind_phase() =
 
 Find nodes with no structural connections (no incoming or outgoing edges on structural predicates).
 
-```
+```text
 orphans() =
   for each node (excluding root MOD):
     has_structural_edge = any of:
@@ -262,7 +262,7 @@ orphans() =
 
 Detect cycles in DAG-constrained subgraphs.
 
-```
+```text
 has_cycle(subgraph) =
   topological_sort(subgraph) fails ⟺ cycle exists
 ```
@@ -274,7 +274,7 @@ has_cycle(subgraph) =
 
 Find predicate targets that don't correspond to existing nodes.
 
-```
+```text
 dangling_refs() =
   for each node:
     for each predicate value {"@id": target_id}:
@@ -290,7 +290,7 @@ dangling_refs() =
 
 Compare graph state between two baselines.
 
-```
+```text
 semantic_diff(baseline_a, baseline_b) =
   graph_a = reconstruct_graph(baseline_a.commitSha)
   graph_b = reconstruct_graph(baseline_b.commitSha)
@@ -300,14 +300,14 @@ semantic_diff(baseline_a, baseline_b) =
   return {added, removed, modified}
 ```
 
-**Starting point**: Two BSL nodes
-**Complexity**: O(n) where n is the total number of nodes across both graphs. Dominated by the cost of reconstructing graph state from git commits.
+**Starting point**: two BSL nodes
+**Complexity**: O(n) where n is the total number of nodes across both graphs. The cost of reconstructing graph state from git commits dominates.
 
 ### Deferred defects by target (CQ-A5)
 
 Find deferred defects that target a specific baseline or phase.
 
-```
+```text
 deferred_for_target(target) =
   for each def where def.status = deferred:
     if def.deferralTarget matches target:

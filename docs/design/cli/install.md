@@ -1,35 +1,37 @@
-# Install / Uninstall
+# Install / uninstall
 
-The install and uninstall commands manage integration with Claude Code. These commands modify Claude Code configuration files to wire up arci hooks.
+The install and uninstall commands manage integration with Claude Code. These commands modify Claude Code configuration files to wire up ARCI hooks.
 
 ## Synopsis
 
-    arci install [options]
-    arci uninstall [options]
+```text
+arci install [options]
+arci uninstall [options]
+```
 
 ## Description
 
 ### Install
 
-The `arci install` command configures Claude Code to invoke arci. Without arguments, it enters an interactive mode that guides the user through configuration. With explicit flags, it can run non-interactively for scripting.
+The `arci install` command configures Claude Code to invoke ARCI. Without arguments, it enters an interactive mode that guides the user through configuration. With explicit flags, it can run non-interactively for scripting.
 
 ### Uninstall
 
-The `arci uninstall` command reverses the installation, removing arci hook entries from Claude Code configuration.
+The `arci uninstall` command reverses the installation, removing ARCI hook entries from Claude Code configuration.
 
 ## Options
 
 ### Install options
 
-- `--scope <scope>` — Choose global, project, or both levels.
-- `--scaffold` — Create starter configuration files.
-- `--non-interactive` — Skip prompts (for scripting).
-- `--dry-run` — Preview changes without applying them.
+- `--scope <scope>`: choose global, project, or both levels.
+- `--scaffold`: create starter configuration files.
+- `--non-interactive`: skip prompts (for scripting).
+- `--dry-run`: preview changes without applying them.
 
 ### Uninstall options
 
-- `--scope <scope>` — Choose which level to uninstall from.
-- `--purge` — Additionally remove arci's own configuration directories.
+- `--scope <scope>`: choose which level to uninstall from.
+- `--purge`: also remove ARCI's own configuration directories.
 
 ## Examples
 

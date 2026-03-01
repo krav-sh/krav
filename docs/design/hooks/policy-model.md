@@ -1,12 +1,12 @@
 # Policy model
 
-This document describes arci's policy model.
+This document describes ARCI's policy model.
 
 ## Design goals
 
-The policy model prioritizes clarity and self-containment over enterprise flexibility. A policy file should be readable top to bottom and understandable without cross-referencing other documents. When you need to know why a tool call was blocked, you should be able to find the answer in one place.
+The policy model favors clarity and self-containment over enterprise flexibility. A policy file should be readable top to bottom and understandable without cross-referencing other documents. When you need to know why a tool call failed, you should be able to find the answer in one place.
 
-Policies are self-contained units that declare their own matching, parameters, and enforcement. Reuse is handled through variables and macros for expression reuse, parameter providers for external data, and the config cascade for layered overrides.
+Policies are self-contained units that declare their own matching, parameters, and enforcement. Reuse comes from variables and macros for expression reuse, parameter providers for external data, and the config cascade for layered overrides.
 
 ## Policy structure
 
@@ -49,7 +49,7 @@ variables:
 macros:
   - name: is_destructive
     expression: |
-      command.matches("rm\\s+-rf") || 
+      command.matches("rm\\s+-rf") ||
       command.contains("chmod 777") ||
       command.contains("> /dev/sd")
 
@@ -63,15 +63,15 @@ rules:
       action: deny
 ```
 
-### version
+### Version
 
-Schema version for the policy format. Currently `1`. This enables future schema evolution without requiring apiVersion/kind ceremony.
+Schema version for the policy format. Currently `1`. Future schema versions can evolve without requiring apiVersion/kind ceremony.
 
-### name
+### Name
 
 Unique identifier for the policy. Used in logging, metrics, and error messages. Names should be kebab-case and descriptive.
 
-### metadata
+### Metadata
 
 Optional metadata about the policy. The `description` field provides human-readable documentation. The `labels` field contains arbitrary key-value pairs for organization and filtering.
 
@@ -97,13 +97,13 @@ config:
   default_state: audit  # enabled | disabled | audit
 ```
 
-The `failurePolicy` determines what happens when the policy itself errors (expression evaluation failure, parameter resolution failure, etc.). With `allow`, the policy is skipped and the tool call proceeds. With `deny`, errors block the tool call. The default is `allow`, consistent with fail-open semantics.
+The `failurePolicy` determines what happens when the policy itself errors (expression evaluation failure, parameter resolution failure, etc.). With `allow`, the engine skips the policy and the tool call proceeds. With `deny`, errors block the tool call. The default is `allow`, consistent with fail-open semantics.
 
-The `priority` determines evaluation order. Policies are grouped by priority and evaluated from highest to lowest: critical, high, medium, low. Within a priority level, policies are ordered by config cascade (universal → project). Higher-priority policies can mutate requests before lower-priority policies see them. The default is `medium`.
+The `priority` determines evaluation order. The engine groups policies by priority and runs them from highest to lowest: critical, high, medium, low. Within a priority level, the config cascade orders them (universal then project). Higher-priority policies can mutate requests before lower-priority policies see them. The default is `medium`.
 
 The `default_state` declares the policy's preferred enforcement state when no manifest explicitly references it. This is useful for policies that should be opt-in (`default_state: disabled`) or policies under evaluation (`default_state: audit`). The precedence order is: manifest reference > policy self-declaration > layer `defaultBehavior`. If omitted, the policy inherits from the layer's `defaultBehavior` setting.
 
-### match
+### Match
 
 Structural matching that determines whether this policy applies to a given hook event. Match conditions use OR-within-arrays, AND-across-fields logic.
 
@@ -125,15 +125,15 @@ The `events` field specifies which hook events this policy handles. Common value
 
 The `tools` field specifies which tool names this policy handles: `Bash`, `Write`, `Edit`, `Read`, `Glob`, `Grep`, etc.
 
-The `paths` field filters by file path when the hook event involves a file. Both `include` and `exclude` accept glob patterns. Exclude takes precedence over include.
+The `paths` field filters by path when the hook event involves a file. Both `include` and `exclude` accept glob patterns. Exclude takes precedence over include.
 
 The `branches` field filters by git branch. Useful for policies that should only apply on protected branches or only on feature branches.
 
 Match evaluation is fast because it uses structural comparison and indexing. The engine can filter thousands of policies to a handful of candidates before evaluating any CEL expressions.
 
-### conditions
+### Conditions
 
-Dynamic conditions that determine whether the policy applies, evaluated after structural matching passes. Conditions are CEL expressions that must all return true (AND logic with short-circuit evaluation).
+Runtime conditions that determine whether the policy applies, checked after structural matching passes. Conditions are CEL expressions that must all return true (AND logic with short-circuit evaluation).
 
 ```yaml
 conditions:
@@ -147,7 +147,7 @@ conditions:
 
 Each condition has a `name` for debugging and an `expression` containing CEL code. Conditions can reference parameters, variables, and built-in functions.
 
-If any condition returns false, the policy is skipped for this event. This is different from a validation failure—skipped policies don't appear in audit logs or contribute to the overall decision.
+If any condition returns false, the engine skips the policy for this event. This differs from a validation failure: skipped policies do not appear in audit logs or contribute to the final decision.
 
 ### parameters
 
@@ -189,13 +189,13 @@ parameters:
       enabled: true
 ```
 
-Parameters are resolved before any expressions evaluate. If resolution fails and no defaults are provided, the behavior depends on `config.failurePolicy`. Resolved parameters are available in expressions as `params.parameterName`.
+The engine resolves parameters before running any expressions. If resolution fails and no defaults exist, the behavior depends on `config.failurePolicy`. Resolved parameters are available in expressions as `params.parameterName`.
 
-Provider types include `file` (reads JSON/YAML from disk), `http` (fetches from an endpoint), `env` (reads environment variable), and named providers defined in the arci configuration.
+Provider types include `file` (reads JSON/YAML from disk), `http` (fetches from an endpoint), `env` (reads environment variable), and named providers defined in the ARCI configuration.
 
-### variables
+### Variables
 
-Variables are computed values derived from parameters, the hook event, built-in functions, or other variables. They provide a way to factor out common expressions and make rules more readable.
+Variables hold values derived from parameters, the hook event, built-in functions, or other variables. They provide a way to factor out common expressions and make rules more readable.
 
 ```yaml
 variables:
@@ -213,17 +213,17 @@ variables:
     expression: 'blocked_patterns.exists(p, command.contains(p))'
 ```
 
-Variables are evaluated in declaration order, so later variables can reference earlier ones. Variables defined at the policy level are available to all rules. Rules can define their own variables that shadow policy-level variables.
+The engine processes variables in declaration order, so later variables can reference earlier ones. Variables defined at the policy level are available to all rules. Rules can define their own variables that shadow policy-level variables.
 
-### macros
+### Macros
 
-Macros are reusable expression fragments that can be called from CEL expressions. They're useful for complex logic that appears in multiple rules or policies.
+Macros are reusable expression fragments that you can call from CEL expressions. They work well for complex logic that appears in many rules or policies.
 
 ```yaml
 macros:
   - name: is_destructive_command
     expression: |
-      command.matches("rm\\s+-rf") || 
+      command.matches("rm\\s+-rf") ||
       command.contains("chmod 777") ||
       command.contains("> /dev/sd")
 
@@ -232,9 +232,9 @@ macros:
       $current_branch() in params.protectedBranches
 ```
 
-Macros are invoked with a `$` prefix: `$is_destructive_command()`. They can reference variables and parameters from the calling context.
+Call macros with a `$` prefix: `$is_destructive_command()`. They can reference variables and parameters from the calling context.
 
-### rules
+### Rules
 
 Rules are the core of a policy. Each rule defines a specific check, mutation, or side effect. A policy contains one or more rules.
 
@@ -281,13 +281,13 @@ rules:
 
 Each rule has the following fields:
 
-### name
+### Name
 
 Required. Unique identifier within the policy. Used in logging and error messages.
 
-### match
+### Match
 
-Optional structural matching that narrows the policy's match. A rule's match intersects with the policy's match—both must pass for the rule to be a candidate. Syntax is identical to policy-level match.
+Optional structural matching that narrows the policy's match. A rule's match intersects with the policy's match, and both must pass for the rule to run. Syntax is identical to policy-level match.
 
 ```yaml
 rules:
@@ -298,9 +298,9 @@ rules:
       # ...
 ```
 
-### conditions
+### Conditions
 
-Optional dynamic conditions for the rule. These are evaluated after the rule's structural match passes. If any condition returns false, the rule is skipped (not a failure, just not applicable).
+Optional runtime conditions for the rule. The engine checks these after the rule's structural match passes. If any condition returns false, the engine skips the rule (not a failure, just not applicable).
 
 ```yaml
 rules:
@@ -313,9 +313,9 @@ rules:
       action: deny
 ```
 
-The distinction between conditions and validation is important: conditions determine whether the rule is relevant, validation determines whether it passes. A rule that's not relevant is skipped silently. A rule that's relevant but fails validation is a violation.
+The distinction between conditions and validation is important: conditions determine whether the rule is relevant, validation determines whether it passes. The engine silently skips irrelevant rules. A rule that is relevant but fails validation is a violation.
 
-### variables
+### Variables
 
 Optional rule-local variables. These can shadow policy-level variables and are only visible within this rule.
 
@@ -331,7 +331,7 @@ rules:
       action: warn
 ```
 
-### validate
+### Validation
 
 Validation rules check a condition and produce a result if it fails. Each rule can have at most one `validate` block.
 
@@ -344,13 +344,13 @@ validate:
 
 The `expression` is a CEL expression that must return true for the validation to pass. If it returns false, the validation fails with the specified action.
 
-The `message` is a human-readable explanation shown when validation fails. It can include template expressions like `{{ variable }}` for dynamic content.
+The `message` is a human-readable explanation shown when validation fails. It can include template expressions like `{{ variable }}` for variable content.
 
 The `action` determines what happens on failure: `deny` blocks the tool call, `warn` allows it with a warning, `audit` logs silently without user notification.
 
-### mutate
+### Mutate
 
-Mutation rules transform the hook event. Mutations are applied before validations, so validation rules see the mutated state.
+Mutation rules transform the hook event. The engine applies mutations before validations, so validation rules see the mutated state.
 
 ```yaml
 mutate:
@@ -364,9 +364,9 @@ mutate:
 
 The `expression` is a CEL expression that receives `object` (the current event state) and returns the modified state. Mutations use CEL's immutable update syntax.
 
-### effects
+### Effects
 
-Effects are side actions that run after validation/mutation. A rule can have multiple effects.
+Effects are side actions that run after validation/mutation. A rule can have many effects.
 
 ```yaml
 effects:
@@ -387,7 +387,7 @@ effects:
     when: on_pass
 ```
 
-The `when` field controls when the effect runs: `always` (default), `on_pass` (rule passed or was skipped), `on_fail` (validation failed).
+The `when` field controls when the effect runs: `always` (default), `on_pass` (rule passed or the engine skipped it), `on_fail` (validation failed).
 
 Effect types include:
 
@@ -395,9 +395,9 @@ Effect types include:
 
 `notify` sends a notification to the user via OS notification system.
 
-`log` writes to the arci log at the specified level.
+`log` writes to the ARCI log at the specified level.
 
-Additional effect types may be added for webhooks, metrics, and other integrations.
+Future versions may introduce effect types for webhooks, metrics, and other integrations.
 
 ### Rule type constraints
 
@@ -444,7 +444,7 @@ All CEL expressions have access to the following context:
 
 ### Hook event data
 
-```
+```text
 tool_name         # string: normalized tool name ("Bash", "Write", etc.)
 tool_input        # map: tool-specific input fields
 event_type        # string: "pre_tool_call", "post_tool_call", etc.
@@ -454,19 +454,19 @@ timestamp         # timestamp: when the event occurred
 
 ### Parameters
 
-```
+```text
 params.paramName  # value from parameter definition
 ```
 
 ### Variables
 
-```
+```text
 variableName      # value from variable definition (policy or rule level)
 ```
 
 ### Built-in functions
 
-```
+```text
 $file_exists(path)           # bool: check if file exists
 $current_branch()            # string: current git branch
 $git_is_dirty()              # bool: check for uncommitted changes
@@ -479,7 +479,7 @@ $matches_glob(path, pattern) # bool: glob pattern matching
 
 ### Macros
 
-```
+```text
 $macroName()                 # result of macro expression
 ```
 
@@ -644,7 +644,7 @@ conditions:
 macros:
   - name: is_destructive_command
     expression: |
-      command.matches("rm\\s+-rf") || 
+      command.matches("rm\\s+-rf") ||
       command.contains("chmod 777")
 
 rules:

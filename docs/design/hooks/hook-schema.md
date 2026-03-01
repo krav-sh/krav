@@ -1,24 +1,24 @@
 # Hook schema
 
-This document defines arci's normalized hook schema for Claude Code integration. The schema maps Claude Code's hook events to canonical event types used in policy evaluation.
+This document defines ARCI's normalized hook schema for Claude Code integration. The schema maps Claude Code's hook events to canonical event types used in policy evaluation.
 
 For how policies use this schema, see [Policy model](policy-model.md). For how evaluation works, see [Execution model](execution-model.md).
 
 ## Design principles
 
-The schema follows three principles. First, use action-oriented event names and canonical tool identifiers that align with Claude Code's conventions. Second, provide silent skip for unavailable context so that policies requiring session scope are silently skipped when session ID is unavailable, rather than failing evaluation. Third, normalize common fields while providing escape hatches so that Claude Code-specific fields remain accessible through the `raw` field for policies that need them.
+The schema follows three principles. First, use action-oriented event names and canonical tool identifiers that align with Claude Code's conventions. Second, silently skip unavailable context so that policies requiring session scope are silently skipped when session ID is unavailable, rather than failing evaluation. Third, normalize common fields while providing escape hatches so that Claude Code-specific fields remain accessible through the `raw` field for policies that need them.
 
 ## Event types
 
-arci defines canonical event types that map to Claude Code's native hook event names.
+ARCI defines canonical event types that map to Claude Code's native hook event names.
 
 ### Core lifecycle events
 
 The `pre_tool_call` event fires after Claude decides to invoke a tool but before execution begins. Policies can block the operation, auto-approve, mutate the input, or inject warnings. This is the primary enforcement point for security and safety policies. Claude Code event: `PreToolUse`.
 
-The `post_tool_call` event fires immediately after a tool completes successfully. Policies can validate output, inject feedback to the agent, log for auditing, or trigger follow-up actions. This event cannot block since the operation has already completed. Claude Code event: `PostToolUse`.
+The `post_tool_call` event fires immediately after a tool completes successfully. Policies can check output, inject feedback to the agent, log for auditing, or trigger follow-up actions. This event cannot block since the operation has already completed. Claude Code event: `PostToolUse`.
 
-The `pre_prompt` event fires when a user submits a prompt, before Claude begins processing. Policies can inject additional context, block the prompt entirely, or log for analysis. Claude Code event: `UserPromptSubmit`.
+The `pre_prompt` event fires when a user submits a prompt, before Claude begins processing. Policies can inject extra context, block the prompt entirely, or log for analysis. Claude Code event: `UserPromptSubmit`.
 
 The `post_response` event fires when Claude finishes responding. Policies can prevent stopping and provide instructions to continue, log the completion, or trigger cleanup actions. Claude Code event: `Stop`.
 
@@ -40,7 +40,7 @@ The `subagent_stop` event fires when a subagent completes its task. It shares th
 
 ## Tool names
 
-arci uses Claude Code's native tool names as canonical identifiers.
+ARCI uses Claude Code's native tool names as canonical identifiers.
 
 ### Canonical tool names
 
@@ -50,7 +50,7 @@ The `Write` tool creates or overwrites files.
 
 The `Read` tool reads file contents.
 
-The `Edit` tool modifies existing files with targeted edits. `MultiEdit` performs multiple edits in one call.
+The `Edit` tool modifies existing files with targeted edits. `MultiEdit` performs batched edits in one call.
 
 The `Glob` tool searches for files by pattern.
 
@@ -76,11 +76,11 @@ conditions:
 
 ## Input schema
 
-Policies evaluate against a normalized input context. Common fields are present in all events; event-specific fields are available only for relevant event types.
+Policies run against a normalized input context. Common fields are present in all events; event-specific fields are available only for relevant event types.
 
 ### Common fields
 
-The `event_type` field contains the canonical event type (e.g., `pre_tool_call`, `session_start`).
+The `event_type` field contains the canonical event type (such as `pre_tool_call`, `session_start`).
 
 The `session_id` field contains Claude Code's session identifier (a UUID that persists across the conversation).
 
@@ -92,7 +92,7 @@ The `timestamp` field contains the event timestamp.
 
 For `pre_tool_call` and `post_tool_call` events:
 
-The `tool_name` field contains the tool name (e.g., `Bash`, `Write`).
+The `tool_name` field contains the tool name (such as `Bash`, `Write`).
 
 The `tool_input` field contains tool parameters as an object. Contents vary by tool. See tool input schemas below.
 
@@ -156,25 +156,25 @@ For `Edit`:
 
 For `Glob`:
 
-- `pattern` (string): Glob pattern to match files (e.g., `**/*.py`)
+- `pattern` (string): Glob pattern to match files (such as `**/*.py`)
 - `path` (string, optional): Base directory to search from; defaults to `cwd`
 
 For `Grep`:
 
 - `pattern` (string): Regular expression pattern to search for
 - `path` (string, optional): File or directory to search; defaults to `cwd`
-- `include` (string, optional): Glob pattern to filter files (e.g., `*.py`)
+- `include` (string, optional): Glob pattern to filter files (such as `*.py`)
 
 For `Task`:
 
 - `prompt` (string): The task description for the subagent
-- `subagent_type` (string, optional): Type of subagent to spawn
-- `context` (string, optional): Additional context for the subagent
+- `subagent_type` (string, optional): Subagent kind to spawn
+- `context` (string, optional): Extra context for the subagent
 
 For `WebSearch`:
 
 - `query` (string): The search query
-- `num_results` (integer, optional): Maximum number of results
+- `num_results` (integer, optional): Max number of results
 
 For `WebFetch`:
 
@@ -189,7 +189,7 @@ For `mcp:` tools:
 
 ### Accessing raw Claude Code data
 
-The `raw` field contains the unmodified hook input from Claude Code. This provides access to fields not present in the normalized schema, such as `permission_mode`, `transcript_path`, and `tool_use_id`.
+The `raw` field contains the unmodified hook input from Claude Code, including fields not present in the normalized schema such as `permission_mode`, `transcript_path`, and `tool_use_id`.
 
 ```yaml
 # Access Claude Code's permission mode
@@ -204,7 +204,7 @@ variables:
 
 ## Output schema
 
-arci produces a response that is translated to Claude Code's expected output format.
+ARCI produces a response and translates it to Claude Code's expected output format.
 
 ### Response structure
 
@@ -243,7 +243,7 @@ Messages accumulate from all policies that match and produce output.
 
 ### Mutations
 
-The `mutations` object contains field modifications to apply to the hook event. Mutations are merged from all matching policies according to priority and cascade order. The mutated event is what Claude receives if the action is `allow` or `warn`.
+The `mutations` object contains field modifications to apply to the hook event. The engine merges mutations from all matching policies according to priority and cascade order. The mutated event is what Claude receives if the action is `allow` or `warn`.
 
 ### Control fields
 
@@ -251,7 +251,7 @@ The `continue` field (boolean, default true) determines whether Claude should co
 
 ### Output format translation
 
-arci translates the abstract output to Claude Code's expected format:
+ARCI translates the abstract output to Claude Code's expected format:
 
 | Action | Claude Code Behavior |
 |--------|---------------------|
@@ -263,7 +263,7 @@ arci translates the abstract output to Claude Code's expected format:
 
 ### Empty or null fields
 
-Optional or unavailable fields should be checked with CEL's `has()` macro or the null-coalescing operator before use.
+Check optional or unavailable fields with CEL's `has()` macro or the null-coalescing operator before use.
 
 ```yaml
 # Check for field existence
@@ -305,11 +305,11 @@ conditions:
 
 ### Timeout handling
 
-Hook timeout behavior is configured in Claude Code's settings (default 30 seconds per hook). arci enforces its own timeout on policy evaluation. When evaluation times out, the policy is skipped with fail-open semantics.
+Claude Code's settings control hook timeout behavior (default 30 seconds per hook). ARCI enforces its own timeout on policy evaluation. When evaluation times out, the engine skips the policy with fail-open semantics.
 
-### Regex patterns
+### Regular expression patterns
 
-CEL provides regex support through the `.matches()` method (RE2 syntax). Note that backslashes must be escaped in YAML strings.
+CEL provides regular expression support through the `.matches()` method (RE2 syntax). Note that you must escape backslashes in YAML strings.
 
 ```yaml
 # Match rm with -rf flags

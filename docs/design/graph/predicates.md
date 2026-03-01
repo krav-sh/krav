@@ -2,9 +2,9 @@
 
 ## Overview
 
-Predicates define the semantic relationships between nodes in the knowledge graph. Each predicate has a specific domain (source types), range (target types), cardinality, structural constraint, and behavior for suspect link propagation.
+Predicates are RDF object properties in the `arci:` namespace that define the semantic relationships between nodes in the knowledge graph. Each predicate has a specific domain (source types), range (target types), cardinality, structural constraint, and behavior for suspect link propagation.
 
-All relationships are stored as JSON-LD properties on the source node, with `{"@id": "TARGET-ID"}` values. Directionality is always from the node that "has" the relationship to the node it references.
+JSON-LD properties on the source node represent all relationships, with `{"@id": "TARGET-ID"}` values. Directionality is always from the node that "has" the relationship to the node it references.
 
 ## Predicate classification
 
@@ -47,8 +47,8 @@ Expresses formal transformation: concepts become needs, needs become requirement
 | Suspect propagation | Modification of source marks downstream `derivesFrom` edges as suspect |
 
 ```json
-{"@id": "NED-B7G3M9K2", "derivesFrom": [{"@id": "CON-K7M3NP2Q"}]}
-{"@id": "REQ-C2H6N4P8", "derivesFrom": [{"@id": "NED-B7G3M9K2"}]}
+{"@id": "NEED-B7G3M9K2", "derivesFrom": [{"@id": "CON-K7M3NP2Q"}]}
+{"@id": "REQ-C2H6N4P8", "derivesFrom": [{"@id": "NEED-B7G3M9K2"}]}
 {"@id": "REQ-CH1LDR3Q", "derivesFrom": [{"@id": "REQ-C2H6N4P8"}]}
 ```
 
@@ -56,13 +56,13 @@ Expresses formal transformation: concepts become needs, needs become requirement
 
 Predicates that assign entities to their owning container.
 
-#### module
+#### Module
 
 Expresses which module owns a node.
 
 | Aspect | Value |
 |--------|-------|
-| Domain | NED, REQ, VRF, TSK, DEF |
+| Domain | NED, REQ, TC, TSK, DEF, BSL |
 | Range | MOD |
 | Cardinality | 1 (exactly one) |
 | Structure | Single-value |
@@ -70,9 +70,27 @@ Expresses which module owns a node.
 | Suspect propagation | None (organizational, not semantic) |
 
 ```json
-{"@id": "NED-B7G3M9K2", "module": {"@id": "MOD-A4F8R2X1"}}
+{"@id": "NEED-B7G3M9K2", "module": {"@id": "MOD-A4F8R2X1"}}
 {"@id": "REQ-C2H6N4P8", "module": {"@id": "MOD-A4F8R2X1"}}
-{"@id": "TSK-E3K8S6V2", "module": {"@id": "MOD-A4F8R2X1"}}
+{"@id": "TASK-E3K8S6V2", "module": {"@id": "MOD-A4F8R2X1"}}
+```
+
+#### Stakeholder
+
+Expresses which stakeholders have expectations captured by a need.
+
+| Aspect | Value |
+|--------|-------|
+| Domain | NED |
+| Range | STK |
+| Cardinality | 1..* (at least one stakeholder) |
+| Structure | Unrestricted |
+| Inverse | (queried as "needs for stakeholder") |
+| Suspect propagation | None (stakeholder identity is organizational, not semantic) |
+
+```json
+{"@id": "NEED-B7G3M9K2", "stakeholder": [{"@id": "STK-H5N7P3Q9"}]}
+{"@id": "NEED-ERR0R002", "stakeholder": [{"@id": "STK-H5N7P3Q9"}, {"@id": "STK-1NT3GR8R"}]}
 ```
 
 ### Allocation
@@ -81,7 +99,7 @@ Predicates that express flow-down of obligations to architectural elements.
 
 #### allocatesTo
 
-Expresses requirement flow-down to child modules. When a parent module's requirement must be met by children, `allocatesTo` distributes the obligation, potentially with budgets or partitions.
+Expresses requirement flow-down to child modules. When children must meet a parent module's requirement, `allocatesTo` distributes the obligation, potentially with budgets or partitions.
 
 | Aspect | Value |
 |--------|-------|
@@ -118,7 +136,7 @@ Expresses task ordering. A task depends on other tasks completing before it can 
 | Suspect propagation | None (dependency is structural, not semantic) |
 
 ```json
-{"@id": "TSK-E3K8S6V2", "dependsOn": [{"@id": "TSK-G5M2R8X4"}]}
+{"@id": "TASK-E3K8S6V2", "dependsOn": [{"@id": "TASK-G5M2R8X4"}]}
 ```
 
 ### Verification
@@ -132,21 +150,21 @@ Links requirements to the verifications that provide evidence of satisfaction.
 | Aspect | Value |
 |--------|-------|
 | Domain | REQ |
-| Range | VRF |
+| Range | TC |
 | Cardinality | 0..* |
 | Structure | Unrestricted |
 | Inverse | (queried as "verifies") |
 | Suspect propagation | Modification of the requirement marks `verifiedBy` edges as suspect |
 
 ```json
-{"@id": "REQ-C2H6N4P8", "verifiedBy": [{"@id": "VRF-D9J5Q1R3"}]}
+{"@id": "REQ-C2H6N4P8", "verifiedBy": [{"@id": "TC-D9J5Q1R3"}]}
 ```
 
 ### Quality
 
 Predicates that connect defects to their context.
 
-#### subject
+#### Subject
 
 Points at the node that has a problem. Carries the semantic "this node is defective in some way."
 
@@ -177,10 +195,10 @@ Points at the examination task that found the defect.
 | Suspect propagation | None |
 
 ```json
-{"@id": "DEF-F1L4T7W5", "detectedBy": {"@id": "TSK-R3V13W01"}}
+{"@id": "DEF-F1L4T7W5", "detectedBy": {"@id": "TASK-R3V13W01"}}
 ```
 
-#### generates
+#### Generates
 
 Expresses that a defect creates a remediation task.
 
@@ -194,14 +212,73 @@ Expresses that a defect creates a remediation task.
 | Suspect propagation | None |
 
 ```json
-{"@id": "DEF-F1L4T7W5", "generates": {"@id": "TSK-F1X00001"}}
+{"@id": "DEF-F1L4T7W5", "generates": {"@id": "TASK-F1X00001"}}
+```
+
+### Implementation
+
+Predicates that link work items to the obligations they satisfy.
+
+#### Builds
+
+Links tasks to the requirements they exist to satisfy. Uses `oslc_cm:implementsRequirement` directly because ARCI adds no additional semantics (no suspect propagation, no DAG enforcement).
+
+| Aspect | Value |
+|--------|-------|
+| Domain | TASK |
+| Range | REQ |
+| Cardinality | 0..* |
+| Structure | Unrestricted |
+| Inverse | (queried as "implemented by") |
+| Suspect propagation | None (`verifiedBy` suspect propagation catches requirement changes) |
+
+```json
+{"@id": "TASK-E3K8S6V2", "implements": [{"@id": "REQ-C2H6N4P8"}]}
+```
+
+### Provenance
+
+Predicates that track who performed actions and agent hierarchy.
+
+#### Operator
+
+Links an agent to the developer who initiated the session.
+
+| Aspect | Value |
+|--------|-------|
+| Domain | AGT |
+| Range | DEV |
+| Cardinality | 0..1 |
+| Structure | Single-value |
+| Inverse | (queried as "sessions for developer") |
+| Suspect propagation | None |
+
+```json
+{"@id": "AGT-M5V9K3X7", "operator": {"@id": "DEV-J4R8T2W6"}}
+```
+
+#### parentAgent
+
+Links a subagent to the session agent that spawned it. Only valid on agents where `subagentId` is non-null.
+
+| Aspect | Value |
+|--------|-------|
+| Domain | AGT |
+| Range | AGT |
+| Cardinality | 0..1 |
+| Structure | Single-value |
+| Inverse | (queried as "subagents of") |
+| Suspect propagation | None |
+
+```json
+{"@id": "AGT-SUB4G3NT", "parentAgent": {"@id": "AGT-M5V9K3X7"}}
 ```
 
 ### Informal
 
 Predicates that express non-formal relationships useful for navigation and context.
 
-#### informs
+#### Informs
 
 Expresses that a concept informs a module. This is a bootstrap/documentation relationship, not part of the formal transformation chain. Unlike `derivesFrom`, `informs` does not establish traceability obligations.
 
@@ -222,30 +299,32 @@ Expresses that a concept informs a module. This is a bootstrap/documentation rel
 
 Source types as rows, target types as columns, predicates in cells. Empty cells indicate no valid predicate between those types.
 
-|  | → CON | → MOD | → NED | → REQ | → VRF | → TSK | → DEF | → BSL |
-|---|---|---|---|---|---|---|---|---|
-| **CON →** | | informs | | | | | | |
-| **MOD →** | | childOf | | | | | | |
-| **NED →** | derivesFrom | module | | | | | | |
-| **REQ →** | | module, allocatesTo | derivesFrom | derivesFrom | verifiedBy | | | |
-| **VRF →** | | module | | | | | | |
-| **TSK →** | | module | | | | dependsOn | | |
-| **DEF →** | | module, subject | subject | subject | subject | detectedBy, generates, subject | subject | |
-| **BSL →** | | module | | | | | | |
+|  | → CON | → MOD | → NED | → REQ | → TC | → TSK | → DEF | → BSL | → STK | → DEV | → AGT |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| **CON →** | | informs | | | | | | | | | |
+| **MOD →** | | childOf | | | | | | | | | |
+| **NED →** | derivesFrom | module | | | | | | | stakeholder | | |
+| **REQ →** | | module, allocatesTo | derivesFrom | derivesFrom | verifiedBy | | | | | | |
+| **TC →** | | module | | | | | | | | | |
+| **TSK →** | | module | | builds | | dependsOn | | | | | |
+| **DEF →** | | module, subject | subject | subject | subject | detectedBy, generates, subject | subject | | | | |
+| **BSL →** | | module | | | | | | | | | |
+| **DEV →** | | | | | | | | | | | |
+| **AGT →** | | | | | | | | | | operator | parentAgent |
 
 ## Directionality conventions
 
-Relationships are stored on the **source** node as JSON-LD properties:
+The **source** node stores relationships as JSON-LD properties:
 
 - "MOD-A has childOf MOD-B" → the `childOf` property is on MOD-A's record
-- "REQ-A has derivesFrom NED-B" → the `derivesFrom` property is on REQ-A's record
+- "REQ-A has derivesFrom NEED-B" → the `derivesFrom` property is on REQ-A's record
 - "DEF-A has subject REQ-B" → the `subject` property is on DEF-A's record
 
-To query inverse relationships (e.g., "what are the children of MOD-B?"), traverse the graph to find all nodes with `childOf` pointing at MOD-B. See [query patterns](query-patterns.md) for canonical traversal patterns.
+To query inverse relationships ("what are the children of MOD-B?"), traverse the graph to find all nodes with `childOf` pointing at MOD-B. See [query patterns](query-patterns.md) for canonical traversal patterns.
 
 ## Suspect propagation summary
 
-Predicates that propagate suspect status when the source is modified:
+Predicates that propagate suspect status when someone modifies the source:
 
 | Predicate | Propagation direction | Trigger |
 |-----------|----------------------|---------|
@@ -253,6 +332,6 @@ Predicates that propagate suspect status when the source is modified:
 | `verifiedBy` | Requirement modified → verification edges marked suspect | Requirement's `statement` changes |
 | `allocatesTo` | Requirement modified → allocation edges marked suspect | Requirement's `statement` or allocation parameters change |
 
-Predicates that do **not** propagate suspect status: `childOf`, `module`, `dependsOn`, `subject`, `detectedBy`, `generates`, `informs`.
+Predicates that do not propagate suspect status: `childOf`, `module`, `dependsOn`, `subject`, `detectedBy`, `generates`, `informs`, `implements`, `operator`, `parentAgent`.
 
 See [constraints](constraints.md) for the full suspect propagation rules and [lifecycle coordination](lifecycle-coordination.md) for how suspect links interact with lifecycle state.

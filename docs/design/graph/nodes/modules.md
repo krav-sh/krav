@@ -1,0 +1,298 @@
+# Modules
+
+## Overview
+
+Modules (MOD-*) are architectural containers representing the things the team builds. A module could be a system, subsystem, component, module, or any identifiable element in the architecture. Modules form a hierarchy via parent-child relationships and serve as the organizing principle for needs, requirements, and work.
+
+Unlike document-centric models where "specs" own requirements, ARCI organizes around the architectural elements themselves. A module owns its needs and requirements; the module is what the team builds, constrains, and verifies.
+
+## Purpose
+
+Modules serve multiple roles:
+
+**Architectural decomposition**: the module hierarchy represents how the system breaks down into subsystems, components, and modules. This decomposition is the primary structuring mechanism for the project.
+
+**Ownership**: needs and requirements belong to modules. `The parser shall tokenize input in under 10 ms` is a requirement owned by MOD-parser, not floating in a document.
+
+**Phase tracking**: each module tracks its current lifecycle phase (architecture, design, coding, etc.), enabling phase-gated execution where ARCI constrains work to the appropriate phase.
+
+**Work scoping**: tasks relate to modules. `What's the plan for the parser?` becomes a query over tasks where module is MOD-parser or its descendants.
+
+**Deliverable organization**: the system organizes task outputs (architecture docs, API specs, code) by module in the filesystem.
+
+## Hierarchy
+
+Modules form a tree via childOf relationships:
+
+```text
+MOD-OAPSROOT (the project itself)
+├── MOD-A4F8R2X1 (parser subsystem)
+│   ├── MOD-L3X3R001 (lexer component)
+│   └── MOD-T0K3N002 (tokenizer component)
+├── MOD-B9G3M7K2 (CLI subsystem)
+│   ├── MOD-C0MM4ND1 (command parser)
+│   └── MOD-0UTPUT01 (output formatter)
+└── MOD-K8G4R5X2 (knowledge graph subsystem)
+```
+
+The root module represents the project as a whole and owns project-wide needs and requirements.
+
+### Hierarchy rules
+
+- Every module except root has exactly one parent (single childOf relationship)
+- Root module has no parent
+- Cycles are not allowed
+- ARCI supports reparenting (with review of derived items)
+
+## Lifecycle phase
+
+Each module tracks its current phase:
+
+```text
+architecture → design → implementation → integration → verification → validation
+```
+
+```plantuml
+@startuml module-phase-lifecycle
+skinparam state {
+  BackgroundColor #E6F4EA
+  BorderColor #34A853
+  FontColor #333333
+  StartColor #34A853
+  EndColor #34A853
+}
+skinparam ArrowColor #34A853
+
+state "architecture" as arch : Identifying components,\nboundaries, interfaces
+state "design" as design : Defining APIs,\ndata models, algorithms
+state "implementation" as impl : Building the thing
+state "integration" as integ : Assembling components,\nresolving interfaces
+state "verification" as verif : Testing against\nrequirements
+state "validation" as valid : Confirming stakeholder\nneeds are met
+
+[*] --> arch
+arch --> design : advance
+design --> impl : advance
+impl --> integ : advance
+integ --> verif : advance
+verif --> valid : advance
+valid --> [*]
+
+arch <-[dashed]- design : regress
+design <-[dashed]- impl : regress
+impl <-[dashed]- integ : regress
+integ <-[dashed]- verif : regress
+verif <-[dashed]- valid : regress
+
+note bottom of valid
+  Module status (active | deprecated | archived)
+  is tracked independently of phase.
+end note
+@enduml
+```
+
+| Phase          | Description                                    |
+|----------------|------------------------------------------------|
+| architecture   | Identifying components, boundaries, interfaces |
+| design         | Defining APIs, data models, algorithms         |
+| coding         | Building the thing                             |
+| integration    | Assembling components, resolving interfaces    |
+| verification   | Testing against requirements                   |
+| validation     | Confirming stakeholder needs pass acceptance   |
+
+### Phase constraints
+
+Each module's phase is independent of its parent's and siblings' phases. A backend subsystem can reach verification while the frontend is still in design; a mature component can cycle through coding and verification for a new feature while the root module sits at integration. Cross-module coordination uses task dependencies (milestone tasks that depend on verification tasks across modules) and baseline policies (requiring child module baselines before creating a release baseline on the parent). A parent module's phase reflects the state of its own work, not the progress of its children.
+
+**Task constraint**: the user can only create or execute tasks for the module's current phase or earlier phases.
+
+### Phase advancement
+
+```bash
+arci module advance MOD-A4F8R2X1 --to design
+```
+
+Advancement criteria:
+
+- All tasks for the current phase are complete
+- Verification tasks for the current phase have no blocking findings
+
+### Phase regression
+
+```bash
+arci module regress MOD-A4F8R2X1 --to architecture --reason "boundary unclear"
+```
+
+When a parent regresses:
+
+- Regression does not affect child modules; each module's phase constraints are self-contained
+- ARCI automatically creates a finding (DEF-*) with the reason
+
+## Storage model
+
+ARCI stores module metadata in `graph.jsonlt` as JSON-LD compact form. Prose files contain no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
+
+```json
+{"@context": "context.jsonld", "@id": "MOD-A4F8R2X1", "@type": "Module", "title": "Parser", "description": "Parses input into AST", "childOf": {"@id": "MOD-OAPSROOT"}, "phase": "implementation", "status": "active"}
+```
+
+Fields:
+
+- `@id`: Unique identifier (MOD-XXXXXXXX format)
+- `@type`: Always "Module"
+- `title`: Human-readable title
+- `description`: Brief description (optional)
+- `childOf`: Parent module reference (null/absent for root)
+- `phase`: Current lifecycle phase
+- `status`: active, deprecated, archived
+- `summary`: Inline prose for extended context (architectural overview, component purpose, design rationale; optional)
+- `created`, `updated`: ISO 8601 timestamps
+- `tags`: Array of strings (optional)
+
+## Stakeholder classes
+
+Modules at different levels serve different stakeholder classes:
+
+| Level     | Stakeholders                                        | Need examples                             |
+|-----------|-----------------------------------------------------|-------------------------------------------|
+| Root      | OSS community, contributors, maintainers, ecosystem | Stability, compatibility, discoverability |
+| Subsystem | Domain users, integrators                           | Functionality, performance, extensibility |
+| Component | Developers, adjacent components                     | API clarity, error handling, testability  |
+
+## Relationships
+
+ARCI embeds relationships in the module's JSON-LD record using `{"@id": "..."}` values.
+
+### Outgoing relationships
+
+| Property   | Target | Cardinality | Description                                                |
+| ---------- | ------ | ----------- | ---------------------------------------------------------- |
+| childOf    | MOD-*  | Single      | This module's parent                                       |
+| integrates | MOD-*  | Multi       | Peer modules this one integrates (for integration modules) |
+
+### Incoming relationships (queried via graph)
+
+| Property     | Source | Description                                            |
+|--------------|--------|--------------------------------------------------------|
+| childOf      | MOD-*  | Child modules                                         |
+| allocatesTo  | REQ-*  | Requirements allocated to this module                  |
+| module       | NEED-*  | Needs owned by this module                             |
+| module       | REQ-*  | Requirements owned by this module                      |
+| module       | TASK-*  | Tasks for this module                                  |
+| informs      | CON-*  | Concepts that inform this module                       |
+
+Example with relationships:
+
+```json
+{"@context": "context.jsonld", "@id": "MOD-0BS3RV01", "@type": "Module", "title": "Observability", "childOf": {"@id": "MOD-OAPSROOT"}, "integrates": [{"@id": "MOD-A4F8R2X1"}, {"@id": "MOD-B9G3M7K2"}], "phase": "architecture", "status": "active"}
+```
+
+## Prose files
+
+Modules can have a prose file for extended descriptions that go beyond `description` and `summary` (architectural overviews, component rationale, boundary justifications). The file lives at `.arci/modules/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
+
+Module prose files are distinct from task deliverables (see below). The module's own prose describes what the module is and why it exists. Task deliverables are outputs of work done within the module's scope.
+
+## Deliverable organization
+
+ARCI organizes task deliverables by module in subdirectories under `.arci/modules/`:
+
+```text
+.arci/
+  modules/
+    20260103164500-A4F8R2X1-parser.md        # Module's own prose file
+    MOD-A4F8R2X1/
+      architecture.md       # From architecture tasks
+      api-design.md         # From design tasks
+      interface-spec.md     # From design tasks
+    MOD-B9G3M7K2/
+      user-guide.md         # From documentation tasks
+```
+
+## Special modules
+
+### Root module
+
+Every project has a root module representing the project as a whole:
+
+```json
+{"@context": "context.jsonld", "@id": "MOD-OAPSROOT", "@type": "Module", "title": "arci", "description": "Agentic Requirements Composition & Integration", "phase": "implementation", "status": "active"}
+```
+
+Root-level needs capture project-wide stakeholder expectations. Root-level requirements flow down to child modules.
+
+### Integration modules
+
+Some modules represent integrations between siblings rather than components:
+
+```json
+{"@context": "context.jsonld", "@id": "MOD-0BS3RV01", "@type": "Module", "title": "Observability", "childOf": {"@id": "MOD-OAPSROOT"}, "integrates": [{"@id": "MOD-A4F8R2X1"}, {"@id": "MOD-B9G3M7K2"}], "phase": "design", "status": "active"}
+```
+
+Integration modules aren't constrained by sibling phases but their integration tasks may depend on sibling verification.
+
+## CLI commands
+
+```bash
+# CRUD
+arci module create --title "Parser" --parent MOD-OAPSROOT
+arci module show MOD-A4F8R2X1
+arci module list
+arci module list --parent MOD-OAPSROOT --phase implementation
+arci module update MOD-A4F8R2X1 --title "Parser v2"
+arci module delete MOD-A4F8R2X1  # Must have no children
+
+# Hierarchy
+arci module children MOD-OAPSROOT
+arci module tree MOD-OAPSROOT
+arci module reparent MOD-A4F8R2X1 --to MOD-B9G3M7K2
+
+# Phase management
+arci module phase MOD-A4F8R2X1
+arci module advance MOD-A4F8R2X1 --to design
+arci module regress MOD-A4F8R2X1 --to architecture --reason "..."
+
+# Work scoping
+arci module decompose MOD-A4F8R2X1 --template full-feature
+arci module tasks MOD-A4F8R2X1
+arci module tasks MOD-A4F8R2X1 --include-descendants
+
+# Context
+arci context MOD-A4F8R2X1
+```
+
+See [Module](../../cli/commands/module.md) for full CLI documentation.
+
+## Examples
+
+### Root module
+
+```json
+{"@context": "context.jsonld", "@id": "MOD-OAPSROOT", "@type": "Module", "title": "arci", "description": "Agentic Requirements Composition & Integration", "phase": "implementation", "status": "active"}
+```
+
+### Subsystem module
+
+```json
+{"@context": "context.jsonld", "@id": "MOD-A4F8R2X1", "@type": "Module", "title": "Parser", "description": "Parses arci commands and configuration", "childOf": {"@id": "MOD-OAPSROOT"}, "phase": "design", "status": "active", "tags": ["core"]}
+```
+
+### Component module
+
+```json
+{"@context": "context.jsonld", "@id": "MOD-L3X3R001", "@type": "Module", "title": "Lexer", "description": "Tokenizes input stream", "childOf": {"@id": "MOD-A4F8R2X1"}, "phase": "architecture", "status": "active"}
+```
+
+## Summary
+
+Modules are architectural containers that:
+
+- Form a hierarchy representing system decomposition
+- Own needs and requirements
+- Track lifecycle phase independently with module-scoped advancement criteria
+- Scope tasks and deliverables
+- Serve as the primary organizing principle for the project
+- Store metadata in graph.jsonlt; `summary` for inline context, prose files at derived paths for extended content
+- Implemented following three-layer architecture (core/io/service)
+
+The module hierarchy replaces document-centric organization: the thing under construction is the organizing principle, not documents describing it.

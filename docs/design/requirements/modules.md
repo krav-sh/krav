@@ -2,29 +2,29 @@
 
 ## Overview
 
-Modules (MOD-*) are architectural containers representing the things being built. A module could be a system, subsystem, component, module, or any identifiable element in the architecture. Modules form a hierarchy via parent-child relationships and serve as the organizing principle for needs, requirements, and work.
+Modules (MOD-*) are architectural containers representing the things the team builds. A module could be a system, subsystem, component, module, or any identifiable element in the architecture. Modules form a hierarchy via parent-child relationships and serve as the organizing principle for needs, requirements, and work.
 
-Unlike document-centric models where "specs" own requirements, arci organizes around the architectural elements themselves. A module owns its needs and requirements; the module is what's being built, constrained, and verified.
+Unlike document-centric models where "specs" own requirements, ARCI organizes around the architectural elements themselves. A module owns its needs and requirements; the module is what the team builds, constrains, and verifies.
 
 ## Purpose
 
-Modules serve several roles:
+Modules serve multiple roles:
 
-**Architectural decomposition**: The module hierarchy represents how the system breaks down into subsystems, components, and modules. This decomposition is the primary structuring mechanism for the project.
+**Architectural decomposition**: the module hierarchy represents how the system breaks down into subsystems, components, and modules. This decomposition is the primary structuring mechanism for the project.
 
-**Ownership**: Needs and requirements belong to modules. "The parser shall tokenize input in under 10ms" is a requirement owned by MOD-parser, not floating in a document.
+**Ownership**: needs and requirements belong to modules. "The parser shall tokenize input in under 10 ms" is a requirement owned by MOD-parser, not floating in a document.
 
-**Phase tracking**: Each module tracks its current lifecycle phase (architecture, design, implementation, etc.). This enables phase-gated execution where work is constrained to the appropriate phase.
+**Phase tracking**: each module tracks its current lifecycle phase (architecture, design, coding, and so on). Phase-gated execution constrains work to the appropriate phase.
 
-**Work scoping**: Tasks relate to modules. "What's the plan for the parser?" becomes a query over tasks where module is MOD-parser or its descendants.
+**Work scoping**: tasks relate to modules. "What's the plan for the parser?" becomes a query over tasks where module is MOD-parser or its descendants.
 
-**Deliverable organization**: Task outputs (architecture docs, API specs, code) are organized by module in the filesystem.
+**Deliverable organization**: modules organize task outputs (architecture docs, API specs, code) by module in the filesystem.
 
 ## Hierarchy
 
 Modules form a tree via childOf relationships:
 
-```
+```text
 MOD-OAPSROOT (the project itself)
 ├── MOD-A4F8R2X1 (parser subsystem)
 │   ├── MOD-L3X3R001 (lexer component)
@@ -41,14 +41,14 @@ The root module represents the project as a whole and owns project-wide needs an
 
 - Every module except root has exactly one parent (single childOf relationship)
 - Root module has no parent
-- Cycles are not allowed
-- Reparenting is supported (with review of derived items)
+- The hierarchy forbids cycles
+- The system supports reparenting (with review of derived items)
 
 ## Lifecycle phase
 
 Each module tracks its current phase:
 
-```
+```text
 architecture → design → implementation → integration → verification → validation
 ```
 
@@ -56,23 +56,23 @@ architecture → design → implementation → integration → verification → 
 |----------------|------------------------------------------------|
 | architecture   | Identifying components, boundaries, interfaces |
 | design         | Defining APIs, data models, algorithms         |
-| implementation | Building the thing                             |
+| `implementation` | Writing code, building the thing               |
 | integration    | Assembling components, resolving interfaces    |
 | verification   | Testing against requirements                   |
-| validation     | Confirming stakeholder needs are met           |
+| validation     | Confirming the product meets stakeholder needs |
 
 ### Phase constraints
 
-**Hierarchical constraint**: Child modules can be at or behind their parent's phase, never ahead.
+**Hierarchical constraint**: child modules can be at or behind their parent's phase, never ahead.
 
-```
+```text
 MOD-OAPSROOT.phase = implementation
   MOD-parser.phase = implementation  ✓ (at parent)
   MOD-cli.phase = design             ✓ (behind parent)
   MOD-cli.phase = verification       ✗ (ahead of parent, blocked)
 ```
 
-**Task constraint**: Tasks can only be created or executed for the module's current phase or earlier phases.
+**Task constraint**: the system only allows creating or executing tasks for the module's current phase or earlier phases.
 
 ### Phase advancement
 
@@ -95,12 +95,12 @@ arci moduleregress MOD-A4F8R2X1 --to architecture --reason "boundary unclear"
 When a parent regresses:
 
 - Children remain at their current phase
-- Children are blocked from advancing past the new parent phase
-- A finding (FND-*) is created automatically with the reason
+- The constraint blocks children from advancing past the new parent phase
+- ARCI automatically creates a finding (FND-*) with the reason
 
 ## Storage model
 
-Module metadata is stored in `graph.jsonlt` as JSON-LD compact form. There is no frontmatter in prose files—`graph.jsonlt` is the single source of truth for all structured data.
+ARCI stores module metadata in `graph.jsonlt` as JSON-LD compact form. Prose files have no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
 
 ```json
 {"@context": "context.jsonld", "@id": "MOD-A4F8R2X1", "@type": "Module", "title": "Parser", "description": "Parses input into AST", "childOf": {"@id": "MOD-OAPSROOT"}, "phase": "implementation", "status": "active"}
@@ -130,7 +130,7 @@ Modules at different levels serve different stakeholder classes:
 
 ## Relationships
 
-Relationships are embedded in the module's JSON-LD record using `{"@id": "..."}` values.
+The module's JSON-LD record embeds relationships using `{"@id": "..."}` values.
 
 ### Outgoing relationships
 
@@ -144,7 +144,7 @@ Relationships are embedded in the module's JSON-LD record using `{"@id": "..."}`
 | Property     | Source | Description                                            |
 |--------------|--------|--------------------------------------------------------|
 | childOf      | MOD-*  | Child modules                                         |
-| allocatesTo  | REQ-*  | Requirements allocated to this module                  |
+| allocatesTo  | REQ-*  | Requirements that allocate to this module               |
 | module       | NED-*  | Needs owned by this module                             |
 | module       | REQ-*  | Requirements owned by this module                      |
 | module       | TSK-*  | Tasks for this module                                  |
@@ -156,11 +156,11 @@ Example with relationships:
 {"@context": "context.jsonld", "@id": "MOD-0BS3RV01", "@type": "Module", "title": "Observability", "childOf": {"@id": "MOD-OAPSROOT"}, "integrates": [{"@id": "MOD-A4F8R2X1"}, {"@id": "MOD-B9G3M7K2"}], "phase": "architecture", "status": "active"}
 ```
 
-## Deliverable organization
+## Deliverable layout
 
-Task deliverables are organized by module:
+ARCI organizes task deliverables by module:
 
-```
+```text
 .arci/
   modules/
     MOD-A4F8R2X1/
@@ -191,11 +191,11 @@ Some modules represent integrations between siblings rather than components:
 {"@context": "context.jsonld", "@id": "MOD-0BS3RV01", "@type": "Module", "title": "Observability", "childOf": {"@id": "MOD-OAPSROOT"}, "integrates": [{"@id": "MOD-A4F8R2X1"}, {"@id": "MOD-B9G3M7K2"}], "phase": "design", "status": "active"}
 ```
 
-Integration modules aren't constrained by sibling phases but their integration tasks may depend on sibling verification.
+Sibling phases don't constrain integration modules, but their integration tasks may depend on sibling verification.
 
 ## Implementation architecture
 
-Module functionality follows the three-layer architecture (see CON-GR4PH4RC).
+Module capability follows the three-layer architecture (see CON-GR4PH4RC).
 
 ### Typed node
 
@@ -216,7 +216,7 @@ class ModuleNode:
 
 All fields use proper types. The IO layer creates ModuleNode directly from JSON-LD records, preserving all type-specific fields.
 
-### Core layer (arci.core.module)
+### Core layer (`arci.core.module`)
 
 Pure functions and typed data structures:
 
@@ -258,7 +258,7 @@ def owned_requirements(graph: Graph, module_id: str) -> frozenset[str]: ...
 def owned_tasks(graph: Graph, module_id: str) -> frozenset[str]: ...
 ```
 
-### Service layer (arci.service.module)
+### Service layer (`arci.service.module`)
 
 Orchestrates core and IO:
 
@@ -338,15 +338,15 @@ arci contextmodule MOD-A4F8R2X1
 | Service | Implemented | CRUD, hierarchy, and phase transitions in `arci.service.module` |
 | CLI | Implemented | Commands in `arci.cli._commands._module` with output formatting in `arci.cli._output` |
 
-### CLI implementation details
+### CLI details
 
-The CLI implementation includes:
+The CLI includes:
 
 - **Output formatting** (`arci.cli._output`): Protocol-based formatters (TableFormatter, JSONFormatter, AgentFormatter) with NodeDisplay adapter pattern
 - **Graph context** (`arci.cli._commands._graph`): GraphContext provider for store access
 - **Module commands** (`arci.cli._commands._module`): Full CRUD, hierarchy, and phase management
 
-Stub commands (decompose, tasks, context) are registered but not yet implemented.
+The CLI registers stub commands (decompose, tasks, context) but does not yet provide them.
 
 ## Summary
 
@@ -360,4 +360,4 @@ Modules are architectural containers that:
 - Store metadata in graph.jsonlt with no frontmatter in prose files
 - Implemented following three-layer architecture (core/io/service)
 
-The module hierarchy replaces document-centric organization—the thing being built is the organizing principle, not documents describing it.
+The module hierarchy replaces document-centric organization: the thing the team builds is the organizing principle, not documents describing it.

@@ -37,22 +37,23 @@ skinparam class {
     BorderColor<<work>> #00897B
     HeaderBackgroundColor<<work>> #B2DFDB
 
-    BackgroundColor<<observation>> #ECEFF1
-    BorderColor<<observation>> #607D8B
-    HeaderBackgroundColor<<observation>> #CFD8DC
+    BackgroundColor<<quality>> #ECEFF1
+    BorderColor<<quality>> #607D8B
+    HeaderBackgroundColor<<quality>> #CFD8DC
 }
 
 title arci knowledge graph domain model
 
 class "CON-*\nConcept" as CON <<exploration>> {
-    status: seed | exploring | crystallized | superseded
+    status: draft | exploring | crystallized
+    \t| formalized | superseded
     --
     Exploration and design thinking.
     Captures ideas, options analysis,
     and crystallized decisions.
 }
 
-class "MOD-*\nModule" as ENT <<container>> {
+class "MOD-*\nModule" as MOD <<container>> {
     phase: architecture | design | implementation
     \t| integration | verification | validation
     status: active | deprecated | archived
@@ -62,9 +63,10 @@ class "MOD-*\nModule" as ENT <<container>> {
     Forms hierarchy via childOf.
 }
 
-class "NED-*\nNeed" as NED <<stakeholder>> {
+class "NEED-*\nNeed" as NED <<stakeholder>> {
     priority: must | should | could | wont
-    status: draft | proposed | validated | deferred | rejected
+    status: draft | proposed | validated
+    \t| satisfied | obsolete
     --
     Stakeholder expectation.
     Validated (stakeholder confirms),
@@ -73,8 +75,8 @@ class "NED-*\nNeed" as NED <<stakeholder>> {
 
 class "REQ-*\nRequirement" as REQ <<obligation>> {
     priority: must | should | could | wont
-    status: draft | proposed | approved | implemented
-    \t| verified | deferred | rejected
+    status: draft | proposed | approved
+    \t| implemented | verified | obsolete
     verification_method: test | inspection
     \t| demonstration | analysis
     --
@@ -83,37 +85,37 @@ class "REQ-*\nRequirement" as REQ <<obligation>> {
     not validated.
 }
 
-class "VRF-*\nVerification" as VRF <<evidence>> {
+class "TC-*\nTest Case" as TC <<evidence>> {
     method: test | inspection | demonstration | analysis
     level: unit | integration | system | acceptance
-    status: draft | ready | passing | failing
-    \t| skipped | obsolete
+    status: draft | specified | implemented
+    \t| executable | obsolete
+    currentResult: pass | fail | skip | unknown
     --
-    Evidence that requirements
-    are satisfied.
+    Test specification for verifying
+    requirements are satisfied.
 }
 
-class "TSK-*\nTask" as TSK <<work>> {
+class "TASK-*\nTask" as TSK <<work>> {
     process_phase: architecture | design | ...
     task_type: exploration | code-review | ...
     status: pending | ready | in_progress
-    \t| blocked | done | cancelled
+    \t| blocked | complete | cancelled
     deliverables: [{kind, type, path, ...}]
     --
     Atomic work unit in DAG.
     Executed in Claude Code sessions.
 }
 
-class "FND-*\nFinding" as FND <<observation>> {
-    finding_type: issue | recommendation
-    \t| question | decision | observation
+class "DEF-*\nDefect" as DEF <<quality>> {
+    category: missing | incorrect | ambiguous | ...
     severity: critical | major | minor | trivial
-    status: open | acknowledged | addressed
-    \t| closed | wont_fix
+    status: open | confirmed | resolved
+    \t| verified | closed | rejected | deferred
     --
-    Observation from review.
-    Issues and questions can
-    block phase advancement.
+    Identified problem requiring action.
+    Critical/major defects block
+    phase advancement.
 }
 
 ' === FORMAL TRANSFORMATION CHAIN ===
@@ -124,34 +126,33 @@ REQ -[#EA4335,bold]-> TSK : **decompose**
 
 ' === STRUCTURAL RELATIONSHIPS ===
 
-ENT -[#34A853]--> ENT : childOf
+MOD -[#34A853]--> MOD : childOf
 
-ENT <-[#34A853,dashed]- NED : module
-ENT <-[#34A853,dashed]- REQ : module
-ENT <-[#34A853,dashed]- TSK : module
-ENT <-[#34A853,dashed]- VRF : module
-ENT <-[#34A853,dashed]- FND : module
+MOD <-[#34A853,dashed]- NED : module
+MOD <-[#34A853,dashed]- REQ : module
+MOD <-[#34A853,dashed]- TSK : module
+MOD <-[#34A853,dashed]- TC : module
+MOD <-[#34A853,dashed]- DEF : module
 
 ' === TRACEABILITY RELATIONSHIPS ===
 
-CON .[#4285F4].> ENT : informs
+CON .[#4285F4].> MOD : informs
 
-REQ -[#EA4335]-> ENT : allocatesTo
+REQ -[#EA4335]-> MOD : allocatesTo
 
 NED <.[#F9AB00].. REQ : derivesFrom
 
 TSK -[#00897B]-> TSK : dependsOn
 
-REQ <-[#9C27B0]-- VRF : verifies
-REQ .[#9C27B0].> VRF : verifiedBy
+REQ <-[#9C27B0]-- TC : verifies
+REQ .[#9C27B0].> TC : verifiedBy
 
-FND -[#607D8B]-> CON : regarding
-FND -[#607D8B]-> ENT : regarding
-FND -[#607D8B]-> NED : regarding
-FND -[#607D8B]-> REQ : regarding
+DEF -[#607D8B]-> CON : subject
+DEF -[#607D8B]-> MOD : subject
+DEF -[#607D8B]-> NED : subject
+DEF -[#607D8B]-> REQ : subject
 
-FND -[#607D8B,bold]-> TSK : generates
-TSK .[#607D8B].> FND : addressedBy
+DEF -[#607D8B,bold]-> TSK : generates
 
 ' === LEGEND ===
 
@@ -159,9 +160,9 @@ legend bottom left
   |= Arrow style |= Meaning |
   | **Bold colored** | Formal transformation: Concept > Need > Requirement > Task > Deliverable |
   | Solid colored | Structural (childOf, allocatesTo, verifies, generates) |
-  | Dashed green | Ownership: all nodes belong to an Module via //module// |
-  | Dotted | Inverse/traceability (derivesFrom, verifiedBy, addressedBy) |
-  | Gray solid | Finding //regarding// any node type |
+  | Dashed green | Ownership: all nodes belong to a Module via //module// |
+  | Dotted | Inverse/traceability (derivesFrom, verifiedBy) |
+  | Gray solid | Defect //subject// — any node type |
 
   All nodes stored in **graph.jsonlt** (JSON-LD compact form).
   Prose in **.arci/** markdown (no frontmatter).

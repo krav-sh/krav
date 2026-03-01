@@ -1,15 +1,15 @@
 # Dashboard
 
-The arci dashboard is a web-based interface for monitoring and debugging hook activity. It provides real-time visibility into hook events, rule matching, configuration status, and state store contents.
+The ARCI dashboard is a web-based interface for monitoring and debugging hook activity. It provides real-time visibility into hook events, rule matching, configuration status, and state store contents.
 
-The dashboard is served by the [daemon](../daemon.md) on the same HTTP port as the API. It is designed for developers debugging their hook configurations, answering questions like: Why did this rule fire? Why didn't this rule fire? What's the current state? Is my configuration valid?
+The [daemon](../daemon/index.md) serves the dashboard on the same HTTP port as the API. It targets developers debugging their hook configurations, answering questions like: why did this rule fire? why didn't this rule fire? what's the current state? is the configuration valid?
 
 ## Documentation
 
-- [Features](features.md) — the five user-facing views and what they display
-- [Technology](technology.md) — stack choices (Go templates, htmx, Alpine.js, Pico CSS)
-- [Real-time updates](real-time.md) — WebSocket streaming, polling, htmx integration
-- [Routing](routing.md) — chi router, handler pattern, daemon data flow
+- [Features](features.md): the five user-facing views and what they display
+- [Technology](technology.md): stack choices (Go templates, htmx, Alpine.js, Pico CSS)
+- [Real-time updates](real-time.md): WebSocket streaming, polling, htmx integration
+- [Routing](routing.md): chi router, handler pattern, daemon data flow
 
 ## Routes
 
@@ -25,13 +25,13 @@ The dashboard is served by the [daemon](../daemon.md) on the same HTTP port as t
 
 ## Access control
 
-The dashboard listens only on localhost by default. This provides basic security for development use, as only local processes can access it.
+The dashboard listens only on localhost by default, so only local processes can access it.
 
-For production or shared environments, additional access control might be needed. Options include binding to a Unix socket only, requiring an API key via HTTP middleware, or integrating with an authentication proxy. These are future considerations.
+Production or shared environments might need additional access control. Options include binding to a Unix socket only, requiring an API key via HTTP middleware, or integrating with an authentication proxy. These are future considerations.
 
 ## Responsive design
 
-The dashboard is designed to be usable on smaller screens, though it's primarily a desktop developer tool. Tables scroll horizontally when needed. The event stream remains usable on mobile.
+The dashboard targets usability on smaller screens, though it's primarily a desktop developer tool. Tables scroll horizontally when needed. The event stream remains usable on mobile.
 
 ## Future enhancements
 
@@ -43,10 +43,10 @@ Possible future dashboard features include:
 - Performance profiling to identify slow rules
 - Export/import of rules and state
 
-These are not in the initial scope but could be added based on user feedback.
+These fall outside the initial scope but the team could add them based on user feedback.
 
 ## See also
 
-- [Architecture](../architecture.md) — high-level system architecture
-- [Daemon](../daemon.md) — the long-running process that serves the dashboard
-- [CLI dashboard command](../cli/dashboard.md) — starting the dashboard from the command line
+- [Architecture](../architecture.md): high-level system architecture
+- [Daemon](../daemon/index.md): the long-running process that serves the dashboard
+- [CLI dashboard command](../cli/commands/dashboard.md): starting the dashboard from the command line

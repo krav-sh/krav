@@ -8,17 +8,17 @@ Tasks have a process phase attribute indicating where they fit in the ISO/IEC/IE
 
 ## Purpose
 
-Tasks serve several roles:
+Tasks serve multiple roles:
 
-**Work decomposition**: Complex work breaks down into manageable, atomic tasks that Claude Code can execute in focused sessions.
+**Work decomposition**: complex work breaks down into manageable, atomic tasks that Claude Code can execute in focused sessions.
 
-**Dependency management**: dependsOn relationships express ordering. Tasks can't start until dependencies complete.
+**Dependency management**: dependsOn relationships express ordering. Tasks cannot start until dependencies complete.
 
-**Phase organization**: The phase attribute organizes work by lifecycle stage and enables phase gates.
+**Phase organization**: the phase attribute organizes work by lifecycle stage and enables phase gates.
 
-**Progress tracking**: Task status shows what's done, what's in progress, what's blocked.
+**Progress tracking**: task status shows what's done, what's in progress, what's blocked.
 
-**Deliverable tracking**: Each task's `deliverables` array records what it produced.
+**Deliverable tracking**: each task's `deliverables` array records what it produced.
 
 ## Process phases
 
@@ -28,10 +28,10 @@ Tasks belong to one of six phases from ISO/IEC/IEEE 15288:
 |----------------|---------------------------------------------|----------------------------------------------------|
 | architecture   | Identify components, boundaries, interfaces | module-decomposition, interface-identification     |
 | design         | Define APIs, data models, algorithms        | api-design, data-model, algorithm-design           |
-| implementation | Build the thing                             | feature-implementation, refactoring, documentation |
+| `implementation` | Build the thing                             | `feature-implementation`, refactoring, documentation |
 | integration    | Assemble components, resolve interfaces     | component-integration, deployment-integration      |
-| verification   | Test against requirements                   | test-implementation, code-review, security-audit   |
-| validation     | Confirm stakeholder needs are met           | user-acceptance, stakeholder-demo                  |
+| verification   | Test against requirements                   | `test-implementation`, code-review, security-audit   |
+| validation     | Confirm the system satisfies stakeholder needs | user-acceptance, stakeholder-demo                  |
 
 See CON-K7M3NP2Q for detailed task types per phase.
 
@@ -39,18 +39,18 @@ See CON-K7M3NP2Q for detailed task types per phase.
 
 Tasks progress through states:
 
-```
+```text
 pending → ready → in_progress → blocked → complete → cancelled
 ```
 
 | State       | Description                               |
 |-------------|-------------------------------------------|
 | pending     | Not yet ready (dependencies incomplete)   |
-| ready       | All dependencies complete, can be started |
-| in_progress | Currently being worked on                 |
+| ready       | All dependencies complete, work can begin |
+| in_progress | Work underway                             |
 | blocked     | Started but waiting on something          |
 | complete    | Finished with deliverables                |
-| cancelled   | Will not be done (with reason)            |
+| cancelled   | Dropped (with reason)                     |
 
 State transitions:
 
@@ -64,7 +64,7 @@ State transitions:
 
 Tasks form a directed acyclic graph via dependsOn relationships:
 
-```
+```text
 TSK-arch-parser
     ↓
 TSK-design-parser-api
@@ -92,7 +92,7 @@ arci taskcritical-path TSK-R7V3W9Y1  # Longest path to target
 
 ### "Plans" as queries
 
-There are no plan containers. Work organization emerges from queries:
+No plan containers exist. Work organization emerges from queries:
 
 ```bash
 # "What's the plan for the parser?"
@@ -110,7 +110,7 @@ arci taskready
 
 ## Storage model
 
-Task metadata is stored in `graph.jsonlt` as JSON-LD compact form. There is no frontmatter in prose files—`graph.jsonlt` is the single source of truth for all structured data.
+`graph.jsonlt` stores task metadata as JSON-LD compact form. Prose files have no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
 
 ```json
 {"@context": "context.jsonld", "@id": "TSK-E3K8S6V2", "@type": "Task", "title": "Implement lexer tokenization", "module": {"@id": "MOD-A4F8R2X1"}, "processPhase": "implementation", "taskType": "feature-implementation", "status": "complete", "priority": "high", "content": "tasks/20260103165000-E3K8S6V2-implement-lexer.md", "dependsOn": [{"@id": "TSK-G5M2R8X4"}]}
@@ -123,8 +123,8 @@ Fields:
 - `title`: Human-readable title
 - `module`: Module this task is for (required)
 - `description`: Brief description (optional)
-- `processPhase`: Process phase (architecture, design, implementation, integration, verification, validation)
-- `taskType`: Type within phase (e.g., feature-implementation, code-review)
+- `processPhase`: Process phase (architecture, design, `implementation`, integration, verification, validation)
+- `taskType`: Type within phase (such as `feature-implementation`, code-review)
 - `status`: Lifecycle state (pending, ready, in_progress, blocked, complete, cancelled)
 - `priority`: high, medium, low
 - `assignee`: Who's working on this (optional)
@@ -190,7 +190,7 @@ Discovered edge case with Unicode identifiers...
 
 ## Relationships
 
-Relationships are embedded in the task's JSON-LD record using `{"@id": "..."}` values.
+The task's JSON-LD record embeds relationships using `{"@id": "..."}` values.
 
 ### Outgoing relationships
 
@@ -215,7 +215,7 @@ Example with relationships:
 
 ## Templates
 
-Tasks can be created from templates:
+Users create tasks from templates:
 
 ```bash
 arci taskcreate --template quick-review --module MOD-A4F8R2X1
@@ -254,7 +254,7 @@ If a session ends early, the next session can resume from checkpoints.
 
 ## Implementation architecture
 
-Task functionality follows the three-layer architecture (see CON-GR4PH4RC).
+Task features follow the three-layer architecture (see CON-GR4PH4RC).
 
 ### Typed node
 
@@ -282,7 +282,7 @@ class TaskNode:
 
 All fields use proper types. The IO layer creates TaskNode directly from JSON-LD records, preserving all type-specific fields like `process_phase`, `task_type`, and `deliverables`.
 
-### Core layer (arci.core.task)
+### Core layer (`arci.core.task`)
 
 Pure functions and typed data structures:
 
@@ -342,7 +342,7 @@ def blocking(graph: Graph, task_id: str) -> frozenset[str]: ...
 def critical_path(graph: Graph, task_id: str) -> tuple[str, ...]: ...
 ```
 
-### Service layer (arci.service.task)
+### Service layer (`arci.service.task`)
 
 Orchestrates core and IO:
 
@@ -465,4 +465,4 @@ Tasks are atomic work units that:
 - Store metadata in graph.jsonlt with no frontmatter in prose files
 - Implemented following three-layer architecture (core/io/service)
 
-The task DAG is the work organization—milestones are downstream tasks, scopes are transitive closures, and "the plan" is a query over the graph.
+The task DAG is the work organization: milestones are downstream tasks, scopes are transitive closures, and "the plan" is a query over the graph.

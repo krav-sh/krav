@@ -8,17 +8,17 @@ Unlike test results (pass/fail on specific requirements), findings are qualitati
 
 ## Purpose
 
-Findings serve several roles:
+Findings serve multiple roles:
 
-**Issue tracking**: Problems discovered during review need tracking through resolution. Findings provide this without requiring external issue trackers.
+**Issue tracking**: problems discovered during review need tracking through resolution. Findings provide this without requiring external issue trackers.
 
-**Decision capture**: Review discussions produce decisions. Capturing these as findings preserves rationale.
+**Decision capture**: review discussions produce decisions. Capturing these as findings preserves rationale.
 
-**Recommendation pipeline**: Not every observation is an issue. Recommendations capture improvement opportunities without blocking work.
+**Recommendation pipeline**: not every observation is an issue. Recommendations capture improvement opportunities without blocking work.
 
-**Question tracking**: Ambiguities discovered during review need answers. Questions track these until resolved.
+**Question tracking**: ambiguities discovered during review need answers. Questions track these until resolved.
 
-**Audit trail**: For compliance or quality purposes, findings document what was reviewed and what was found.
+**Audit trail**: for compliance or quality purposes, findings document what the team reviewed and what it discovered.
 
 ## Finding types
 
@@ -56,7 +56,7 @@ Neutral notes, neither good nor bad.
 
 Findings progress through states:
 
-```
+```text
 open → acknowledged → addressed → closed
                   ↘ wont_fix
 ```
@@ -82,14 +82,14 @@ For issues, severity indicates impact:
 
 | Severity | Description                                    | Typical response |
 |----------|------------------------------------------------|------------------|
-| critical | Blocks release, major functionality broken     | Immediate fix    |
+| critical | Blocks release, major feature broken            | Immediate fix    |
 | major    | Significant problem, should fix before release | Schedule fix     |
 | minor    | Small issue, can defer if needed               | Backlog          |
-| trivial  | Cosmetic, very low impact                      | Optional fix     |
+| trivial  | Cosmetic, minimal impact                       | Optional fix     |
 
 ## Storage model
 
-Finding metadata is stored in `graph.jsonlt` as JSON-LD compact form. There is no frontmatter in prose files—`graph.jsonlt` is the single source of truth for all structured data.
+`graph.jsonlt` stores finding metadata as JSON-LD compact form. Prose files have no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
 
 ```json
 {"@context": "context.jsonld", "@id": "FND-F1L4T7W5", "@type": "Finding", "title": "Missing line numbers in errors", "module": {"@id": "MOD-A4F8R2X1"}, "findingType": "issue", "severity": "major", "status": "open", "statement": "Error messages don't include line numbers", "rationale": "Makes debugging difficult for users", "regarding": {"@id": "MOD-A4F8R2X1"}}
@@ -106,14 +106,14 @@ Fields:
 - `status`: Lifecycle state (open, acknowledged, addressed, closed, wont_fix)
 - `statement`: The finding statement
 - `rationale`: Why this is a finding / why it matters (optional)
-- `resolutionNotes`: How the finding was resolved (optional)
+- `resolutionNotes`: How the team resolved the finding (optional)
 - `content`: Path to prose file for extended context (optional)
 - `created`, `updated`, `closed`: ISO 8601 timestamps
 - `tags`: Array of strings (optional)
 
 ## Relationships
 
-Relationships are embedded in the finding's JSON-LD record using `{"@id": "..."}` values.
+The finding's JSON-LD record embeds relationships using `{"@id": "..."}` values.
 
 ### Outgoing relationships
 
@@ -148,7 +148,7 @@ Example with relationships:
 
 ## Finding sources
 
-Findings are produced by verification and validation tasks as deliverables:
+Verification and validation tasks produce findings as deliverables:
 
 ```json
 {"@context": "context.jsonld", "@id": "TSK-V3R1FY01", "@type": "Task", "title": "Parser code review", "module": {"@id": "MOD-A4F8R2X1"}, "processPhase": "verification", "taskType": "code-review"}
@@ -185,13 +185,13 @@ This:
 
 Some operations create findings automatically:
 
-**Phase regression**: When an module regresses to an earlier phase, a finding is created:
+**Phase regression**: when a module regresses to an earlier phase, ARCI creates a finding:
 
 ```json
 {"@context": "context.jsonld", "@id": "FND-R3GR3SS1", "@type": "Finding", "findingType": "issue", "severity": "major", "statement": "Boundary between lexer and tokenizer unclear", "rationale": "Module regression: MOD-A4F8R2X1 regressed to architecture"}
 ```
 
-**Verification failures**: When tests fail, findings can capture the details:
+**Verification failures**: when tests fail, findings can capture the details:
 
 ```json
 {"@context": "context.jsonld", "@id": "FND-T35TF41L", "@type": "Finding", "findingType": "issue", "severity": "critical", "statement": "Performance requirement REQ-C2H6N4P8 not met", "rationale": "p99 latency: 67ms (requirement: 50ms)"}
@@ -199,7 +199,7 @@ Some operations create findings automatically:
 
 ## Implementation architecture
 
-Finding functionality follows the three-layer architecture (see CON-GR4PH4RC).
+Finding capability follows the three-layer architecture (see CON-GR4PH4RC).
 
 ### Typed node
 
@@ -225,7 +225,7 @@ class FindingNode:
 
 All fields use proper types. The IO layer creates FindingNode directly from JSON-LD records, preserving all type-specific fields like `finding_type`, `severity`, `statement`, and `resolution_notes`.
 
-### Core layer (arci.core.finding)
+### Core layer (`arci.core.finding`)
 
 Pure functions and typed data structures:
 

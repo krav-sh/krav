@@ -2,35 +2,35 @@
 
 ## Overview
 
-Requirements (REQ-*) are design obligations—formal constraints on the system that, when satisfied, fulfill stakeholder needs. Unlike needs (stakeholder expectations), requirements are stated in terms of what the system shall do and must be verifiable.
+Requirements (REQ-*) are design obligations, formal constraints on the system that, when satisfied, fulfill stakeholder needs. Unlike needs (stakeholder expectations), requirements state what the system shall do and must be verifiable.
 
 In INCOSE terms, a requirement is "an agreed-to obligation." It's a contract: if the system meets this requirement, it satisfies (part of) a stakeholder need.
 
 ## Purpose
 
-Requirements serve several roles:
+Requirements serve multiple roles:
 
-**Design constraint**: Requirements constrain design and implementation choices. They're the "shall" statements that implementations must satisfy.
+**Design constraint**: requirements constrain design and coding choices. They're the "shall" statements that code must satisfy.
 
-**Verification target**: Every requirement must be verifiable. Verifications (using test, inspection, analysis, or demonstration methods) provide evidence that requirements are met.
+**Verification target**: every requirement must be verifiable. Verifications (using test, inspection, analysis, or demonstration methods) provide evidence that the system meets requirements.
 
-**Traceability anchor**: Requirements link upward to needs (why does this exist?) and downward to verifications (how is this verified?). This bidirectional traceability is essential for understanding and maintaining the system.
+**Traceability anchor**: requirements link upward to needs (why does this exist?) and downward to verifications (how is this verified?). This bidirectional traceability is essential for understanding and maintaining the system.
 
-**Flow-down mechanism**: Parent module requirements allocate to child modules, creating derived requirements with budgets or partitions.
+**Flow-down mechanism**: parent module requirements allocate to child modules, creating derived requirements with budgets or partitions.
 
 ## Requirements vs needs
 
 | Aspect      | Need                            | Requirement            |
 |-------------|---------------------------------|------------------------|
 | Perspective | Stakeholder                     | System                 |
-| Language    | "Users need..."                 | "The system shall..."  |
+| Language    | `Users need...`                 | `The system shall...`  |
 | Precision   | Qualitative OK                  | Must be verifiable     |
 | Owner       | Stakeholder                     | Design team            |
-| Validation  | Did we capture the right thing? | Did we build it right? |
+| Validation  | Was the right thing captured?   | Was it built right?    |
 
 Example:
 
-```
+```text
 Need: "Users need quick feedback when parsing fails"
     ↓
 Requirement: "The parser shall report the first syntax error within 50ms"
@@ -40,17 +40,17 @@ Requirement: "The parser shall report the first syntax error within 50ms"
 
 Requirements progress through states:
 
-```
+```text
 draft → proposed → approved → implemented → verified → obsolete
 ```
 
 | State       | Description                           |
 |-------------|---------------------------------------|
-| draft       | Initial capture, being refined        |
+| draft       | Initial capture, still refining       |
 | proposed    | Ready for review and approval         |
 | approved    | Accepted as a design obligation       |
 | implemented | Implementation claims to satisfy this |
-| verified    | Tests confirm requirement is met      |
+| verified    | Tests confirm the system meets this   |
 | obsolete    | No longer applicable                  |
 
 State transitions:
@@ -67,15 +67,15 @@ Good requirements are:
 
 | Quality     | Description                 | Example                     |
 |-------------|-----------------------------|-----------------------------|
-| Verifiable  | Can be tested or measured   | "within 50ms" not "quickly" |
+| Verifiable  | Someone can test or measure | `within 50 ms` not `quickly` |
 | Unambiguous | Single clear interpretation | "first error" not "errors"  |
 | Atomic      | Tests one thing             | Split compound requirements |
-| Traceable   | Links to need(s)            | derivesFrom relationships   |
+| Traceable   | Links to needs              | derivesFrom relationships   |
 | Feasible    | Technically achievable      | Within project constraints  |
 
 ## Storage model
 
-Requirement metadata is stored in `graph.jsonlt` as JSON-LD compact form. There is no frontmatter in prose files—`graph.jsonlt` is the single source of truth for all structured data.
+ARCI stores requirement metadata in `graph.jsonlt` as JSON-LD compact form. Prose files have no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
 
 ```json
 {"@context": "context.jsonld", "@id": "REQ-C2H6N4P8", "@type": "Requirement", "title": "Parser error latency", "module": {"@id": "MOD-A4F8R2X1"}, "statement": "The parser shall report the first syntax error within 50ms", "status": "approved", "priority": "must", "verificationMethod": "test", "verificationCriteria": "Benchmark suite achieves p99 < 50ms", "derivesFrom": [{"@id": "NED-B7G3M9K2"}]}
@@ -103,7 +103,7 @@ Requirements use MoSCoW prioritization (inherited from needs or set directly):
 | Priority | Description                          |
 |----------|--------------------------------------|
 | must     | Essential; system fails without this |
-| should   | Important; significant value         |
+| should   | Important; high value                |
 | could    | Desirable; if time permits           |
 | wont     | Explicitly out of scope              |
 
@@ -122,14 +122,14 @@ Each requirement specifies its verification method and criteria.
 
 ## Relationships
 
-Relationships are embedded in the requirement's JSON-LD record using `{"@id": "..."}` values.
+The requirement's JSON-LD record embeds relationships using `{"@id": "..."}` values.
 
 ### Outgoing relationships
 
 | Property    | Target | Cardinality | Description                              |
 |-------------|--------|-------------|------------------------------------------|
 | module      | MOD-*  | Single      | Module this requirement belongs to       |
-| derivesFrom | NED-*  | Multi       | Need(s) this requirement satisfies       |
+| derivesFrom | NED-*  | Multi       | Needs this requirement satisfies         |
 | derivesFrom | REQ-*  | Multi       | Parent requirement (for flow-down)       |
 | allocatesTo | MOD-*  | Multi       | Child modules with derived requirements |
 
@@ -169,7 +169,7 @@ Example with allocation:
 
 ## Derivation
 
-When a need is validated, derivation produces requirements:
+When stakeholders validate a need, derivation produces requirements:
 
 ```bash
 arci needderive NED-B7G3M9K2
@@ -183,7 +183,7 @@ arci reqderive REQ-H4J7N2P5 --to MOD-A4F8R2X1
 
 ## Implementation architecture
 
-Requirement functionality follows the three-layer architecture (see CON-GR4PH4RC).
+Requirement capability follows the three-layer architecture (see CON-GR4PH4RC).
 
 ### Typed node
 
@@ -208,7 +208,7 @@ class RequirementNode:
 
 All fields use proper types. The IO layer creates RequirementNode directly from JSON-LD records, preserving all type-specific fields like `statement`, `verification_method`, and `verification_criteria`.
 
-### Core layer (arci.core.requirement)
+### Core layer (`arci.core.requirement`)
 
 Pure functions and typed data structures:
 
@@ -253,7 +253,7 @@ def verified_by(graph: Graph, req_id: str) -> frozenset[str]: ...
 def allocated_to(graph: Graph, req_id: str) -> frozenset[str]: ...
 ```
 
-### Service layer (arci.service.requirement)
+### Service layer (`arci.service.requirement`)
 
 Orchestrates core and IO:
 
@@ -357,4 +357,4 @@ Requirements are verifiable design obligations:
 - Store metadata in graph.jsonlt with no frontmatter in prose files
 - Implemented following three-layer architecture (core/io/service)
 
-Requirements are the contract between stakeholder expectations (needs) and implementation (code). Every requirement should trace back to a need and forward to verifications that provide evidence.
+Requirements are the contract between stakeholder expectations (needs) and working code. Every requirement should trace back to a need and forward to verifications that provide evidence.

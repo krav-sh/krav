@@ -1,20 +1,20 @@
 # Builtins
 
-arci ships with a collection of curated builtin policies that users can opt into. These policies encode common safety patterns, workflow guardrails, and productivity enhancements that apply broadly across projects and Claude Code. Builtins are implemented as a rules-only extension that ships with the core package, sitting at the lowest precedence level so users can easily override or disable any policy.
+ARCI ships with a collection of curated builtin policies that users can opt into. These policies encode common safety patterns, workflow guardrails, and productivity enhancements that apply broadly across projects and Claude Code. Builtins use a rules-only extension that ships with the core package, sitting at the lowest precedence level so users can easily override or turn off any policy.
 
 ## Design rationale
 
-Many arci users want sensible defaults without having to author policies from scratch. Dangerous command patterns, git hygiene practices, and tool usage guidance are universal concerns that don't vary much across projects. Rather than expecting every user to rediscover and encode these patterns, arci provides a curated set of builtin policies that capture community best practices.
+Many ARCI users want sensible defaults without having to author policies from scratch. Dangerous command patterns, git hygiene practices, and tool usage guidance are universal concerns that don't vary much across projects. Rather than expecting every user to rediscover and encode these patterns, ARCI provides a curated set of builtin policies that capture community best practices.
 
-At the same time, builtins must not impose opinions on users who don't want them. Some teams have legitimate reasons to run `rm -rf /` or force-push to main. Builtins are therefore opt-in at the category level and individually overridable. The precedence system ensures that any user or project policy with the same name completely replaces the builtin version.
+Builtins must not impose opinions on users who don't want them. Some teams have legitimate reasons to run `rm -rf /` or force-push to main. Builtins are opt-in at the category level and individually overridable. The precedence system ensures that any user or project policy with the same name replaces the builtin version.
 
-Builtins also serve as documentation. Even users who disable certain policies benefit from seeing what patterns arci considers worth addressing. The builtin policies demonstrate expression language features, action patterns, and state management techniques that users can adapt for their own policies.
+Builtins also serve as documentation. Even users who turn off certain policies can see what patterns ARCI considers worth addressing. The builtin policies show expression language features, action patterns, and state management techniques that users can adapt for their own policies.
 
 ## Architecture
 
-Builtins are implemented as a rules-only extension within the arci package itself. The `arci/builtins/` directory contains YAML policy files organized by category. At daemon startup, these policies are discovered through the standard extension mechanism and loaded at the lowest precedence level.
+Builtins use a rules-only extension within the ARCI package itself. The `arci/builtins/` directory contains YAML policy files organized by category. At daemon startup, the standard extension mechanism discovers these policies and loads them at the lowest precedence level.
 
-```
+```text
 arci/
   builtins/
     extension.toml           # Extension manifest for builtin registration
@@ -37,11 +37,11 @@ description = "Built-in policies for common safety and workflow patterns"
 paths = ["policies.d/*.yaml"]
 ```
 
-This means builtins participate in the same discovery, loading, and precedence mechanics as external extensions. The only difference is that they ship with the package rather than requiring separate installation.
+This means builtins take part in the same discovery, loading, and precedence mechanics as external extensions. The only difference is that they ship with the package rather than requiring separate installation.
 
 ## Opting into builtins
 
-Builtins are disabled by default. Users opt in by enabling specific categories in their `policies.json`:
+Builtins are off by default. Users opt in by enabling specific categories in their `policies.json`:
 
 ```json
 {
@@ -56,7 +56,7 @@ Builtins are disabled by default. Users opt in by enabling specific categories i
 }
 ```
 
-Alternatively, users can enable entire categories using a glob pattern in their `arci.yaml`:
+Or, users can enable entire categories using a glob pattern in their `arci.yaml`:
 
 ```yaml
 # <user-config-dir>/arci/arci.yaml
@@ -67,7 +67,7 @@ builtins:
   code-quality: false  # Explicitly disabled (same as omitting)
 ```
 
-Each category corresponds to a YAML file in the builtins policies directory. Enabling a category loads all policies from that file. Users can then disable or override individual policies at higher precedence levels.
+Each category corresponds to a YAML file in the builtins policies directory. Enabling a category loads all policies from that file. Users can then turn off or override individual policies at higher precedence levels.
 
 This category-based approach balances convenience with control. Users don't need to understand every policy before opting in, but they can drill down and customize once they encounter specific policies they want to adjust.
 
@@ -80,7 +80,7 @@ builtins:
   git: true
 ```
 
-When both user and project configuration specify builtins, the union of enabled categories is loaded. A category is loaded if either configuration enables it. To prevent a category from loading when user configuration enables it, projects would need to override individual policies rather than the category.
+When both user and project configuration specify builtins, the loader merges the union of enabled categories. The loader enables a category if either configuration enables it. To prevent a category from loading when user configuration enables it, projects would need to override individual policies rather than the category.
 
 ## Policy identification
 
@@ -107,7 +107,7 @@ Or provide a complete policy definition in their `policies.d/` directory with th
 
 The safety category provides protection against dangerous operations that could cause data loss or system compromise.
 
-**arci:block-dangerous-rm** blocks recursive deletion of root or home directories.
+**`arci:block-dangerous-rm`** blocks recursive deletion of root or home directories.
 
 ```yaml
 version: 1
@@ -140,7 +140,7 @@ rules:
       action: deny
 ```
 
-**arci:block-curl-pipe-shell** blocks piping curl/wget output directly to shell interpreters.
+**`arci:block-curl-pipe-shell`** blocks piping curl/wget output directly to shell interpreters.
 
 ```yaml
 version: 1
@@ -173,7 +173,7 @@ rules:
       action: deny
 ```
 
-**arci:block-chmod-dangerous** blocks overly permissive chmod operations.
+**`arci:block-chmod-dangerous`** blocks overly permissive chmod operations.
 
 ```yaml
 version: 1
@@ -203,7 +203,7 @@ rules:
       action: deny
 ```
 
-**arci:warn-env-file-read** warns when reading files that may contain secrets.
+**`arci:warn-env-file-read`** warns when reading files that may contain secrets.
 
 ```yaml
 version: 1
@@ -246,7 +246,7 @@ rules:
 
 The git category provides guardrails for common git workflow mistakes.
 
-**arci:convert-force-to-lease** converts `--force` to `--force-with-lease` for safer force pushes.
+**`arci:convert-force-to-lease`** converts `--force` to `--force-with-lease` for safer force pushes.
 
 ```yaml
 version: 1
@@ -299,7 +299,7 @@ rules:
         when: always
 ```
 
-**arci:warn-main-branch-push** warns before pushing directly to main or master.
+**`arci:warn-main-branch-push`** warns before pushing directly to main or master.
 
 ```yaml
 version: 1
@@ -337,7 +337,7 @@ rules:
       action: warn
 ```
 
-**arci:block-force-push-main** blocks force pushing to protected branches.
+**`arci:block-force-push-main`** blocks force pushing to protected branches.
 
 ```yaml
 version: 1
@@ -375,7 +375,7 @@ rules:
       action: deny
 ```
 
-**arci:warn-uncommitted-changes** warns when certain operations run with uncommitted changes.
+**`arci:warn-uncommitted-changes`** warns when certain operations run with uncommitted changes.
 
 ```yaml
 version: 1
@@ -415,7 +415,7 @@ rules:
 
 The tool guidance category helps Claude Code use appropriate tools for common operations.
 
-**arci:redirect-bash-find** suggests using the Glob tool instead of bash find.
+**`arci:redirect-bash-find`** suggests using the Glob tool instead of bash find.
 
 ```yaml
 version: 1
@@ -447,7 +447,7 @@ rules:
       action: warn
 ```
 
-**arci:redirect-bash-grep** suggests using the Grep tool instead of bash grep.
+**`arci:redirect-bash-grep`** suggests using the Grep tool instead of bash grep.
 
 ```yaml
 version: 1
@@ -479,7 +479,7 @@ rules:
       action: warn
 ```
 
-**arci:redirect-bash-cat** suggests using the Read tool instead of bash cat.
+**`arci:redirect-bash-cat`** suggests using the Read tool instead of bash cat.
 
 ```yaml
 version: 1
@@ -517,7 +517,7 @@ rules:
 
 The code quality category encourages fixing issues rather than suppressing them.
 
-**arci:warn-type-ignore** warns when adding type: ignore comments.
+**`arci:warn-type-ignore`** warns when adding type: ignore comments.
 
 ```yaml
 version: 1
@@ -555,7 +555,7 @@ rules:
       action: warn
 ```
 
-**arci:warn-noqa** warns when adding noqa comments.
+**`arci:warn-noqa`** warns when adding noqa comments.
 
 ```yaml
 version: 1
@@ -590,7 +590,7 @@ rules:
       action: warn
 ```
 
-**arci:warn-eslint-disable** warns when adding eslint-disable comments.
+**`arci:warn-eslint-disable`** warns when adding `eslint-disable` comments.
 
 ```yaml
 version: 1
@@ -627,9 +627,9 @@ rules:
 
 ## State-dependent patterns
 
-Some builtin policies demonstrate state-dependent patterns using the state store. These policies show how to implement escalating warnings that transition from warn to deny after repeated occurrences.
+Some builtin policies show state-dependent patterns using the state store. These policies show how to build escalating warnings that transition from warn to deny after repeated occurrences.
 
-**arci:escalating-warning-template** demonstrates the warn-then-block pattern. This template warns on the first two occurrences and blocks on the third.
+**`arci:escalating-warning-template`** shows the warn-then-block pattern. This template warns on the first two occurrences and blocks on the third.
 
 ```yaml
 version: 1
@@ -687,11 +687,11 @@ rules:
       action: deny
 ```
 
-This template demonstrates several key concepts. The policy uses `$session_get()` to retrieve the current attempt count with a default of 0. The `setState` effect increments the counter on every match using `when: always`. Two separate validation rules handle the warning and blocking phases, with conditions that check the attempt count. Users can copy and adapt this pattern for their own escalating policies by changing the pattern match and adjusting `max_warnings`.
+This template shows key concepts. The policy uses `$session_get()` to retrieve the current attempt count with a default of 0. The `setState` effect increments the counter on every match using `when: always`. Two separate validation rules handle the warning and blocking phases, with conditions that check the attempt count. Users can copy and adapt this pattern for their own escalating policies by changing the pattern match and adjusting `max_warnings`.
 
 ## Viewing enabled builtins
 
-The CLI provides commands to inspect which builtins are active:
+The command-line tool provides commands to inspect which builtins are active:
 
 ```bash
 # List all policies including builtins
@@ -710,7 +710,7 @@ The dashboard also displays enabled builtins alongside user and project policies
 
 Users can override builtins in three ways.
 
-To disable a specific policy without replacing it, add it to `disabled` in `policies.json`:
+To turn off a specific policy without replacing it, add it to `disabled` in `policies.json`:
 
 ```json
 {
@@ -718,7 +718,7 @@ To disable a specific policy without replacing it, add it to `disabled` in `poli
 }
 ```
 
-To completely redefine a policy, create a policy with the same name in your `policies.d/` directory. Because user and project policies have higher precedence than builtins, your policy replaces the builtin entirely:
+To fully redefine a policy, create a policy with the same name in your `policies.d/` directory. Because user and project policies have higher precedence than builtins, your policy replaces the builtin entirely:
 
 ```yaml
 version: 1
@@ -748,11 +748,11 @@ rules:
       action: deny
 ```
 
-To adjust a single aspect of a builtin without fully redefining it, you would need to copy the full policy and modify it, since policies are atomic units that replace entirely rather than merging.
+To adjust a single aspect of a builtin without fully redefining it, you would need to copy the full policy and change it, since policies are atomic units that replace entirely rather than merging.
 
 ## Future categories
 
-Additional builtin categories may be added in future versions.
+Future versions may include more builtin categories.
 
 Framework-specific policies could provide convention enforcement for Python (pytest patterns, import organization), JavaScript (package.json hygiene, lockfile enforcement), and other ecosystems. These would be opt-in categories like `builtins.python: true`.
 
@@ -760,4 +760,4 @@ Security policies could extend the safety category with patterns for preventing 
 
 Workflow policies could provide templates for common multi-step workflows like "test before commit" or "lint on save" that users can enable and customize.
 
-New categories follow the same opt-in model. Upgrading arci never automatically enables new builtin categories—users must explicitly opt in after reviewing what's included.
+New categories follow the same opt-in model. Upgrading ARCI never automatically enables new builtin categories. Users must explicitly opt in after reviewing what's included.

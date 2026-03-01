@@ -2,13 +2,13 @@
 
 ## Overview
 
-Each entity type in the knowledge graph has its own lifecycle state machine. This document defines how lifecycle state changes on one entity interact with and propagate to related entities across the graph.
+Each RDF class in the knowledge graph has its own lifecycle state machine, where lifecycle states are values of the `arci:status` datatype property. This document defines how lifecycle state changes on one entity interact with and propagate to related entities across the graph.
 
 ## Entity lifecycles
 
 ### Concept lifecycle
 
-```
+```text
 draft → exploring → crystallized → superseded
 ```
 
@@ -19,18 +19,18 @@ draft → exploring → crystallized → superseded
 
 ### Need lifecycle
 
-```
+```text
 draft → validated → addressed → superseded
 ```
 
 - **draft**: Initial formulation of stakeholder expectation
 - **validated**: Confirmed as a real stakeholder expectation
-- **addressed**: All derived requirements are satisfied
+- **addressed**: All derived requirements satisfy their criteria
 - **superseded**: Replaced or no longer relevant
 
 ### Requirement lifecycle
 
-```
+```text
 draft → approved → satisfied → superseded
 ```
 
@@ -39,33 +39,35 @@ draft → approved → satisfied → superseded
 - **satisfied**: All verifications are passing
 - **superseded**: Replaced or withdrawn
 
-### Verification lifecycle
+### Test case lifecycle
 
-```
-planned → implementing → passing → failing → blocked
+```text
+draft → specified → implemented → executable → obsolete
 ```
 
-- **planned**: Verification defined but not yet implemented
-- **implementing**: Verification under development
-- **passing**: Verification executed and passing
-- **failing**: Verification executed and failing
-- **blocked**: Cannot execute (dependency missing, environment unavailable)
+- **draft**: Test case under development
+- **specified**: Test case specification complete
+- **implemented**: Test case has a working build
+- **executable**: Test case ready to run
+- **obsolete**: No longer relevant
+
+Test cases also track `currentResult` (pass | fail | skip | unknown) and `lastRunAt` separately from their lifecycle status.
 
 ### Task lifecycle
 
-```
+```text
 pending → active → complete → blocked → cancelled
 ```
 
 - **pending**: Not yet started, dependencies may be incomplete
-- **active**: Currently being worked on
+- **active**: Currently in progress
 - **complete**: Work finished, deliverables produced
 - **blocked**: Cannot proceed (dependency or external blocker)
-- **cancelled**: Abandoned, will not be completed
+- **cancelled**: Abandoned, not completing
 
 ### Defect lifecycle
 
-```
+```text
 open → confirmed → resolved → verified → closed
                 ↓
              rejected
@@ -82,18 +84,18 @@ open → confirmed → resolved → verified → closed
 
 ### Baseline lifecycle
 
-```
+```text
 draft → proposed → approved → superseded
 ```
 
-- **draft**: Being assembled
+- **draft**: Under assembly
 - **proposed**: Submitted for approval
 - **approved**: Official reference point
 - **superseded**: Replaced by a newer baseline
 
 ### Module phase lifecycle
 
-```
+```text
 architecture → design → implementation → integration → verification → validation
 ```
 
@@ -105,28 +107,28 @@ State changes on leaf entities propagate upward through the derivation chain.
 
 ### Task completion drives requirement status
 
-When all tasks for a requirement's module (at the current phase) complete, and the requirement's verifications are passing, the requirement can transition to `satisfied`:
+When all tasks for a requirement's module (at the current phase) complete, and the requirement's test cases have `currentResult: pass`, the requirement can transition to `satisfied`:
 
-```
-TSK-* → status: complete (all tasks for this phase)
-  + VRF-* → status: passing (all verifications for this requirement)
+```text
+TASK-* → status: complete (all tasks for this phase)
+  + TC-* → currentResult: pass (all test cases for this requirement)
     ⇒ REQ-* can transition to: satisfied
 ```
 
-This is not automatic — an explicit check or review confirms that task completion and passing verifications collectively satisfy the requirement.
+This is not automatic; an explicit check or review confirms that task completion and passing test results collectively satisfy the requirement.
 
 ### Requirement satisfaction drives need status
 
 When all requirements derived from a need are `satisfied`, the need can transition to `addressed`:
 
-```
+```text
 REQ-* → status: satisfied (all requirements deriving from this need)
-  ⇒ NED-* can transition to: addressed
+  ⇒ NEED-* can transition to: addressed
 ```
 
-### Verification status drives requirement assessment
+### Test case results drive requirement assessment
 
-When a VRF transitions to `passing`, the requirement it verifies may now be assessable for `satisfied` status. When a VRF transitions to `failing`, the requirement's `satisfied` status is called into question.
+When a Tc's `currentResult` changes to `pass`, the requirement it verifies may now be assessable for `satisfied` status. When a Tc's `currentResult` changes to `fail`, the requirement's `satisfied` status becomes questionable.
 
 ## Downward impact
 
@@ -135,22 +137,25 @@ Changes to upstream entities impact downstream entities through suspect link pro
 ### Concept modification
 
 When a CON node's key properties change:
-1. `derivesFrom` edges on NED nodes that derive from this CON are marked suspect
+
+1. ARCI marks `derivesFrom` edges on NED nodes that derive from this CON as suspect
 2. Reviewers examine each suspect NED to determine if the change affects the need
-3. If the need is affected, the reviewer updates it and suspect propagates further downstream
+3. If the need changes, the reviewer updates it and suspect propagates further downstream
 
 ### Need modification
 
 When a NED node's `statement` or `status` changes:
-1. `derivesFrom` edges on REQ nodes that derive from this NED are marked suspect
+
+1. ARCI marks `derivesFrom` edges on REQ nodes that derive from this NED as suspect
 2. `verifiedBy` edges on those REQ nodes may also become suspect (if the requirement changes)
 
 ### Requirement modification
 
 When a REQ node's `statement` changes:
-1. `verifiedBy` edges are marked suspect (verification may no longer be valid)
-2. `derivesFrom` edges on child REQ nodes are marked suspect (derived requirements may need updating)
-3. `allocatesTo` edges are marked suspect (allocations may need re-evaluation)
+
+1. ARCI marks `verifiedBy` edges as suspect (verification may no longer be valid)
+2. ARCI marks `derivesFrom` edges on child REQ nodes as suspect (derived requirements may need updating)
+3. ARCI marks `allocatesTo` edges as suspect (allocations may need re-evaluation)
 
 ## Phase-lifecycle interaction
 
@@ -161,7 +166,6 @@ A module can advance to the next phase when:
 1. **All phase tasks complete**: Every TSK where `module = this MOD` and `processPhase = current phase` has `status = complete`
 2. **No blocking defects**: No DEF where `module = this MOD` has `severity ∈ {critical, major}` and `status ∈ {open, confirmed}`
 3. **Review dispositions acceptable**: All review tasks for the current phase are complete with acceptable dispositions (accepted, or conditionally accepted with all conditions resolved)
-4. **Parent at or ahead**: If this module has a `childOf` parent, the parent's phase is ≥ the target phase
 
 ### Task completion drives phase readiness
 
@@ -170,8 +174,9 @@ Each task completion reduces the set of remaining work for its process phase. Wh
 ### Phase regression
 
 When a module regresses to an earlier phase:
+
 1. A DEF node is automatically created to record why the regression occurred
-2. Child modules remain at their current phase but are blocked from advancing past the new parent phase
+2. Child modules remain independent of a parent's phase regression. Their own phase advancement criteria stand alone.
 3. Tasks for phases after the regression target may need to be re-evaluated
 
 ## Suspect link interaction
@@ -187,7 +192,7 @@ When a module regresses to an earlier phase:
 ### Suspect link review workflow
 
 1. A modification triggers suspect marking on downstream edges
-2. Suspect links appear in the suspect link view (`arci graph suspect`)
+2. ARCI surfaces suspect links for review
 3. A reviewer examines each suspect link and takes one of:
    - **Clear**: The link is still valid despite the upstream change
    - **Update**: The downstream node needs a minor adjustment (no defect)
@@ -205,17 +210,17 @@ When reviewing suspect links, baselines provide a reference point. The reviewer 
 
 Review tasks (architecture-review, design-review, code-review) produce defects as part of their output:
 
-```
-TSK-R3V13W01 (review task)
-  produces → DEF-F1L4T7W5 (detectedBy → TSK-R3V13W01)
+```text
+TASK-R3V13W01 (review task)
+  produces → DEF-F1L4T7W5 (detectedBy → TASK-R3V13W01)
 ```
 
 ### Defect remediation chain
 
-```
+```text
 DEF-F1L4T7W5 (confirmed)
-  generates → TSK-F1X00001 (remediation task)
-    TSK-F1X00001 → status: complete
+  generates → TASK-F1X00001 (remediation task)
+    TASK-F1X00001 → status: complete
       ⇒ DEF-F1L4T7W5 → status: resolved
         ⇒ re-examination confirms fix
           ⇒ DEF-F1L4T7W5 → status: verified → closed
@@ -224,19 +229,20 @@ DEF-F1L4T7W5 (confirmed)
 ### Defect and phase gates
 
 Phase advancement checks defect status:
+
 - **Blocking defects** (critical, major with status open or confirmed) prevent advancement
 - **Deferred defects** do not block (the deferral is an explicit decision)
-- **Resolved but unverified defects** are borderline — project policy determines whether they block
+- **Resolved but unverified defects** are borderline; project policy determines whether they block
 
 ## State transition dependency matrix
 
 This matrix shows which entity status transitions depend on the status of related entities:
 
-| Transition | Depends on |
-|-----------|------------|
-| NED → addressed | All derived REQs are satisfied |
-| REQ → satisfied | All VRFs are passing |
-| MOD phase advance | All phase TSKs complete, no blocking DEFs, reviews acceptable, parent phase ≥ target |
-| DEF → resolved | Generated TSK is complete |
-| DEF → verified | Re-examination confirms fix adequate |
-| BSL → approved | No blocking DEFs in scope (policy-dependent) |
+| Transition        | Depends on                                                    |
+| ----------------- | ------------------------------------------------------------- |
+| NED → addressed   | All derived REQs reach satisfied status                       |
+| REQ → satisfied   | All VRFs are passing                                          |
+| MOD phase advance | All phase TSKs complete, no blocking DEFs, reviews acceptable |
+| DEF → resolved    | Generated TSK is complete                                     |
+| DEF → verified    | Re-examination confirms fix adequate                          |
+| BSL → approved    | No blocking DEFs in scope (policy-dependent)                  |

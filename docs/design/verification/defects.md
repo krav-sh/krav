@@ -2,7 +2,7 @@
 
 ## Overview
 
-Defects (DEF-*) are identified problems — deviations from requirements, standards, or expectations discovered during review, verification, analysis, or any examination activity. A defect records what's wrong, how severe it is, how it was dispositioned, and how it was resolved.
+Defects (DEF-*) represent problems that someone has identified: deviations from requirements, standards, or expectations discovered during review, verification, analysis, or any examination activity. A defect records what's wrong, how severe it is, how the team dispositioned it, and how they resolved it.
 
 Defects replace the earlier Findings design (FND-*), which conflated five distinct concerns (issues, recommendations, questions, decisions, observations) under one entity type. The redesign narrows the scope to actual problems, moves decisions to concepts (CON-*), and pushes questions and observations out of the knowledge graph into task context and review deliverables where they belong.
 
@@ -12,40 +12,40 @@ The design draws on IEEE 1028 (Software Reviews and Audits), which defines a def
 
 Defects serve three roles.
 
-**Problem tracking**: A defect is a problem that needs action. It has severity, it has an owner (the module where it was found), it traces to what's wrong and what examination found it. This is the minimum viable tracking needed to manage quality without an external issue tracker.
+**Problem tracking**: a defect is a problem that needs action. It has severity, it has an owner (the module where the examination found it), it traces to what's wrong and what examination found it. This is the minimum viable tracking needed to manage quality without an external issue tracker.
 
-**Phase gate enforcement**: Open defects of sufficient severity block module phase advancement. Critical and major defects must be resolved or explicitly deferred before an module can advance. This is the enforcement mechanism that gives phase gates teeth.
+**Phase gate enforcement**: open defects of sufficient severity block module phase advancement. The team must resolve or explicitly defer critical and major defects before a module can advance. This is the enforcement mechanism that gives phase gates teeth.
 
-**Process feedback**: Defects carry metadata about when and where they were found (which phase, which review, which module). Over time, this data reveals process gaps. Defects found in verification that originated in architecture indicate the architecture review missed something. This is defect causal analysis, a core CMMI practice.
+**Process feedback**: defects carry metadata about when and where the team found them (which phase, which review, which module). Over time, this data reveals process gaps. Defects that verification surfaces but that originated in architecture indicate the architecture review missed something. This is defect causal analysis, a core CMMI practice.
 
 ## What defects are not
 
-Defects are not decisions. A decision is a committed choice with rationale and alternatives considered — that's a concept (CON-*) with concept_type capturing the category (architectural, technical, process, etc.). Decisions don't have severity, don't need remediation, and don't block phase advancement. They get made, not fixed.
+Defects are not decisions. A decision is a committed choice with rationale and alternatives considered; that's a concept (CON-*) with concept_type capturing the category (architectural, technical, process, etc.). Decisions don't have severity, don't need remediation, and don't block phase advancement. They get made, not fixed.
 
 Defects are not questions. A question during review is a blocker on the review task, captured in the task's context or the review report deliverable. If a question reveals an actual problem, the problem becomes a defect. The question itself doesn't need a lifecycle in the knowledge graph.
 
 Defects are not neutral observations. Notes, commentary, and "things to keep in mind" go in review report deliverables as prose. If an observation later turns out to be a problem, it becomes a defect at that point.
 
-Defects are not recommendations. A suggestion for improvement that isn't actually wrong doesn't need defect-level tracking. Recommendations go in review deliverables. If a recommendation is important enough to track, it becomes a need (NED-*) — a stakeholder expectation for how the system should improve.
+Defects are not recommendations. A suggestion for improvement that isn't actually wrong doesn't need defect-level tracking. Recommendations go in review deliverables. If a recommendation is important enough to track, it becomes a need (NED-*), a stakeholder expectation for how the system should improve.
 
 ## Defect categories
 
-The `category` field captures what kind of problem was found. These categories come from standard RE defect taxonomies and tell you *what's wrong*, not just that something was found:
+The `category` field captures what kind of problem the examination found. These categories come from standard RE defect taxonomies and tell you *what's wrong*, not just that the examination found something:
 
 | Category        | Description                                               |
 |-----------------|-----------------------------------------------------------|
 | missing         | Something that should exist but doesn't                   |
 | incorrect       | Something exists but is wrong                             |
 | ambiguous       | Multiple valid interpretations are possible               |
-| inconsistent    | Contradicts another requirement, design, or implementation|
-| non-verifiable  | Requirement cannot be tested or measured as stated         |
+| inconsistent    | Contradicts another requirement, design, or code          |
+| non-verifiable  | No one can test or measure the requirement as stated       |
 | non-traceable   | No upstream link to a need or parent requirement          |
 | incomplete      | Partially specified, missing necessary detail              |
 | superfluous     | Unnecessary, adds complexity without value                 |
 | non-conformant  | Implementation deviates from an approved requirement       |
-| regression      | Previously-passing verification now fails                  |
+| regression      | Previously passing verification now fails                  |
 
-Not every defect needs a category — it's optional. But categorized defects enable aggregate analysis: "we keep finding `ambiguous` defects in our requirements, which suggests our derivation process needs tightening."
+Not every defect needs a category; it's optional. But categorized defects enable aggregate analysis: "the team keeps finding `ambiguous` defects in the requirements, which suggests the derivation process needs tightening."
 
 ## Severity
 
@@ -58,13 +58,13 @@ Severity indicates impact and urgency:
 | minor    | Small problem, workaround exists               | Does not block |
 | trivial  | Cosmetic, negligible impact                    | Does not block |
 
-Critical and major defects block module phase advancement by default. This default can be adjusted by hook policy — a project might decide that all open defects block, or that only critical defects block.
+Critical and major defects block module phase advancement by default. Hook policy can adjust this default; a project might decide that all open defects block, or that only critical defects block.
 
 ## Lifecycle
 
-Defects have two distinct lifecycle concerns: disposition (what do we think about this problem?) and resolution (what did we do about it?). The status field captures both as a single linear progression, but the transitions encode the two-phase nature.
+Defects have two distinct lifecycle concerns: disposition (is this a real problem?) and resolution (how was it fixed?). The status field captures both as a single linear progression, but the transitions encode the two-phase nature.
 
-```
+```text
 open → confirmed → resolved → verified → closed
          ↓
       rejected (with rationale)
@@ -85,25 +85,25 @@ State transitions:
 
 - `open → confirmed`: Triage confirms this is a real problem.
 - `open → rejected`: Triage determines this is not a problem. Rationale required.
-- `confirmed → deferred`: Problem is real but postponement is justified. Rationale and deferral target (a baseline, phase, or milestone) required.
+- `confirmed → deferred`: Problem is real but the rationale justifies postponement. Rationale and deferral target (a baseline, phase, or milestone) required.
 - `confirmed → resolved`: Remediation task completes.
 - `resolved → verified`: Re-examination confirms the fix is adequate.
 - `verified → closed`: Administrative closure.
-- `deferred → confirmed`: Deferred defect is picked back up (target reached or priority changed).
+- `deferred → confirmed`: Team picks the deferred defect back up (target reached or priority changed).
 
-The `confirmed → resolved` transition is typically driven by the linked remediation task completing. The `resolved → verified` transition requires re-examination — either the original reviewer confirms the fix, or a verification re-runs and passes.
+The `confirmed → resolved` transition is typically driven by the linked remediation task completing. The `resolved → verified` transition requires re-examination: either the original reviewer confirms the fix, or a verification re-runs and passes.
 
 ### Why separate confirmed from resolved?
 
-In the original FND-* design, the lifecycle was open → acknowledged → addressed → closed. This conflated triage with resolution. A confirmed defect with no remediation task yet assigned is in a different state than one where the fix is done but unverified. Separating these states gives better visibility into the defect pipeline: how many defects are awaiting triage? How many are confirmed but unassigned? How many have fixes awaiting verification?
+In the original FND-* design, the lifecycle was open → acknowledged → addressed → closed. This conflated triage with resolution. A confirmed defect with no remediation task yet assigned occupies a different state than one where the developer has finished the fix but nobody has verified it. Separating these states gives better visibility into the defect pipeline: how many defects await triage? How many sit confirmed but unassigned? How many have fixes awaiting someone to verify them?
 
 ### Why verified before closed?
 
-A resolved defect isn't necessarily fixed correctly. The `verified` state requires someone (or some automated check) to confirm the fix is adequate. This prevents the pattern where a defect is "closed" but the fix introduced a new problem or didn't actually address the original issue. For automated verifications (method: test), the `resolved → verified` transition can be automated when the relevant VRF-* node returns to passing status.
+A resolved defect isn't necessarily fixed correctly. The `verified` state requires someone (or some automated check) to confirm the fix is adequate. This prevents the pattern where a defect is "closed" but the fix introduced a new problem or didn't actually address the original issue. For automated verifications (method: test), the system can automate the `resolved → verified` transition when the relevant VRF-* node returns to passing status.
 
 ## Storage model
 
-Defect metadata is stored in `graph.jsonlt` as JSON-LD compact form:
+The graph stores defect metadata in `graph.jsonlt` as JSON-LD compact form:
 
 ```json
 {"@context": "context.jsonld", "@id": "DEF-F1L4T7W5", "@type": "Defect", "title": "Error messages missing line numbers", "module": {"@id": "MOD-A4F8R2X1"}, "category": "incomplete", "severity": "major", "status": "confirmed", "statement": "Error messages report the error type but not the source location, making it difficult to locate problems in input files", "detectedBy": {"@id": "TSK-R3V13W01"}, "detectedInPhase": "design", "subject": {"@id": "REQ-3RR0R001"}}
@@ -114,15 +114,15 @@ Fields:
 - `@id`: Unique identifier (DEF-XXXXXXXX format)
 - `@type`: Always "Defect"
 - `title`: Short description of the problem
-- `module`: Module where the defect was found (required)
+- `module`: Module where the examination found the defect (required)
 - `category`: Defect category (optional, see Defect categories)
 - `severity`: critical, major, minor, trivial (required)
 - `status`: Lifecycle state (see Lifecycle)
 - `statement`: Full description of the problem
-- `rationale`: For rejected/deferred: why this disposition was chosen (optional)
+- `rationale`: For rejected/deferred: why the team chose this disposition (optional)
 - `deferralTarget`: For deferred: what milestone, phase, or baseline triggers re-evaluation (optional)
-- `resolutionNotes`: How the defect was fixed (populated on resolution, optional)
-- `detectedInPhase`: The module phase when the defect was found (optional)
+- `resolutionNotes`: How the team fixed the defect (populated on resolution, optional)
+- `detectedInPhase`: The module phase when the examination found the defect (optional)
 - `content`: Path to prose file for extended context (optional)
 - `created`, `updated`: ISO 8601 timestamps
 - `tags`: Array of strings (optional)
@@ -133,7 +133,7 @@ Fields:
 
 | Property   | Target | Cardinality | Description                                  |
 |------------|--------|-------------|----------------------------------------------|
-| module     | MOD-*  | Single      | Module where the defect was found            |
+| module     | MOD-*  | Single      | Module where the examination found the defect|
 | subject    | any    | Single      | What the defect is about (the defective item)|
 | detectedBy | TSK-*  | Single      | The examination task that found this defect  |
 | generates  | TSK-*  | Single      | Remediation task created to fix this defect  |
@@ -146,7 +146,7 @@ Fields:
 
 ### The subject relationship
 
-`subject` replaces the old `regarding` predicate. It points at the node that is defective — the requirement that's ambiguous, the module whose interface is incomplete, the verification that's inadequate. Unlike `regarding` (which was vague about what the relationship meant), `subject` carries a specific semantic: "this node has a problem."
+`subject` replaces the old `regarding` predicate. It points at the node that is defective: the requirement that's ambiguous, the module whose interface is incomplete, the verification that's inadequate. Unlike `regarding` (which was vague about what the relationship meant), `subject` carries a specific semantic: "this node has a problem."
 
 `subject` can target any node type:
 
@@ -158,9 +158,9 @@ Fields:
 
 ### The detectedBy relationship
 
-`detectedBy` points at the task that found the defect. This gives traceability from defect back to examination activity — which review or verification discovered this problem. It enables questions like "what did the architecture review find?" (all DEF-* where detectedBy points at the review task).
+`detectedBy` points at the task that found the defect. This gives traceability from defect back to examination activity, showing which review or verification discovered this problem. It enables questions like "what did the architecture review find?" (all DEF-* where detectedBy points at the review task).
 
-When a defect is found outside a formal review (e.g., an agent notices a problem during implementation), `detectedBy` can be omitted. The defect still exists and tracks through its lifecycle; it just doesn't trace back to a specific examination activity.
+When someone finds a defect outside a formal review (say, an agent notices a problem during coding), the creator can omit `detectedBy`. The defect still exists and tracks through its lifecycle; it just doesn't trace back to a specific examination activity.
 
 ### The generates relationship
 
@@ -174,15 +174,15 @@ When a confirmed defect needs work, `generates` links to the remediation task. T
 
 A review in arci is a verification-phase task (task_type: `architecture-review`, `design-review`, `code-review`, `requirements-review`). The review task produces two kinds of output:
 
-**Review report** (task deliverable): A prose document capturing the review's analysis, observations, recommendations, and overall disposition. This is where neutral observations, suggestions, and commentary live. The report is a file in the module's deliverables directory.
+**Review report** (task deliverable): a prose document capturing the review's analysis, observations, recommendations, and aggregate disposition. This is where neutral observations, suggestions, and commentary live. The report is a file in the module's deliverables directory.
 
-**Defects** (DEF-* nodes): Zero or more defect records for actual problems found. Each defect links back to the review task via `detectedBy`.
+**Defects** (DEF-* nodes): zero or more defect records for actual problems found. Each defect links back to the review task via `detectedBy`.
 
-The review task also has a **disposition** — the overall review outcome. This is captured in the review report deliverable rather than on the task node itself, since disposition is specific to reviews and doesn't apply to other task types. Dispositions follow IEEE 1028:
+The review task also has a **disposition**, the aggregate review outcome. The review report deliverable captures this rather than the task node itself, since disposition is specific to reviews and doesn't apply to other task types. Dispositions follow IEEE 1028:
 
 - **accepted**: Reviewed item meets criteria, no blocking defects.
-- **conditionally accepted**: Reviewed item is acceptable once identified defects are resolved. The conditions are the open defects.
-- **not accepted**: Reviewed item does not meet criteria, significant rework needed.
+- **conditionally accepted**: Reviewed item is acceptable once the team resolves identified defects. The conditions are the open defects.
+- **not accepted**: Reviewed item does not meet criteria, major rework needed.
 
 Phase advancement checks review task dispositions: all review tasks for the current phase must be complete with acceptable dispositions (accepted or conditionally accepted with all conditions resolved).
 
@@ -190,7 +190,7 @@ Phase advancement checks review task dispositions: all review tasks for the curr
 
 When a VRF-* moves to `failing` status, that's a verification result, not automatically a defect. The agent or human executing the verification task decides whether a failure warrants a defect:
 
-- Expected failure during development (test written before implementation): no defect.
+- Expected failure during development (test written before code): no defect.
 - Regression (previously passing, now failing): create a defect with category `regression`.
 - New failure revealing a real problem: create a defect with the appropriate category.
 
@@ -218,9 +218,9 @@ policies:
 
 Defects interact with baselines in two ways.
 
-**Baseline creation**: A project can require (via hook policy) that no open blocking defects exist before creating or approving a baseline. This ensures baselines represent clean states.
+**Baseline creation**: a project can require (via hook policy) that no open blocking defects exist before creating or approving a baseline. Baselines then represent clean states.
 
-**Deferral targets**: Deferred defects can reference a baseline or phase as their target: "fix this before the design baseline." The `deferralTarget` field captures this. When the target baseline is being prepared, deferred defects targeting it surface as items that need resolution or explicit re-deferral.
+**Deferral targets**: deferred defects can reference a baseline or phase as their target: "fix this before the design baseline." The `deferralTarget` field captures this. When the team prepares the target baseline, deferred defects targeting it surface as items that need resolution or explicit re-deferral.
 
 ## Interaction with suspect links
 
@@ -232,17 +232,17 @@ This avoids flooding the defect list with auto-generated items that may not be r
 
 Some operations create defects automatically:
 
-**Phase regression**: When a module regresses to an earlier phase, a defect is created to record why:
+**Phase regression**: when a module regresses to an earlier phase, the system creates a defect to record why:
 
 ```json
 {"@context": "context.jsonld", "@id": "DEF-R3GR3SS1", "@type": "Defect", "title": "Module boundary unclear", "module": {"@id": "MOD-A4F8R2X1"}, "severity": "major", "status": "confirmed", "statement": "Boundary between lexer and tokenizer is unclear, causing interface confusion", "category": "ambiguous", "detectedInPhase": "design", "subject": {"@id": "MOD-A4F8R2X1"}}
 ```
 
-This is one of the few cases where automatic creation is justified — phase regression is always a significant event that needs a tracked reason.
+Phase regression always needs a tracked reason, making automatic creation appropriate here.
 
 ## Implementation architecture
 
-Defect functionality follows the three-layer architecture.
+Defect capability follows the three-layer architecture.
 
 ### Typed node
 
@@ -323,7 +323,7 @@ BLOCKING_SEVERITIES: frozenset[Severity] = frozenset({
 })
 ```
 
-### Core layer (arci.core.defect)
+### Core layer (`arci.core.defect`)
 
 Pure functions:
 
@@ -473,7 +473,7 @@ For projects using the earlier Findings (FND-*) model, the migration path:
 - `findingType: question` → Stays in review task context. If the question revealed a problem, the problem becomes DEF-*.
 - `findingType: observation` → Stays in review report deliverable prose.
 
-The `regarding` predicate becomes `subject`. The `generates`/`addressedBy` pattern is preserved as `generates`/`resolvedBy`.
+The `regarding` predicate becomes `subject`. The `generates`/`addressedBy` pattern carries forward as `generates`/`resolvedBy`.
 
 ## Implementation status
 
@@ -486,13 +486,13 @@ The `regarding` predicate becomes `subject`. The `generates`/`addressedBy` patte
 
 ## Summary
 
-Defects are identified problems that need action:
+Defects track identified problems that need action:
 
 - Scoped to actual deviations from requirements, standards, or expectations
 - Categorized by what's wrong (missing, incorrect, ambiguous, regression, etc.)
 - Severity-graded with critical/major blocking phase advancement
-- Lifecycle separates disposition (is this real?) from resolution (did we fix it?)
+- Lifecycle separates disposition (is this real?) from resolution (was it fixed correctly?)
 - Traced to the defective item via `subject` and the examination that found it via `detectedBy`
 - Remediated through generated tasks, verified before closure
 - Interact with baselines (clean baselines require no open blocking defects) and suspect links (reviewers create defects when suspect links reveal real problems)
-- Do not contain decisions, questions, observations, or recommendations — those belong in concepts, task context, and review deliverables respectively
+- Do not contain decisions, questions, observations, or recommendations; those belong in concepts, task context, and review deliverables respectively

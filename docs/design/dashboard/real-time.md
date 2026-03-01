@@ -1,10 +1,10 @@
-# Real-time Updates
+# Real-time updates
 
 The dashboard provides live updates through two mechanisms: WebSocket streaming for the event stream, and htmx polling for statistics and state views.
 
-## WebSocket event streaming
+## WebSocket streaming
 
-Live events use [`nhooyr.io/websocket`](https://pkg.go.dev/nhooyr.io/websocket) via the `/events` endpoint. The client subscribes and receives events as they occur. Events are rendered server-side as HTML fragments and pushed to the client.
+Live events use [`nhooyr.io/websocket`](https://pkg.go.dev/nhooyr.io/websocket) via the `/events` endpoint. The client subscribes and receives events as they occur. The server renders events as HTML fragments and pushes them to the client.
 
 ```go
 import (
@@ -63,11 +63,11 @@ The htmx WebSocket extension handles connecting to the WebSocket and swapping co
 </div>
 ```
 
-This pattern means the server controls the rendering — it sends complete HTML fragments, and htmx simply inserts them. No client-side JavaScript is needed to parse data or build DOM elements.
+The server controls the rendering: it sends complete HTML fragments, and htmx inserts them. Client-side JavaScript does not need to parse data or build DOM elements.
 
 ## Polling
 
-For statistics and state views, the dashboard uses htmx's polling feature rather than WebSocket. These views don't need instant updates — a 5-second refresh interval provides a good balance between freshness and server load:
+For statistics and state views, the dashboard uses htmx's polling feature rather than WebSocket. These views don't need instant updates; a 5-second refresh interval provides a good balance between freshness and server load:
 
 ```html
 <div hx-get="/dashboard/stats" hx-trigger="every 5s" hx-swap="innerHTML">

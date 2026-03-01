@@ -1,6 +1,6 @@
 # Policy loading
 
-This document describes how arci loads and assembles policies from the configuration cascade. It complements [config-cascade.md](../config-cascade.md), which covers file locations and precedence rules, and [policy-model.md](policy-model.md), which describes the structure of individual policies. This document focuses on the loading algorithm, data structures, and implementation approach.
+This document describes how ARCI loads and assembles policies from the configuration cascade. It complements [config-cascade.md](../configuration/config-cascade.md), which covers file locations and precedence rules, and [policy-model.md](policy-model.md), which describes the structure of individual policies. This document focuses on the loading algorithm, data structures, and design.
 
 ## Loading architecture
 
@@ -10,7 +10,7 @@ The loader performs four operations. Discovery determines which directories and 
 
 The boundary between the loader and the core is `[]policy.Policy`. The loader produces this slice by reading, parsing, and merging configuration across the cascade. The core consumes it via `CompilePolicies()`, which validates expressions and prepares policies for efficient evaluation. This clean boundary makes the core easy to test in isolation since tests can construct `Policy` values directly without involving the filesystem.
 
-This mirrors the config loading architecture described in [configuration.md](../configuration.md), but with different merging semantics. Main configuration uses key-value replacement where higher-precedence layers override lower ones. Policy loading uses collection assembly where policies from different layers coexist, with qualified names providing access to specific layers when needed.
+This mirrors the config loading architecture described in [configuration.md](../configuration/configuration.md), but with different merging semantics. Main configuration uses key-value replacement where higher-precedence layers override lower ones. Policy loading uses collection assembly where policies from different layers coexist, with qualified names providing access to specific layers when needed.
 
 ## Two-phase loading
 
@@ -37,15 +37,15 @@ flowchart TB
     result1 --> filter
 ```
 
-In the first phase, the loader discovers and loads all `arci-policies.yaml` files from the cascade. These manifest files declare which policies are enabled or disabled. The loader merges these manifests according to cascade precedence rules to produce a single effective manifest that controls policy state.
+In the first phase, the loader discovers and loads all `arci-policies.yaml` files from the cascade. These manifest files declare which policies to enable or turn off. The loader merges these manifests according to cascade precedence rules to produce a single effective manifest that controls policy state.
 
-In the second phase, the loader discovers and loads policy definition files from `policies.d/` directories. It applies the merged manifest to determine which policies are enabled, then assembles the final `PolicyCascade` with full provenance tracking.
+In the second phase, the loader discovers and loads policy definition files from `policies.d/` directories. It applies the merged manifest to determine each policy's enforcement state, then assembles the final `PolicyCascade` with full provenance tracking.
 
-This ordering ensures that a project can disable a user-level policy, and that disabled policies are still loaded and tracked (for diagnostics and override inspection) but excluded from the active policy set.
+A project can turn off a user-level policy, and turned-off policies remain loaded and tracked (for diagnostics and override inspection) but excluded from the active policy set.
 
 ## Policy manifest loading
 
-The policy manifest file `arci-policies.yaml` controls which policies are active without modifying policy definitions. This separation allows the `arci hook policy enable/disable` commands to manage policy state programmatically.
+The policy manifest file `arci-policies.yaml` controls which policies are active without modifying policy definitions. The `arci hook policy enable/disable` commands manage policy state programmatically through this file.
 
 ### File format
 
@@ -66,7 +66,7 @@ disabled:
 
 The `$schema` field identifies the manifest schema version. The `defaultBehavior` field controls the enforcement state for unlisted policies. Valid values are `all-enabled` (the default), `all-disabled`, and `all-audit`. The `enabled`, `disabled`, and `audit` arrays list policy names in either unqualified form (resolved at highest precedence) or qualified form with a layer prefix.
 
-Policies in the `audit` list are evaluated in dry-run mode: deny actions become warnings, mutations are computed but not applied, and effects are logged but not executed. This enables teams to test new policies in production without risk.
+Policies in the `audit` list run in dry-run mode: deny actions become warnings, the system computes mutations but does not apply them, and it logs effects but does not execute them. Teams can use audit mode to trial new policies in production without risk.
 
 ### Merge rules
 
@@ -74,7 +74,7 @@ Manifest files use per-policy precedence: the highest-precedence layer that ment
 
 Consider this cascade:
 
-```
+```text
 # managed/recommended/arci-policies.yaml
 defaultBehavior: all-enabled
 disabled:
@@ -89,11 +89,11 @@ disabled:
   - dangerous-commands
 ```
 
-The `dangerous-commands` policy ends up disabled because the project layer (highest precedence) explicitly disables it, overriding the user layer's enabling. Both higher layers shadow the managed/recommended layer's setting.
+The `dangerous-commands` policy ends up turned off because the project layer (highest precedence) explicitly turns it off, overriding the user layer's enabling. Both higher layers shadow the managed/recommended layer's setting.
 
 Per-policy precedence means that policies not mentioned by higher layers keep their state from lower layers:
 
-```
+```text
 # user/arci-policies.yaml
 enabled:
   - my-preferences
@@ -104,9 +104,9 @@ enabled:
   - team-standards
 ```
 
-Here `my-preferences` and `verbose-logging` remain enabled because project doesn't mention them. The project layer only affects `team-standards`. If project wanted to disable a user-enabled policy, it would need to list it explicitly in `disabled`.
+Here `my-preferences` and `verbose-logging` remain enabled because project doesn't mention them. The project layer only affects `team-standards`. If project wanted to turn off a user-enabled policy, it would need to list it explicitly in `disabled`.
 
-Within a single layer, a policy name appearing in multiple arrays (for example, both `enabled` and `disabled`) is a validation error. The loader rejects the manifest and reports the conflicting entries.
+Within a single layer, a policy name appearing in more than one array (both `enabled` and `disabled`) is a validation error. The loader rejects the manifest and reports the conflicting entries.
 
 The `defaultBehavior` field is not merged. The highest-precedence layer that specifies it wins. If no layer specifies it, the default is `all-enabled`.
 
@@ -122,9 +122,9 @@ config:
 
 This self-declaration acts as a hint that applies when no manifest explicitly references the policy (either by qualified name or by a matching unqualified reference). The precedence order is: manifest reference > policy self-declaration > layer `defaultBehavior`.
 
-Self-declaration is useful for policies that ship disabled-by-default (opt-in features) or audit-by-default (new policies under evaluation). Without self-declaration, all policies inherit from `defaultBehavior`, which may not be appropriate for experimental or optional policies.
+Self-declaration is useful for policies that ship off-by-default (opt-in features) or audit-by-default (new policies under evaluation). Without self-declaration, all policies inherit from `defaultBehavior`, which may not be appropriate for experimental or optional policies.
 
-Local manifest files (`arci-policies.local.yaml`) override their non-local counterparts at the same cascade level. A policy disabled in the local file is disabled regardless of its state in the non-local file.
+Local manifest files (`arci-policies.local.yaml`) override their non-local counterparts at the same cascade level. A policy turned off in the local file stays off regardless of its state in the non-local file.
 
 ### Override files
 
@@ -138,7 +138,7 @@ Policy definitions live in `policies.d/` directories within each cascade layer. 
 
 The loader processes files within a directory in lexicographical order. Use numeric prefixes to control ordering when declaration order matters:
 
-```
+```text
 policies.d/
 ├── 00-security.yaml
 ├── 10-git-workflow.yaml
@@ -153,7 +153,7 @@ If two files within the same layer define a policy with the same name, the loade
 
 Unlike main configuration where higher layers replace lower ones, policies with the same name from different layers coexist in the cascade. The policy loader tracks the source layer for each policy definition.
 
-```
+```text
 # user/policies.d/safety.yaml
 name: security-baseline
 rules: [...]
@@ -163,7 +163,7 @@ name: security-baseline
 rules: [...]
 ```
 
-The loader loads both policies. When code requests `security-baseline` by unqualified name, it receives the project layer's version (highest precedence). When code requests `user/security-baseline`, it receives the user layer's version specifically.
+The loader loads both policies. When code requests `security-baseline` by unqualified name, it receives the project layer's version (highest precedence). When code requests `user/security-baseline`, it receives the user layer's version.
 
 This design supports three use cases: diagnostics can show all definitions of a policy across layers, users can inspect what they are overriding, and administrators can examine enterprise policies even when project policies shadow them.
 
@@ -171,7 +171,7 @@ This design supports three use cases: diagnostics can show all definitions of a 
 
 The `policies.local.d/` directory provides a separate layer for personal policies that users should not commit to version control. Policies in this directory coexist with policies from `policies.d/` rather than replacing them by name.
 
-```
+```text
 project/
 ├── policies.d/
 │   └── team-standards.yaml      # name: team-standards
@@ -179,7 +179,7 @@ project/
     └── my-experiment.yaml       # name: my-experiment (separate policy)
 ```
 
-To override a project policy with a local variant, disable the project policy in your local manifest and define a replacement in the local directory:
+To override a project policy with a local variant, turn off the project policy in your local manifest and define a replacement in the local directory:
 
 ```yaml
 # .arci/arci-policies.local.yaml
@@ -197,17 +197,11 @@ The `ARCI_POLICIES_DIR` environment variable replaces the entire policy definiti
 
 ## Qualified name resolution
 
-Policy names support two forms: unqualified names and qualified names with layer prefixes. This provides flexibility in how code references policies throughout the system.
+Policy names support two forms: unqualified names and qualified names with layer prefixes.
 
 ### Unqualified names
 
-An unqualified name like `security-baseline` resolves to the highest-precedence layer that defines a policy with that name. In most cases, this is what users want, since they care about the effective policy, not where it came from.
-
-```go
-policy := cascade.Get("security-baseline")
-// Returns project/security-baseline if it exists,
-// otherwise user/security-baseline, etc.
-```
+An unqualified name like `security-baseline` resolves to the highest-precedence layer that defines a policy with that name. Requesting `security-baseline` returns the project layer's definition if one exists, otherwise the user layer's, and so on down the cascade. In most cases, users care about the effective policy, not where it came from.
 
 ### Qualified names
 
@@ -235,17 +229,17 @@ enabled:
   - coding-standards          # enables highest-precedence match
 ```
 
-This allows fine-grained control when the same policy name exists at more than one layer.
+Qualified names give precise control when the same policy name exists at more than one layer.
 
 ## Error handling
 
-Policy loading follows fail-open semantics consistent with the arci design philosophy. Configuration errors should never block the AI assistant from operating.
+Policy loading follows fail-open semantics consistent with the ARCI design philosophy. Configuration errors should never block the AI assistant from operating.
 
 ### Normal layers
 
-When loading from normal cascade layers (system, user, project, local), the loader logs errors in individual files as warnings and skips the file. Loading continues with the remaining files. This means a syntax error in one policy file does not prevent other policies from loading.
+When loading from normal cascade layers (system, user, project, local), the loader logs errors in individual files as warnings and skips the file. Loading continues with the remaining files, so a syntax error in one policy file does not prevent other policies from loading.
 
-```
+```text
 warning: failed to parse /home/user/.config/arci/policies.d/broken.yaml: yaml: line 5: could not find expected ':'
 ```
 
@@ -253,9 +247,9 @@ The `arci hook policy validate` command and the daemon dashboard surface these w
 
 ### Managed/required layer
 
-The loader treats errors in the managed/required layer differently. If the loader cannot load any required managed configuration, the entire policy loading process fails. This ensures that accidental (or intentional) corruption cannot bypass enterprise security policies.
+The loader treats errors in the managed/required layer differently. If the loader cannot load any required managed configuration, the entire policy loading process fails. Accidental (or intentional) corruption cannot bypass enterprise security policies.
 
-```
+```text
 error: failed to load required managed policies: /etc/arci/managed/required/policies.d/compliance.yaml: yaml: line 12: mapping values are not allowed in this context
 ```
 
@@ -283,22 +277,7 @@ The loader loads main configuration (`arci.yaml`) first because some settings ma
 
 ### Factory pattern
 
-The loader exposes a `Factory` type that provides lazy loading. The factory holds configuration state and produces loaded configurations on demand:
-
-```go
-factory := config.NewFactory(config.FactoryOptions{
-    ProjectDir: projectDir,
-})
-
-// Triggers full config and policy loading
-cfg, err := factory.Load(ctx)
-
-// Access policies
-policies := cfg.Policies()
-
-// Access enabled policies only
-enabled := cfg.EnabledPolicies()
-```
+The loader exposes a `Factory` type that provides lazy loading. Callers initialize the factory with the project directory and other configuration state, then retrieve a loaded configuration on demand by calling the `Load` method. The loaded configuration provides access to both the full policy set and the enabled-only subset.
 
 The factory handles caching internally. Repeated calls to `Load` with the same parameters return the cached result. The daemon uses this caching to avoid reloading on every evaluation request.
 
@@ -319,110 +298,60 @@ The policy loading infrastructure uses three key types to track policies and the
 
 ### Policy manifest type
 
-The `PolicyManifest` type represents the merged state of all `arci-policies.yaml` files:
+The `PolicyManifest` type represents the merged state of all `arci-policies.yaml` files. It contains the following fields:
 
-```go
-type PolicyManifest struct {
-    DefaultBehavior DefaultBehavior
-    Enabled         map[string]Source  // policy name -> source that enabled it
-    Disabled        map[string]Source  // policy name -> source that disabled it
-    Audit           map[string]Source  // policy name -> source that set audit mode
-}
+| Field | Description |
+|-------|-------------|
+| `DefaultBehavior` | The default enforcement state for unlisted policies: `all-enabled`, `all-disabled`, or `all-audit` |
+| `Enabled` | Map of policy name to the cascade source that enabled it |
+| `Disabled` | Map of policy name to the cascade source that turned it off |
+| `Audit` | Map of policy name to the cascade source that set audit mode |
 
-type DefaultBehavior int
-
-const (
-    AllEnabled DefaultBehavior = iota
-    AllDisabled
-    AllAudit
-)
-```
-
-The manifest tracks not just the enforcement state but which source in the cascade determined that state. This enables the `arci hook policy explain` command to show why a policy is enabled, disabled, or in audit mode.
+The manifest tracks not just the enforcement state but which source in the cascade determined that state. The `arci hook policy explain` command uses this provenance to show why a policy has a given enforcement state.
 
 ### Policy entry type
 
 The `PolicyEntry` type wraps a policy definition with provenance information:
 
-```go
-type PolicyEntry struct {
-    Policy           policy.Policy
-    Source           Source
-    Layer            Layer
-    FilePath         string
-    IsLocal          bool             // from policies.local.d/
-    EnforcementState EnforcementState // after manifest application
-    StateSource      StateSource      // how the state was determined
-}
+| Field | Description |
+|-------|-------------|
+| `Policy` | The parsed policy domain object |
+| `Source` | The cascade source that provided this definition |
+| `Layer` | The cascade layer (system, user, project, etc.) |
+| `FilePath` | The filesystem path to the definition file |
+| `IsLocal` | Whether the policy came from a `policies.local.d/` directory |
+| `EnforcementState` | The effective state after applying the manifest: `enabled`, `disabled`, or `audit` |
+| `StateSource` | The origin of the enforcement state decision (see below) |
 
-type EnforcementState int
+The `StateSource` field records the origin of the enforcement decision:
 
-const (
-    StateEnabled EnforcementState = iota
-    StateDisabled
-    StateAudit
-)
+| Value | Meaning |
+|-------|---------|
+| `from-manifest` | An explicit reference in an `arci-policies.yaml` file set this state |
+| `from-self-declared` | The policy's own `config.default_state` field determined the state |
+| `from-default` | The layer's `defaultBehavior` setting applied as a fallback |
 
-type StateSource int
-
-const (
-    StateFromManifest     StateSource = iota // explicit reference in manifest
-    StateFromSelfDeclared                    // policy's config.default_state
-    StateFromDefault                         // layer's defaultBehavior
-)
-```
-
-This rich metadata enables diagnostics, debugging, and the cascade inspection commands. The `StateSource` field allows `arci hook policy explain` to show not just the current state but how it was determined.
+The `arci hook policy explain` command uses `StateSource` to show not just the current state but the reason behind it.
 
 ### Policy cascade type
 
-The `PolicyCascade` type is the primary interface for accessing loaded policies:
+The `PolicyCascade` type is the primary interface for accessing loaded policies. Internally it holds the merged manifest, the full list of policy entries, and indexes for lookup by name and by layer.
 
-```go
-type PolicyCascade struct {
-    manifest PolicyManifest
-    entries  []PolicyEntry
-    byName   map[string][]PolicyEntry  // name -> entries across layers
-    byLayer  map[Layer][]PolicyEntry   // layer -> entries in that layer
-}
+The cascade exposes the following operations:
 
-// Get returns the highest-precedence policy with the given name,
-// or nil if not found or disabled.
-func (c *PolicyCascade) Get(name string) *PolicyEntry
-
-// GetQualified returns a specific layer's policy.
-func (c *PolicyCascade) GetQualified(qualifiedName string) *PolicyEntry
-
-// Enabled returns all enabled policies in evaluation order.
-func (c *PolicyCascade) Enabled() []PolicyEntry
-
-// All returns all policies regardless of enabled state.
-func (c *PolicyCascade) All() []PolicyEntry
-
-// ForLayer returns all policies from a specific layer.
-func (c *PolicyCascade) ForLayer(layer Layer) []PolicyEntry
-
-// Sources returns the source cascade used to load this PolicyCascade.
-func (c *PolicyCascade) Sources() []Source
-```
+| Operation | Description |
+|-----------|-------------|
+| `Get(name)` | Returns the highest-precedence enabled policy with the given unqualified name, or nothing if not found or turned off |
+| `GetQualified(qualifiedName)` | Returns a specific layer's policy by qualified name (such as `user/security-baseline`) |
+| `Enabled()` | Returns all enabled policies in evaluation order |
+| `All()` | Returns all policies regardless of enforcement state |
+| `ForLayer(layer)` | Returns all policies from a specific cascade layer |
+| `Sources()` | Returns the source cascade used to load this `PolicyCascade` |
 
 The `PolicyCascade` reuses the `Source` and `Layer` types from the existing cascade infrastructure for consistency. It provides both collection-style access (all policies, all enabled) and lookup-style access (by name, by qualified name).
 
-### Integration with core
+### Integration with Core
 
-When passing policies to the core for compilation, the code extracts only the `policy.Policy` values:
-
-```go
-cascade := loader.LoadPolicies(ctx, projectDir)
-enabled := cascade.Enabled()
-
-// Extract just the domain objects for the core
-policies := make([]policy.Policy, len(enabled))
-for i, entry := range enabled {
-    policies[i] = entry.Policy
-}
-
-compiled, err := engine.CompilePolicies(policies)
-```
+When passing policies to the core for compilation, the integration layer retrieves the enabled entries from the cascade and extracts the raw `Policy` domain objects into a flat collection. This collection is then handed to the core engine for compilation.
 
 The core never sees `PolicyEntry` or `PolicyCascade` since those types exist to track provenance and loading metadata. The core operates only on domain types defined in `internal/core/policy`.

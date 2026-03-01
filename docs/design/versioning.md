@@ -8,25 +8,25 @@ arci uses semantic versioning (SemVer) with the format MAJOR.MINOR.PATCH.
 
 MAJOR version increments indicate breaking changes that may require configuration migration. Examples include removing deprecated features, changing configuration schema in incompatible ways, or altering expression language semantics.
 
-MINOR version increments add functionality in a backward-compatible manner. Examples include new action types, new expression functions, and new CLI commands.
+MINOR version increments add features in a backward-compatible manner. Examples include new action types, new expression functions, and new CLI commands.
 
 PATCH version increments make backward-compatible bug fixes. Examples include fixing expression evaluation bugs, correcting documentation, and addressing security vulnerabilities.
 
 ## Pre-1.0 versioning
 
-During the 0.x development phase, the API and configuration schema may change more freely. The project will clearly document breaking changes in release notes, but users should expect some instability. The goal is to reach 1.0 with a stable, well-designed API rather than prematurely committing to suboptimal designs.
+During the 0.x development phase, the API and configuration schema may change more freely. The project documents breaking changes in release notes, but users should expect some instability. The goal is to reach 1.0 with a stable, well-designed API rather than prematurely committing to suboptimal designs.
 
-After 1.0, the compatibility guarantees described in this document apply fully.
+After 1.0, the compatibility guarantees this document describes apply fully.
 
 ## Compatibility guarantees
 
-TODO: Define specific compatibility guarantees.
+Pending: define specific compatibility guarantees.
 
 Topics to cover:
 
 ### Configuration schema compatibility
 
-- How long deprecated fields are supported
+- How long the system supports deprecated fields
 - Migration tooling for schema changes
 - Validation of old configurations against new schemas
 
@@ -62,7 +62,7 @@ Topics to cover:
 
 ## Schema versioning
 
-TODO: Document configuration schema versioning.
+Pending: document configuration schema versioning.
 
 Topics to cover:
 
@@ -86,7 +86,7 @@ Topics to cover:
 
 ## Extension compatibility
 
-TODO: Document extension versioning concerns.
+Pending: document extension versioning concerns.
 
 Topics to cover:
 
@@ -110,7 +110,7 @@ Topics to cover:
 
 ## Deprecation policy
 
-TODO: Define the deprecation process.
+Pending: define the deprecation process.
 
 Topics to cover:
 
@@ -135,7 +135,7 @@ Topics to cover:
 
 ## Release process
 
-TODO: Document the release process.
+Pending: document the release process.
 
 Topics to cover:
 
@@ -160,7 +160,7 @@ Topics to cover:
 
 ## Upgrade workflows
 
-TODO: Document upgrade procedures.
+Pending: document upgrade procedures.
 
 Topics to cover:
 
@@ -184,10 +184,10 @@ Topics to cover:
 
 ## Known breaking changes
 
-TODO: Document breaking changes as they occur.
+Pending: document breaking changes as they occur.
 
-This section will track breaking changes across versions, including what changed, why it changed, how to migrate, and which versions are affected.
+This section tracks breaking changes across versions, including what changed, why it changed, how to migrate, and which versions the change affects.
 
 ---
 
-This document will be expanded as the versioning policy is refined through actual releases. The goal is predictability—users should understand what upgrading means and have the tools to do it safely.
+This document expands as actual releases refine the versioning policy. The goal is predictability: users should understand what upgrading means and have the tools to do it safely.
