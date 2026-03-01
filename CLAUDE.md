@@ -24,6 +24,28 @@ If there's a specific task assigned for this session, read its full context: the
 | Query eligible tasks via jq | Temporary | 1 | `arci task list --status ready` CLI command |
 | Read full task context before coding | Permanent | n/a | n/a |
 
+## Shell environment
+
+**ALWAYS use `bash -lc "..."` when running tools installed via Homebrew or any tool manager.** The sandbox environment does not inherit PATH modifications from tool managers in non-login shells. If you run `which vale` or `gh auth status` and get "not found," you forgot the login shell. Do not debug PATH issues, do not reinstall tools, do not pass go. Just use `bash -lc`.
+
+```bash
+# WRONG — will fail to find brew-installed tools
+vale docs/design/index.md
+gh auth status
+rumdl fmt file.md
+
+# RIGHT — always use login shell for installed tools
+bash -lc "vale docs/design/index.md"
+bash -lc "gh auth status"
+bash -lc "rumdl fmt file.md"
+```
+
+The `just` recipes handle this internally, so `just lint`, `just format`, etc. work without a login shell wrapper.
+
+| Rule | Classification | Stage | Replacement |
+|------|---------------|-------|-------------|
+| Use login shell for brew-installed tools | Permanent | n/a | n/a |
+
 ## While working
 
 ### Graph awareness
