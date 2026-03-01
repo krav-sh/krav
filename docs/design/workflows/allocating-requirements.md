@@ -30,7 +30,7 @@ A REQ-* node on a parent module that has child modules.
 
 ### Skills
 
-The `arci:allocate` skill runs this workflow. Preprocessing loads the parent module's requirements and child module structure, giving the agent a complete picture of what it needs to distribute and where the allocations can go. This is essential context because allocation decisions depend on understanding each child module's responsibilities and boundaries.
+The `krav:allocate` skill runs this workflow. Preprocessing loads the parent module's requirements and child module structure, giving the agent a complete picture of what it needs to distribute and where the allocations can go. This is essential context because allocation decisions depend on understanding each child module's responsibilities and boundaries.
 
 The skill's instructed commands create `allocatesTo` edges on the parent requirement and derived REQ-* nodes on child modules. The skill instructions guide the agent through determining the allocation type (additive, partitioned, replicated) and ensuring budgets are consistent with the parent requirement's bounds.
 
@@ -42,7 +42,7 @@ The `prompt-context`, `graph-integrity`, and `cli-auto-approve` policies operate
 
 ### Task types
 
-Allocation doesn't create tasks. It creates derived requirements on child modules, which then feed into `arci:decompose` for task creation. The allocation step is strictly about distributing obligations, not planning work.
+Allocation doesn't create tasks. It creates derived requirements on child modules, which then feed into `krav:decompose` for task creation. The allocation step is strictly about distributing obligations, not planning work.
 
 ## Open questions
 

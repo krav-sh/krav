@@ -16,7 +16,7 @@ The agent identifies what to verify. This might be all test cases for a module, 
 
 For each test case, the agent updates `currentResult` (pass, fail, skip, error) and `lastRunAt`. Test cases in `implemented` status transition to `executable` once they run at least once.
 
-The agent then evaluates coverage: which requirements have all test cases passing? Which have failing tests? Which lack test cases entirely? This analysis uses `arci reqcoverage` and `arci tc untested` to surface gaps.
+The agent then evaluates coverage: which requirements have all test cases passing? Which have failing tests? Which lack test cases entirely? This analysis uses `krav reqcoverage` and `krav tc untested` to surface gaps.
 
 If all test cases for a requirement pass, the agent may propose transitioning the requirement to `verified` status. This transition is not automatic; it requires confirmation that the tests are actually sufficient, not just that they pass.
 
@@ -36,15 +36,15 @@ Updated `currentResult` and `lastRunAt` on TC-* nodes. Possibly REQ-* transition
 
 ### Skills
 
-The `arci:verify` skill builds this workflow. It runs inside the `arci-verifier` subagent, so its preprocessing and instructions target isolated test execution. Preprocessing loads the module's TC-* nodes, their current results, and the verification method for each. The skill instructions guide the verifier through executing each test case and recording pass/fail/skip results with evidence via `arci tc record-result`.
+The `krav:verify` skill builds this workflow. It runs inside the `krav-verifier` subagent, so its preprocessing and instructions target isolated test execution. Preprocessing loads the module's TC-* nodes, their current results, and the verification method for each. The skill instructions guide the verifier through executing each test case and recording pass/fail/skip results with evidence via `krav tc record-result`.
 
-The skill emphasizes faithful execution: run the tests as specified, report results accurately, don't fix failing tests. If a test case specification is ambiguous, the verifier flags it as a defect rather than interpreting it charitably. The skill also provides instructed commands for coverage analysis queries via `arci reqcoverage` and `arci tc untested`.
+The skill emphasizes faithful execution: run the tests as specified, report results accurately, don't fix failing tests. If a test case specification is ambiguous, the verifier flags it as a defect rather than interpreting it charitably. The skill also provides instructed commands for coverage analysis queries via `krav reqcoverage` and `krav tc untested`.
 
 ### Agents
 
-The `arci-verifier` subagent is the canonical execution context for this workflow. Like the reviewer, it starts with a fresh context window to avoid coding bias. The agent that wrote the test code shouldn't also run and interpret the tests, since it carries assumptions about expected behavior that might mask real failures.
+The `krav-verifier` subagent is the canonical execution context for this workflow. Like the reviewer, it starts with a fresh context window to avoid coding bias. The agent that wrote the test code shouldn't also run and interpret the tests, since it carries assumptions about expected behavior that might mask real failures.
 
-The verifier has access to Read, Grep, Glob, and Bash tools. Bash is broader than the reviewer's because the verifier needs to execute test suites, but the configuration excludes Write and Edit. The verifier records results through `arci` CLI commands, not by editing test files or graph data directly.
+The verifier has access to Read, Grep, Glob, and Bash tools. Bash is broader than the reviewer's because the verifier needs to execute test suites, but the configuration excludes Write and Edit. The verifier records results through `krav` CLI commands, not by editing test files or graph data directly.
 
 ### Policies
 
@@ -62,9 +62,9 @@ This workflow executes `execute-tests` tasks (the primary verification task type
 
 **How does the agent map test runner output to TC-* nodes?** The test runner reports pass/fail by test function name. The graph has TC-* nodes with `implementation` fields pointing at test files. The agent needs to bridge these: match test runner output (like `test_parser_error_handling PASSED`) to the corresponding TC-* node. This mapping could use paths, test function names, naming conventions, or explicit annotations, but the design does not specify any of these approaches.
 
-**What about tests that aren't in the graph?** Most projects have tests that predate ARCI or that developers wrote without graph involvement. Running the test suite produces results for tests that have no TC-* node. Should the agent ignore these, report them as untracked, or offer to create TC-* nodes for them?
+**What about tests that aren't in the graph?** Most projects have tests that predate Krav or that developers wrote without graph involvement. Running the test suite produces results for tests that have no TC-* node. Should the agent ignore these, report them as untracked, or offer to create TC-* nodes for them?
 
-**CI integration.** In practice, CI runs the tests, not the developer's Claude Code session. How do CI results get into the graph? An `arci tc import-results` command that parses test runner output? A PostToolUse hook in CI that fires after `npm test`? A GitHub Action that calls ARCI? Nobody has designed this plumbing yet.
+**CI integration.** In practice, CI runs the tests, not the developer's Claude Code session. How do CI results get into the graph? An `krav tc import-results` command that parses test runner output? A PostToolUse hook in CI that fires after `npm test`? A GitHub Action that calls Krav? Nobody has designed this plumbing yet.
 
 **Verification vs. regression testing.** "Run the tests" might mean "verify these new requirements" or "make sure nothing broke." The graph cares about both but for different reasons. Verification advances requirement status. Regression testing might reveal new defects against requirements that passed verification earlier. The agent needs to distinguish these cases and report on each.
 

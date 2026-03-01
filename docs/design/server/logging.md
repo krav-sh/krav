@@ -26,12 +26,12 @@ In plain console mode, log output uses logfmt format:
 ```text
 time=2026-03-01T10:30:00Z level=INFO event=startup port=7680 project=/home/user/myproject pid=48210
 time=2026-03-01T10:35:00Z level=INFO event=config_reload trigger=file_watcher files=policies.yaml
-time=2026-03-01T11:02:15Z level=WARN event=config_error file=.arci/policies/broken.yaml error="invalid expression on line 12"
+time=2026-03-01T11:02:15Z level=WARN event=config_error file=.krav/policies/broken.yaml error="invalid expression on line 12"
 ```
 
 ## Log levels
 
-Log levels are configurable via `ARCI_LOG_LEVEL` or the `--log-level` flag on `arci server`.
+Log levels are configurable via `KRAV_LOG_LEVEL` or the `--log-level` flag on `krav server`.
 
 Debug logs detailed information about every evaluation, including expression matching and action execution. Info logs key events like startup, shutdown, and configuration reloads. Warn logs recoverable errors like failed config reloads or state store hiccups. Error logs failures that require attention.
 
@@ -39,14 +39,14 @@ Debug logs detailed information about every evaluation, including expression mat
 
 In TUI mode, the server renders a live status display rather than streaming log lines. The TUI shows the same information (recent evaluations, config status, errors) in a compact, continuously updated format. The underlying event data is identical; only the rendering differs.
 
-The `--console` flag controls which mode the server uses: `rich` forces the TUI, `plain` forces log output, and the default auto-detects based on whether stderr is a TTY. This means `arci server` in a terminal shows the TUI, while `arci server` launched by systemd, launchd, or piped through a log collector gets plain structured output automatically.
+The `--console` flag controls which mode the server uses: `rich` forces the TUI, `plain` forces log output, and the default auto-detects based on whether stderr is a TTY. This means `krav server` in a terminal shows the TUI, while `krav server` launched by systemd, launchd, or piped through a log collector gets plain structured output automatically.
 
 ## Security note
 
-Log output may contain file paths, policy names, and other project metadata. When redirecting logs to shared storage or a logging service, consider what information the logs expose. The same general principle applies as with all ARCI data: it describes your development workflow and deserves appropriate care.
+Log output may contain file paths, policy names, and other project metadata. When redirecting logs to shared storage or a logging service, consider what information the logs expose. The same general principle applies as with all Krav data: it describes your development workflow and deserves appropriate care.
 
 ## See also
 
-- [Hook event logging](../hooks/logging.md): the `arci hook apply` output contract and event log schema
+- [Hook event logging](../hooks/logging.md): the `krav hook apply` output contract and event log schema
 - [CLI logging](../cli/logging.md): output verbosity flags and diagnostic tracing
 - [Server errors](errors.md): troubleshooting, recovery, and metrics

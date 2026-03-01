@@ -4,7 +4,7 @@ The `req` command group manages requirements, verifiable design obligations that
 
 ## Synopsis
 
-    arci req <subcommand> [options]
+    krav req <subcommand> [options]
 
 ## Description
 
@@ -16,7 +16,7 @@ Requirements are formal "shall" statements that the system must satisfy. These c
 
 Creates a requirement node.
 
-    arci req create --module <module-id> \
+    krav req create --module <module-id> \
       --statement <statement> --verification-method <method>
 
 **Flags:**
@@ -33,13 +33,13 @@ Creates a requirement node.
 
 Displays detailed information about a requirement, including metadata, relationships, verification status, and traceability.
 
-    arci req show <req-id>
+    krav req show <req-id>
 
 ### `list`
 
 Lists requirements, optionally filtered by module or status.
 
-    arci req list [options]
+    krav req list [options]
 
 **Flags:**
 
@@ -50,7 +50,7 @@ Lists requirements, optionally filtered by module or status.
 
 Modifies requirement fields.
 
-    arci req update <req-id> [flags]
+    krav req update <req-id> [flags]
 
 **Flags:**
 
@@ -66,13 +66,13 @@ Modifies requirement fields.
 
 Removes a requirement node from the graph.
 
-    arci req delete <req-id>
+    krav req delete <req-id>
 
 ### `link`
 
 Creates relationships between a requirement and other nodes.
 
-    arci req link <req-id> [flags]
+    krav req link <req-id> [flags]
 
 **Flags:**
 
@@ -83,7 +83,7 @@ Creates relationships between a requirement and other nodes.
 
 Creates a derived requirement on a child module (flow-down).
 
-    arci req derive <req-id> --to <module-id>
+    krav req derive <req-id> --to <module-id>
 
 **Flags:**
 
@@ -93,7 +93,7 @@ Creates a derived requirement on a child module (flow-down).
 
 Allocates a parent module requirement to child modules with budget partitions.
 
-    arci req allocate <req-id> --to <module-id> --budget <budget>
+    krav req allocate <req-id> --to <module-id> --budget <budget>
 
 **Flags:**
 
@@ -104,19 +104,19 @@ Allocates a parent module requirement to child modules with budget partitions.
 
 Displays the full traceability chain: concept to need to requirement to test cases.
 
-    arci req trace <req-id>
+    krav req trace <req-id>
 
 ### `coverage`
 
 Reports verification coverage, the ratio of requirements that have at least one passing test case.
 
-    arci req coverage
+    krav req coverage
 
 ### `unverified`
 
 Lists requirements that have no linked test cases.
 
-    arci req unverified
+    krav req unverified
 
 ## See also
 

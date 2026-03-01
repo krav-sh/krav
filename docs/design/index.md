@@ -1,6 +1,6 @@
-# ARCI design documentation
+# Krav design documentation
 
-ARCI (Agentic Requirements Composition & Integration) is a system for Claude Code that combines policy-driven hooks with spec-driven development. It provides declarative rules to validate, transform, and control tool execution, alongside an INCOSE-inspired knowledge graph that structures requirements, test cases, and traceability.
+Krav (Krav) is a system for Claude Code that combines policy-driven hooks with spec-driven development. It provides declarative rules to validate, transform, and control tool execution, alongside an INCOSE-inspired knowledge graph that structures requirements, test cases, and traceability.
 
 ## Two pillars
 
@@ -84,19 +84,19 @@ Reference builds and architecture notes (predating the graph/ directory, retaine
 
 The design process produced these decisions, which appear across the specs. This section collects them for orientation.
 
-**Module naming and PROV-O**: the architectural container type changed from `Entity` to `Module` to avoid collision with `prov:Entity` from the W3C PROV-O ontology. PROV-O's provenance vocabulary (`prov:wasDerivedFrom`, `prov:wasAttributedTo`, `prov:wasGeneratedBy`) maps well onto ARCI's needs for tracking which agent session created or modified graph nodes. The JSON-LD context can import PROV-O alongside the ARCI vocabulary.
+**Module naming and PROV-O**: the architectural container type changed from `Entity` to `Module` to avoid collision with `prov:Entity` from the W3C PROV-O ontology. PROV-O's provenance vocabulary (`prov:wasDerivedFrom`, `prov:wasAttributedTo`, `prov:wasGeneratedBy`) maps well onto Krav's needs for tracking which agent session created or modified graph nodes. The JSON-LD context can import PROV-O alongside the Krav vocabulary.
 
-**External vocabulary alignment**: the JSON-LD context uses Dublin Core Terms (`dcterms:title`, `dcterms:description`, `dcterms:created`, `dcterms:modified`) directly for common metadata properties where ARCI adds no additional semantics. For node types and predicates where ARCI adds lifecycle states, suspect propagation, DAG enforcement, or other constraints, the schema declares `rdfs:subClassOf` and `rdfs:subPropertyOf` relationships to OSLC and PROV-O vocabularies in the T-Box without changing instance data. Concept and Need have no external counterparts since OSLC conflates needs and requirements and has no pre-requirement exploration phase. See [Vocabulary alignment](graph/vocabulary-alignment.md) for the complete mapping.
+**External vocabulary alignment**: the JSON-LD context uses Dublin Core Terms (`dcterms:title`, `dcterms:description`, `dcterms:created`, `dcterms:modified`) directly for common metadata properties where Krav adds no additional semantics. For node types and predicates where Krav adds lifecycle states, suspect propagation, DAG enforcement, or other constraints, the schema declares `rdfs:subClassOf` and `rdfs:subPropertyOf` relationships to OSLC and PROV-O vocabularies in the T-Box without changing instance data. Concept and Need have no external counterparts since OSLC conflates needs and requirements and has no pre-requirement exploration phase. See [Vocabulary alignment](graph/vocabulary-alignment.md) for the complete mapping.
 
 **Defects replace findings**: the original Findings type (FND-*) conflated five concerns: issues, recommendations, questions, decisions, and observations. The redesigned Defects type (DEF-*) narrows to actual problems only. Decisions moved to concepts (CON-*). Questions are task-level context. Observations are review deliverable prose. Recommendations, if important enough to track, become needs (NEED-*).
 
 **Test case specification decoupled from execution**: the original Verification type combined specification and execution state. The redesigned Test Case type (Tc-*) is a specification: what to verify, which method, acceptance criteria, requirements linkage. Everyday execution updates a `currentResult` field on the Tc node without creating graph entities. Formal milestone verification produces a test plan (TP-*) that captures the full evidence package. This decoupling matters in the agent execution model because agent-written test builds (benchmarks, e2e tests, analyses) are themselves verifiable artifacts that reviewers can examine and file defects against.
 
-**Link metadata and suspect propagation**: edge table rows carry optional metadata beyond the `src` and `dst` columns: timestamps, rationale, and a `suspect` flag. When a node changes, ARCI marks downstream traceability edges (`derives_from`, `verified_by`, `allocates_to`) as suspect. Suspect links surface in views for reviewer triage; reviewers clear the flag, create a defect, or update the downstream node. Suspect links don't auto-generate defects to avoid flooding the defect list with items that may not be real problems.
+**Link metadata and suspect propagation**: edge table rows carry optional metadata beyond the `src` and `dst` columns: timestamps, rationale, and a `suspect` flag. When a node changes, Krav marks downstream traceability edges (`derives_from`, `verified_by`, `allocates_to`) as suspect. Suspect links surface in views for reviewer triage; reviewers clear the flag, create a defect, or update the downstream node. Suspect links don't auto-generate defects to avoid flooding the defect list with items that may not be real problems.
 
-**DuckDB + DuckPGQ as the unified data engine**: the knowledge graph runtime is an in-memory DuckDB instance with the DuckPGQ extension (SQL/PGQ, SQL:2023 standard). Node types map to vertex tables, predicates map to edge tables. On-disk serialization uses per-table NDJSON files under `.arci/graph/` for git-friendly version control. The state store is a file-backed DuckDB database at `.arci/state.duckdb`. One DuckDB instance serves both via `ATTACH`, replacing both the JSONLT graph file and the SQLite state store with a single embedded engine. The DuckPGQ spike at `experiments/duckpgq/` validated the approach.
+**DuckDB + DuckPGQ as the unified data engine**: the knowledge graph runtime is an in-memory DuckDB instance with the DuckPGQ extension (SQL/PGQ, SQL:2023 standard). Node types map to vertex tables, predicates map to edge tables. On-disk serialization uses per-table NDJSON files under `.krav/graph/` for git-friendly version control. The state store is a file-backed DuckDB database at `.krav/state.duckdb`. One DuckDB instance serves both via `ATTACH`, replacing both the JSONLT graph file and the SQLite state store with a single embedded engine. The DuckPGQ spike at `experiments/duckpgq/` validated the approach.
 
-**Baselines use git commit anchoring, not full snapshots**: baselines store a git commit SHA rather than duplicating the entire graph. ARCI reconstructs historical graph state by checking out the baseline's commit and reading the NDJSON files from that commit. Semantic diff between baselines produces structured changelogs at the graph level. Baselines scope to module subtrees and integrate with phase gates.
+**Baselines use git commit anchoring, not full snapshots**: baselines store a git commit SHA rather than duplicating the entire graph. Krav reconstructs historical graph state by checking out the baseline's commit and reading the NDJSON files from that commit. Semantic diff between baselines produces structured changelogs at the graph level. Baselines scope to module subtrees and integrate with phase gates.
 
 **Views replace document management**: traditional RE document management (SRS, test plans, traceability matrices, V&V plans) maps to views on the graph, not to separate document entities. Requirements specifications are queries over requirements by module scope. Test plans are the set of Tc-* nodes grouped by level. Traceability matrices are bipartite projections of REQ and Tc. The CLI and dashboard expose these as commands and pages.
 
@@ -109,10 +109,10 @@ The design process produced these decisions, which appear across the specs. This
 C4 and domain model diagrams in PlantUML, with rendered PNG/SVG:
 
 - [diagrams/](diagrams/): PlantUML sources
-  - `arci-c4-context.puml`: system context diagram (Level 1)
-  - `arci-c4-container.puml`: container diagram (Level 2), runtime processes and data stores
-  - `arci-c4-component.puml`: component diagram (Level 3), internals of the ARCI binary
-  - `arci-knowledge-graph.puml`: domain model of all node types and relationships
+  - `krav-c4-context.puml`: system context diagram (Level 1)
+  - `krav-c4-container.puml`: container diagram (Level 2), runtime processes and data stores
+  - `krav-c4-component.puml`: component diagram (Level 3), internals of the Krav binary
+  - `krav-knowledge-graph.puml`: domain model of all node types and relationships
 
 Render locally: `plantuml -tpng -o png/ diagrams/*.puml`
 
@@ -127,7 +127,7 @@ Render locally: `plantuml -tpng -o png/ diagrams/*.puml`
 ### Server
 
 - [Server](server/index.md): long-running process that owns the knowledge graph, caches configuration, and serves the dashboard and API
-- [Server discovery](server/discovery.md): how the CLI locates a running server via `.arci/server.json`
+- [Server discovery](server/discovery.md): how the CLI locates a running server via `.krav/server.json`
 
 ### MCP
 
@@ -151,4 +151,4 @@ Render locally: `plantuml -tpng -o png/ diagrams/*.puml`
 
 ### Reference
 
-- [Glossary](glossary.md): key terms used throughout ARCI documentation
+- [Glossary](glossary.md): key terms used throughout Krav documentation

@@ -6,7 +6,7 @@ The developer says `write tests for these requirements` or `test cases are neede
 
 ## Why
 
-Test cases close the traceability loop. Without them, requirements are claims without evidence. The decoupled model (specification as TC-* nodes, code as task deliverables) means ARCI can track coverage before any tests exist. You know which requirements have planned verification even if the test code doesn't exist yet, and the agent can plan the test code as downstream work.
+Test cases close the traceability loop. Without them, requirements are claims without evidence. The decoupled model (specification as TC-* nodes, code as task deliverables) means Krav can track coverage before any tests exist. You know which requirements have planned verification even if the test code doesn't exist yet, and the agent can plan the test code as downstream work.
 
 ## What happens in the graph
 
@@ -32,7 +32,7 @@ TC-* nodes with `verifies` edges to requirements, acceptance criteria, verificat
 
 ### Skills
 
-The `arci:testcase` skill builds this workflow. Preprocessing loads the module's requirements that lack `verifiedBy` edges (or have incomplete coverage), along with any existing TC-* nodes so the agent can see what's already specified. The coverage gap analysis happens at preprocessing time, so the agent starts with a clear picture of what needs test cases rather than having to compute it.
+The `krav:testcase` skill builds this workflow. Preprocessing loads the module's requirements that lack `verifiedBy` edges (or have incomplete coverage), along with any existing TC-* nodes so the agent can see what's already specified. The coverage gap analysis happens at preprocessing time, so the agent starts with a clear picture of what needs test cases rather than having to compute it.
 
 The skill's instructed commands create TC-* nodes via the CLI, set `verifies` edges to requirements, and define acceptance criteria and verification methods. The skill instructions emphasize the separation between specification (this workflow) and the coding step (a subsequent `implement-tests` task).
 
@@ -44,7 +44,7 @@ The `prompt-context`, `graph-integrity`, and `cli-auto-approve` policies apply a
 
 ### Task types
 
-This workflow produces test case specifications, not test code. The actual test writing comes from `implement-tests` tasks, which the `arci:decompose` skill creates as downstream work. Once test code exists, `execute-tests` tasks (run inside the `arci-verifier` subagent) exercise them. The test-case workflow may also trigger decomposition if the developer wants to immediately plan the work for newly created test cases.
+This workflow produces test case specifications, not test code. The actual test writing comes from `implement-tests` tasks, which the `krav:decompose` skill creates as downstream work. Once test code exists, `execute-tests` tasks (run inside the `krav-verifier` subagent) exercise them. The test-case workflow may also trigger decomposition if the developer wants to immediately plan the work for newly created test cases.
 
 ## Open questions
 
@@ -54,6 +54,6 @@ This workflow produces test case specifications, not test code. The actual test 
 
 **Test level determination.** Should a test case be unit, integration, system, or acceptance level? The module hierarchy gives hints (component module leads to unit, subsystem leads to integration, root leads to system), but it's not automatic. A component requirement about API contracts might need an integration-level test.
 
-**How does existing test code get linked?** If the project already has tests that ARCI did not create, how does the agent discover and link them to requirements? This is the "brownfield" problem: the graph is empty but the codebase has tests.
+**How does existing test code get linked?** If the project already has tests that Krav did not create, how does the agent discover and link them to requirements? This is the "brownfield" problem: the graph is empty but the codebase has tests.
 
 **Acceptance criteria quality.** The agent needs to write acceptance criteria that are specific enough to be useful ("p99 latency < 50 ms across 1000 iterations") not vague ("should be fast"). What makes this hard is that good acceptance criteria require domain understanding. The agent gets this from the requirement's `verificationCriteria` field, but that field might itself be vague.

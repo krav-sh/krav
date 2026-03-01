@@ -1,3 +1,1 @@
-# ARCI
-
-Agentic Requirements Composition & Integration
+# Krav

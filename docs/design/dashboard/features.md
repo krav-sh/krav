@@ -17,7 +17,7 @@ Users can filter events by event type, project, session, or rule ID. Filtering h
 
 Clicking an event expands it to show full details including the complete hook input, evaluation context, each rule the evaluator considered and whether it matched, and action outputs.
 
-This view is essential for understanding what ARCI is doing and debugging unexpected behavior. See [real-time.md](real-time.md) for WebSocket and htmx integration details.
+This view is essential for understanding what Krav is doing and debugging unexpected behavior. See [real-time.md](real-time.md) for WebSocket and htmx integration details.
 
 ## Rule match statistics
 

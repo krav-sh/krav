@@ -1,6 +1,6 @@
 # Policy model
 
-This document describes ARCI's policy model.
+This document describes Krav's policy model.
 
 ## Design goals
 
@@ -170,13 +170,13 @@ parameters:
   - name: teamConfig
     from:
       file:
-        path: .arci/team.json
+        path: .krav/team.json
     defaults: {}
 
   # From environment variable
   - name: environment
     from:
-      env: ARCI_ENV
+      env: KRAV_ENV
     default: development
 
   # HTTP provider
@@ -191,7 +191,7 @@ parameters:
 
 The engine resolves parameters before running any expressions. If resolution fails and no defaults exist, the behavior depends on `config.failurePolicy`. Resolved parameters are available in expressions as `params.parameterName`.
 
-Provider types include `file` (reads JSON/YAML from disk), `http` (fetches from an endpoint), `env` (reads environment variable), and named providers defined in the ARCI configuration.
+Provider types include `file` (reads JSON/YAML from disk), `http` (fetches from an endpoint), `env` (reads environment variable), and named providers defined in the Krav configuration.
 
 ### Variables
 
@@ -395,7 +395,7 @@ Effect types include:
 
 `notify` sends a notification to the user via OS notification system.
 
-`log` writes to the ARCI log at the specified level.
+`log` writes to the Krav log at the specified level.
 
 Future versions may introduce effect types for webhooks, metrics, and other integrations.
 

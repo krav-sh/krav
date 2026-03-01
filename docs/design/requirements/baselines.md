@@ -4,7 +4,7 @@
 
 Baselines (BSL-*) capture the state of the knowledge graph at a decision point. A baseline records which nodes existed, their states, and the relationships between them, anchoring everything to a specific git commit. Baselines enable milestone recording, change auditing, regression detection, and phase gate enforcement.
 
-Traditional RE tools treat baselines as snapshots of a requirements database. ARCI takes a lighter approach: since graph.jsonlt is version-controlled and append-only, the git history already contains every historical state. A baseline is a named reference into that history with metadata about why someone created it, what it covers, and who approved it.
+Traditional RE tools treat baselines as snapshots of a requirements database. Krav takes a lighter approach: since graph.jsonlt is version-controlled and append-only, the git history already contains every historical state. A baseline is a named reference into that history with metadata about why someone created it, what it covers, and who approved it.
 
 ## Purpose
 
@@ -22,7 +22,7 @@ Baselines serve multiple roles:
 
 ## Storage model
 
-Baseline metadata lives in `graph.jsonlt` as JSON-LD compact form, like all other node types. The baseline record does not contain a full graph snapshot; it stores a git commit SHA that ARCI uses to reconstruct the graph state at baseline time.
+Baseline metadata lives in `graph.jsonlt` as JSON-LD compact form, like all other node types. The baseline record does not contain a full graph snapshot; it stores a git commit SHA that Krav uses to reconstruct the graph state at baseline time.
 
 ```json
 {"@context": "context.jsonld", "@id": "BSL-R3L3AS31", "@type": "Baseline", "title": "Architecture baseline", "module": {"@id": "MOD-OAPSROOT"}, "scope": "subtree", "commitSha": "a1b2c3d4e5f6789...", "phase": "architecture", "status": "approved", "approvedBy": "tony", "approvedAt": "2026-02-28T16:00:00Z", "description": "Architecture phase complete for root module. All architecture tasks done, no blocking findings.", "statistics": {"modules": 5, "concepts": 12, "needs": 8, "requirements": 15, "verifications": 6, "tasks": 23, "findings": {"open": 0, "closed": 7}}}
@@ -49,7 +49,7 @@ Fields:
 
 The graph.jsonlt file is version-controlled. Checking out graph.jsonlt at the baseline's commit SHA reconstructs any historical state. This avoids duplicating the entire graph inside the baseline record (which would be expensive and redundant), while remaining fully reproducible.
 
-The tradeoff: if someone rewrites git history (force push, rebase) and the baseline's commit SHA becomes unreachable, the baseline cannot resolve. This is a feature, as it surfaces history tampering. Projects that need tamper-evident baselines should protect the branch containing `.arci/` from force pushes.
+The tradeoff: if someone rewrites git history (force push, rebase) and the baseline's commit SHA becomes unreachable, the baseline cannot resolve. This is a feature, as it surfaces history tampering. Projects that need tamper-evident baselines should protect the branch containing `.krav/` from force pushes.
 
 ### Statistics
 
@@ -91,13 +91,13 @@ The module field determines the root of the scope. Baselining the root module wi
 
 ```bash
 # Baseline the whole project
-arci baseline create --module MOD-OAPSROOT --title "Architecture baseline"
+Krav baseline create --module MOD-OAPSROOT --title "Architecture baseline"
 
 # Baseline a subsystem
-arci baseline create --module MOD-A4F8R2X1 --title "Parser design baseline" --scope subtree
+Krav baseline create --module MOD-A4F8R2X1 --title "Parser design baseline" --scope subtree
 
 # Baseline a single component
-arci baseline create --module MOD-L3X3R001 --title "Lexer implementation baseline" --scope module-only
+Krav baseline create --module MOD-L3X3R001 --title "Lexer implementation baseline" --scope module-only
 ```
 
 ## Lifecycle
@@ -130,7 +130,7 @@ policies:
   - name: require-baseline-before-advance
     description: Ensure the current phase is baselined before advancing
     match:
-      tool: arci
+      tool: krav
       args:
         - match: "module"
           position: 0
@@ -155,7 +155,7 @@ When phase advancement triggers a baseline:
 4. If the configuration enables auto-approve, the baseline enters `approved` status immediately
 5. Phase advancement proceeds
 
-The resulting baseline records exactly what existed when the module left that phase. Later, `arci baseline diff` can show what changed between phases.
+The resulting baseline records exactly what existed when the module left that phase. Later, `krav baseline diff` can show what changed between phases.
 
 ## Semantic diff
 
@@ -163,9 +163,9 @@ The primary analytical operation on baselines is semantic diff: given two baseli
 
 ### Reconstruction
 
-To diff two baselines, ARCI materializes the graph at each commit:
+To diff two baselines, Krav materializes the graph at each commit:
 
-1. Read graph.jsonlt at baseline A's commit SHA (via `git show <sha>:.arci/graph.jsonlt`)
+1. Read graph.jsonlt at baseline A's commit SHA (via `git show <sha>:.krav/graph.jsonlt`)
 2. Read graph.jsonlt at baseline B's commit SHA (or current working tree)
 3. Materialize both into in-memory Graph instances
 4. Scope each graph to the baseline's module subtree
@@ -188,7 +188,7 @@ Statistics delta compares the aggregate counts between baselines.
 ### CLI output
 
 ```text
-$ arci baseline diff BSL-4RCH0001 BSL-D3S1GN01
+$ krav baseline diff BSL-4RCH0001 BSL-D3S1GN01
 
 Comparing "Architecture baseline" → "Design baseline" for MOD-OAPSROOT
   Time span: 2026-01-15 → 2026-02-28
@@ -287,7 +287,7 @@ class BaselineStatistics:
     verification_coverage: float = 0.0
 ```
 
-### Core layer (`arci.core.baseline`)
+### Core layer (`krav.core.baseline`)
 
 Pure functions for baseline operations:
 
@@ -305,7 +305,7 @@ def current_for_phase(graph: Graph, module_id: str, phase: ModulePhase) -> Basel
 def has_approved_baseline(graph: Graph, module_id: str, phase: ModulePhase) -> bool: ...
 ```
 
-### Core layer (`arci.core.baseline_diff`)
+### Core layer (`krav.core.baseline_diff`)
 
 Pure functions for semantic diff. These operate on two Graph instances and produce a structured diff result:
 
@@ -356,7 +356,7 @@ def diff_graphs(
 Baseline persistence uses the same GraphStore append mechanism as all other nodes. The git interaction (reading graph.jsonlt at a historical commit) requires a new IO component:
 
 ```python
-# arci/io/git.py
+# krav/io/git.py
 
 def read_file_at_commit(repo_root: Path, commit_sha: str, relative_path: str) -> str:
     """Read a file's contents at a specific git commit."""
@@ -371,7 +371,7 @@ def has_uncommitted_changes(repo_root: Path, path: str) -> bool:
     ...
 ```
 
-### Service layer (`arci.service.baseline`)
+### Service layer (`krav.service.baseline`)
 
 Orchestrates baseline creation, approval, and diff:
 
@@ -421,25 +421,25 @@ def diff(
 
 ```bash
 # Create
-arci baseline create --module MOD-OAPSROOT --title "Architecture baseline"
-arci baseline create --module MOD-OAPSROOT --title "Architecture baseline" \
+Krav baseline create --module MOD-OAPSROOT --title "Architecture baseline"
+Krav baseline create --module MOD-OAPSROOT --title "Architecture baseline" \
   --phase architecture --auto-approve --approved-by tony
 
 # List and show
-arci baseline list
-arci baseline list --module MOD-OAPSROOT
-arci baseline list --module MOD-OAPSROOT --phase architecture
-arci baseline show BSL-R3L3AS31
+Krav baseline list
+Krav baseline list --module MOD-OAPSROOT
+Krav baseline list --module MOD-OAPSROOT --phase architecture
+Krav baseline show BSL-R3L3AS31
 
 # Approve
-arci baseline approve BSL-R3L3AS31 --approved-by tony
+Krav baseline approve BSL-R3L3AS31 --approved-by tony
 
 # Diff
-arci baseline diff BSL-4RCH0001 BSL-D3S1GN01
-arci baseline diff BSL-D3S1GN01              # Compare against current state
+Krav baseline diff BSL-4RCH0001 BSL-D3S1GN01
+Krav baseline diff BSL-D3S1GN01              # Compare against current state
 
 # Verify integrity
-arci baseline verify BSL-R3L3AS31            # Check commit is reachable, statistics match
+Krav baseline verify BSL-R3L3AS31            # Check commit is reachable, statistics match
 ```
 
 ## Interaction with other features

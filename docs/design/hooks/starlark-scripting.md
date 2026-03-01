@@ -1,6 +1,6 @@
 # Starlark scripting
 
-ARCI uses CEL (Common Expression Language) for all policy expressions: conditions, validations, mutations, and variables. For situations requiring more complex logic than CEL provides, ARCI supports Starlark as an embedded scripting language. Starlark serves two roles: building complex macros that CEL expressions can call, and running as script effects for advanced side actions.
+Krav uses CEL (Common Expression Language) for all policy expressions: conditions, validations, mutations, and variables. For situations requiring more complex logic than CEL provides, Krav supports Starlark as an embedded scripting language. Starlark serves two roles: building complex macros that CEL expressions can call, and running as script effects for advanced side actions.
 
 ## Why Starlark
 
@@ -8,9 +8,9 @@ Starlark complements CEL's declarative expressions with imperative scripting. Wh
 
 Starlark uses Python-like syntax that most developers already know. No new language to learn, no unfamiliar operators or sigils. Anyone who has written a Python function can write a Starlark script. This lowers the barrier to writing custom hook logic compared to domain-specific languages with novel syntax.
 
-The language is deterministic and hermetic by default. Starlark programs cannot access the filesystem, network, or environment unless the host app explicitly provides those capabilities. No `import` statement, no `open()` call, no `os` module. A misconfigured shell script might delete files or exfiltrate data; a Starlark script can only return values or call APIs that ARCI explicitly exposes. This hermetic property is not bolted on through sandboxing but is fundamental to the language design.
+The language is deterministic and hermetic by default. Starlark programs cannot access the filesystem, network, or environment unless the host app explicitly provides those capabilities. No `import` statement, no `open()` call, no `os` module. A misconfigured shell script might delete files or exfiltrate data; a Starlark script can only return values or call APIs that Krav explicitly exposes. This hermetic property is not bolted on through sandboxing but is fundamental to the language design.
 
-Starlark runs natively in Go via `go.starlark.net` without FFI or external interpreters. No Python runtime to initialize, no subprocess to spawn. Scripts execute in the same process as ARCI with minimal overhead. This matters for hook evaluation latency, where every millisecond of delay affects the AI assistant and its user.
+Starlark runs natively in Go via `go.starlark.net` without FFI or external interpreters. No Python runtime to initialize, no subprocess to spawn. Scripts execute in the same process as Krav with minimal overhead. This matters for hook evaluation latency, where every millisecond of delay affects the AI assistant and its user.
 
 The `go.starlark.net` library provides resource limits through step counting and memory bounds. Scripts that loop too long or use unbounded memory stop before they can cause problems. Combined with timeouts, this ensures that a poorly written script cannot hang the hook evaluation pipeline.
 
@@ -315,7 +315,7 @@ for item in items:
     process(item)
 ```
 
-The `go.starlark.net` library supports `while` loops and recursion with configurable limits, though many Starlark implementations intentionally restrict these to guarantee termination. ARCI enables both but enforces step limits to prevent runaway execution.
+The `go.starlark.net` library supports `while` loops and recursion with configurable limits, though many Starlark implementations intentionally restrict these to guarantee termination. Krav enables both but enforces step limits to prevent runaway execution.
 
 ```python
 while count > 0:
@@ -393,9 +393,9 @@ effects:
 
 ## Error handling
 
-Script errors follow ARCI's fail-open philosophy. A broken script never blocks the AI assistant; macros return default values and the engine skips effects.
+Script errors follow Krav's fail-open philosophy. A broken script never blocks the AI assistant; macros return default values and the engine skips effects.
 
-When a script fails, ARCI logs the error with context for debugging:
+When a script fails, Krav logs the error with context for debugging:
 
 ```text
 [WARN] Starlark macro 'is_destructive_command' failed:
@@ -419,23 +419,23 @@ Type errors occur when you apply operations to incompatible types, like adding a
 
 Resource exhaustion occurs when scripts exceed their timeout, step count, or memory limit.
 
-To debug script failures, start by checking the ARCI log for the specific error message and line number. Then test the script in isolation using `arci script test` with sample context. Adding intermediate `print()` calls can help trace execution, as output appears in logs. When the error is not obvious, simplify the script to isolate the failing logic.
+To debug script failures, start by checking the Krav log for the specific error message and line number. Then test the script in isolation using `krav script test` with sample context. Adding intermediate `print()` calls can help trace execution, as output appears in logs. When the error is not obvious, simplify the script to isolate the failing logic.
 
-The `arci script test` command provides an interactive environment for script development:
+The `krav script test` command provides an interactive environment for script development:
 
 ```bash
 # Test a macro with sample input
-arci script test --macro is_destructive_command \
+Krav script test --macro is_destructive_command \
   --args '["rm -rf /"]'
 
 # Test an effect with sample context
-arci script test --effect .arci/scripts/tracking.star \
+Krav script test --effect .krav/scripts/tracking.star \
   --tool-name Bash \
   --tool-input '{"command": "ls -la"}' \
   --session-id sess_test123
 
 # Test inline script
-arci script test --source 'session_get("count")' --session-id abc123
+Krav script test --source 'session_get("count")' --session-id abc123
 ```
 
 This command executes the script with the provided context and displays the return value, any logged output, and resource usage statistics.

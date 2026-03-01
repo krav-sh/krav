@@ -1,10 +1,10 @@
 # Versioning and compatibility
 
-This document describes ARCI's versioning policy, backward compatibility guarantees, and migration strategies. When teams commit rule configurations to git, they need confidence that upgrading ARCI won't break their workflows.
+This document describes Krav's versioning policy, backward compatibility guarantees, and migration strategies. When teams commit rule configurations to git, they need confidence that upgrading Krav won't break their workflows.
 
 ## Version numbering
 
-ARCI uses semantic versioning (SemVer) with the format MAJOR.MINOR.PATCH.
+Krav uses semantic versioning (SemVer) with the format MAJOR.MINOR.PATCH.
 
 MAJOR version increments indicate breaking changes that may require configuration migration. Examples include removing deprecated features, changing configuration schema in incompatible ways, or altering expression language semantics.
 
@@ -58,7 +58,7 @@ Topics to cover:
 
 - Protocol version for extensions
 - Backward compatibility for extension authors
-- Extension/ARCI version matrix
+- Extension/Krav version matrix
 
 ## Schema versioning
 
@@ -90,11 +90,11 @@ Pending: document extension versioning concerns.
 
 Topics to cover:
 
-### Extension/ARCI version constraints
+### Extension/Krav version constraints
 
-- How extensions declare compatible ARCI versions
+- How extensions declare compatible Krav versions
 - Behavior when constraints aren't met
-- Upgrade coordination between extension and ARCI
+- Upgrade coordination between extension and Krav
 
 ### Extension API versions
 
@@ -164,7 +164,7 @@ Pending: document upgrade procedures.
 
 Topics to cover:
 
-### Upgrading ARCI
+### Upgrading Krav
 
 - Testing configuration against new version
 - Reviewing breaking changes
@@ -172,14 +172,14 @@ Topics to cover:
 
 ### Upgrading extensions
 
-- Using `arci extension upgrade`
+- Using `krav extension upgrade`
 - Reviewing extension changelogs
 - Testing after extension updates
 
 ### Team coordination
 
 - Communicating upgrades to team members
-- Synchronizing ARCI versions across team
+- Synchronizing Krav versions across team
 - CI/CD considerations
 
 ## Known breaking changes

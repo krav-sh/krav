@@ -2,7 +2,7 @@
 
 ## Overview
 
-Agents (AGT-*) represent Claude Code sessions and subagents. Each invocation of Claude Code creates a new Agent node, making agents ephemeral; they track a specific execution context rather than a persistent identity. ARCI captures the distinction between session agents and subagents through the `sessionId` (always required) and `subagentId` (null for main session agents, set for subagents spawned within a session).
+Agents (AGT-*) represent Claude Code sessions and subagents. Each invocation of Claude Code creates a new Agent node, making agents ephemeral; they track a specific execution context rather than a persistent identity. Krav captures the distinction between session agents and subagents through the `sessionId` (always required) and `subagentId` (null for main session agents, set for subagents spawned within a session).
 
 ## Purpose
 
@@ -49,7 +49,7 @@ Agent nodes are never deleted. Even after a session closes, the AGT-* node remai
 
 ## Storage model
 
-ARCI stores agent vertex data in the `agents` table (`agents.ndjson` on disk). Edge tables hold all relationships separately.
+Krav stores agent vertex data in the `agents` table (`agents.ndjson` on disk). Edge tables hold all relationships separately.
 
 ### Session agent
 
@@ -84,7 +84,7 @@ Fields:
 
 The `operator` and `parentAgent` predicates live in their respective edge tables.
 
-Most agents are fully described by their structured fields. Agents that accumulate extensive session logs or notes can use a prose file at `.arci/agents/{timestamp}-{NANOID}-{slug}.md`. See [Prose files](../schema.md#prose-files) for the path convention.
+Most agents are fully described by their structured fields. Agents that accumulate extensive session logs or notes can use a prose file at `.krav/agents/{timestamp}-{NANOID}-{slug}.md`. See [Prose files](../schema.md#prose-files) for the path convention.
 
 ## Relationships
 
@@ -106,26 +106,26 @@ Most agents are fully described by their structured fields. Agents that accumula
 
 ```bash
 # CRUD
-arci agent create --session-id "cc-sess-a1b2c3d4" \
+Krav agent create --session-id "cc-sess-a1b2c3d4" \
   --title "Session 2026-01-15T14:30:00Z" \
   --operator DEV-J4R8T2W6
-arci agent show AGT-M5V9K3X7
-arci agent list
-arci agent list --status active
-arci agent list --operator DEV-J4R8T2W6
-arci agent close AGT-M5V9K3X7
+Krav agent show AGT-M5V9K3X7
+Krav agent list
+Krav agent list --status active
+Krav agent list --operator DEV-J4R8T2W6
+Krav agent close AGT-M5V9K3X7
 
 # Queries
-arci agent produced AGT-M5V9K3X7     # Nodes attributed to this agent
-arci agent subagents AGT-M5V9K3X7    # Subagents of this session agent
+Krav agent produced AGT-M5V9K3X7     # Nodes attributed to this agent
+Krav agent subagents AGT-M5V9K3X7    # Subagents of this session agent
 ```
 
 See Agent for full CLI documentation.
 
 ## Design notes
 
-Agents are ephemeral by design. Each Claude Code invocation creates a fresh AGT-* node because session identity matters for provenance; knowing that two modifications happened in the same session is different from knowing they happened in separate sessions. The `sessionId` field captures Claude Code's own session identifier, while the ARCI `id` (AGT-XXXXXXXX) provides a stable graph identity.
+Agents are ephemeral by design. Each Claude Code invocation creates a fresh AGT-* node because session identity matters for provenance; knowing that two modifications happened in the same session is different from knowing they happened in separate sessions. The `sessionId` field captures Claude Code's own session identifier, while the Krav `id` (AGT-XXXXXXXX) provides a stable graph identity.
 
 The `parentAgent` predicate is only valid when `subagentId` is non-null. A main session agent has no parent. This constraint is semantic rather than enforced by the schema; the schema allows any AGT-* to reference any other AGT-* via `parentAgent`, but the convention restricts it to the subagent relationship.
 
-Both Developer and Agent align with `prov:Agent` in the vocabulary mapping. ARCI's own code distinguishes them by `type`.
+Both Developer and Agent align with `prov:Agent` in the vocabulary mapping. Krav's own code distinguishes them by `type`.

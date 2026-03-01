@@ -16,7 +16,7 @@ Nothing in the current graph. The agent reconstructs historical graph state from
 
 The diff is semantic, not textual. Rather than showing line changes in `graph.jsonlt`, it shows: nodes added, nodes modified (with field-level changes), nodes removed, relationships added/removed, phase changes, coverage delta (verification coverage at baseline A vs. baseline B), defect status changes.
 
-Key CLI command: `arci baseline diff BSL-A BSL-B`.
+Key CLI command: `krav baseline diff BSL-A BSL-B`.
 
 ## Trigger patterns
 
@@ -34,13 +34,13 @@ Unchanged.
 
 ### Skills
 
-The `arci:diff` skill builds this workflow. Preprocessing loads the two baselines' metadata (commit anchors, module scope, captured statistics) so the agent can present what it compares before running the actual diff. The skill's instructed command is `arci baseline diff BSL-A BSL-B`, which handles the heavy lifting of graph reconstruction and semantic comparison. The skill body tells the agent how to present the structured diff output: summarize the highlights, group changes by category, and offer to drill into specific areas.
+The `krav:diff` skill builds this workflow. Preprocessing loads the two baselines' metadata (commit anchors, module scope, captured statistics) so the agent can present what it compares before running the actual diff. The skill's instructed command is `krav baseline diff BSL-A BSL-B`, which handles the heavy lifting of graph reconstruction and semantic comparison. The skill body tells the agent how to present the structured diff output: summarize the highlights, group changes by category, and offer to drill into specific areas.
 
-The skill runs inside the `arci-analyst` subagent for larger comparisons, since reconstructing and comparing two full graph states can consume substantial context. For small comparisons (a module-scoped baseline diff with a handful of changes), the main agent can handle it directly.
+The skill runs inside the `krav-analyst` subagent for larger comparisons, since reconstructing and comparing two full graph states can consume substantial context. For small comparisons (a module-scoped baseline diff with a handful of changes), the main agent can handle it directly.
 
 ### Agents
 
-The `arci-analyst` subagent is the preferred execution context for non-trivial baseline comparisons. A release baseline diff across a large project might involve hundreds of node changes, which a dedicated context window handles better than an ongoing coding session. The analyst's system prompt emphasizes precision and completeness: walk the full diff, don't skip changes, report what changed and what it affects.
+The `krav-analyst` subagent is the preferred execution context for non-trivial baseline comparisons. A release baseline diff across a large project might involve hundreds of node changes, which a dedicated context window handles better than an ongoing coding session. The analyst's system prompt emphasizes precision and completeness: walk the full diff, don't skip changes, report what changed and what it affects.
 
 The `agentId` field on the analyst enables resumption for large comparisons that might exceed a single context window, though whether this is practically necessary depends on project size.
 
@@ -48,7 +48,7 @@ The `agentId` field on the analyst enables resumption for large comparisons that
 
 The `subagent-context` policy fires on SubagentStart when the analyst launches for a baseline comparison, injecting the baseline metadata and module scope as `additionalContext`. The `prompt-context` policy fires when the developer mentions specific baselines or modules in follow-up questions.
 
-No enforcement or mutation policies apply since baseline comparison only reads data. The `review-completion-gate` policy (which fires on SubagentStop for ARCI subagents) ensures the analyst produces a structured comparison report before completing.
+No enforcement or mutation policies apply since baseline comparison only reads data. The `review-completion-gate` policy (which fires on SubagentStop for Krav subagents) ensures the analyst produces a structured comparison report before completing.
 
 ### Task types
 

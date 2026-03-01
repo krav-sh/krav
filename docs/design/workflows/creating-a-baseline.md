@@ -36,7 +36,7 @@ A BSL-* node linked to the module, anchored to a commit, with captured statistic
 
 ### Skills
 
-The `arci:baseline` skill builds this workflow. It has `disable-model-invocation: true` in its frontmatter because baselines are deliberate milestones that shouldn't happen accidentally through agent initiative. Preprocessing loads the current module state (node counts, coverage percentages, defect status, suspect link count) so the developer can review the graph's health before confirming the baseline.
+The `krav:baseline` skill builds this workflow. It has `disable-model-invocation: true` in its frontmatter because baselines are deliberate milestones that shouldn't happen accidentally through agent initiative. Preprocessing loads the current module state (node counts, coverage percentages, defect status, suspect link count) so the developer can review the graph's health before confirming the baseline.
 
 The skill's instructed commands run precondition checks via the CLI, present the module state summary for review, and create the BSL-* node on confirmation. The skill body emphasizes that baseline creation is a developer decision, not an agent optimization.
 
@@ -52,7 +52,7 @@ Baseline creation doesn't produce tasks. It's often a step within a `release` ta
 
 ## Open questions
 
-**Baseline approval workflow.** Who approves a baseline? The developer? A separate review step? For a solo developer using ARCI, self-approval is fine. For a team, there might be a review process. The design mentions `status: approved` but not who does the approving or what criteria they use beyond the preconditions.
+**Baseline approval workflow.** Who approves a baseline? The developer? A separate review step? For a solo developer using Krav, self-approval is fine. For a team, there might be a review process. The design mentions `status: approved` but not who does the approving or what criteria they use beyond the preconditions.
 
 **What exactly does the baseline capture?** The design says baselines capture "graph state" but doesn't specify the serialization mechanism. Is it a copy of the relevant `graph.jsonlt` entries? A reference to the git commit (meaning the graph state is reconstructable from the commit)? The `commitSha` field suggests the latter, but that only works if the graph is fully committed to git at baseline time.
 

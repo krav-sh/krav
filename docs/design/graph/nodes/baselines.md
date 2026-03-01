@@ -4,7 +4,7 @@
 
 Baselines (BSL-*) capture the state of the knowledge graph at a specific point in time. A baseline records which nodes existed, their states, and the relationships between them, anchored to a specific git commit. Baselines enable milestone recording, change auditing, regression detection, and phase gate enforcement.
 
-Traditional RE tools treat baselines as snapshots of a requirements database. ARCI takes a lighter approach: since the NDJSON graph files are version-controlled and append-only, the git history already contains every historical state. A baseline is a named reference into that history with metadata about why the team created it, what it covers, and who approved it.
+Traditional RE tools treat baselines as snapshots of a requirements database. Krav takes a lighter approach: since the NDJSON graph files are version-controlled and append-only, the git history already contains every historical state. A baseline is a named reference into that history with metadata about why the team created it, what it covers, and who approved it.
 
 ## Purpose
 
@@ -14,7 +14,7 @@ Baselines serve multiple roles:
 
 **Change auditing**: semantic diff between baselines shows what changed in terms the project cares about (nodes added, modified, removed; relationships changed; phases advanced) rather than raw JSONLT line diffs.
 
-**Phase gates**: phase advancement can require a baseline of the current phase before proceeding, so ARCI records the pre-advancement state for later review. The architecture baseline captures the agreed state before design begins; the design baseline captures the agreed state before coding starts.
+**Phase gates**: phase advancement can require a baseline of the current phase before proceeding, so Krav records the pre-advancement state for later review. The architecture baseline captures the agreed state before design begins; the design baseline captures the agreed state before coding starts.
 
 **Regression detection**: comparing the current graph against a baseline reveals unintended changes. A requirement that existed in the architecture baseline but is missing now warrants investigation.
 
@@ -22,7 +22,7 @@ Baselines serve multiple roles:
 
 ## Storage model
 
-ARCI stores baseline vertex data in the `baselines` table (`baselines.ndjson` on disk). Edge tables hold all relationships separately. The baseline record does not contain a full graph snapshot; it stores a git commit SHA that you can use to reconstruct the graph state at baseline time.
+Krav stores baseline vertex data in the `baselines` table (`baselines.ndjson` on disk). Edge tables hold all relationships separately. The baseline record does not contain a full graph snapshot; it stores a git commit SHA that you can use to reconstruct the graph state at baseline time.
 
 ```json
 {"id": "BSL-R3L3AS31", "type": "Baseline", "title": "Architecture baseline", "scope": "subtree", "commitSha": "a1b2c3d4e5f6789...", "phase": "architecture", "status": "approved", "approvedBy": "tony", "approvedAt": "2026-02-28T16:00:00Z", "description": "Architecture phase complete for root module. All architecture tasks done, no blocking findings.", "statistics": {"modules": 5, "concepts": 12, "needs": 8, "requirements": 15, "verifications": 6, "tasks": 23, "findings": {"open": 0, "closed": 7}}}
@@ -55,9 +55,9 @@ The `module` predicate lives in the `module` edge table.
 
 ### Why git commit SHA, not a full snapshot?
 
-The graph directory (`.arci/graph/`) is version-controlled. You can reconstruct any historical state by checking out the NDJSON files at the baseline's commit SHA. This avoids duplicating the entire graph inside the baseline record (which would be expensive and redundant), while remaining fully reproducible.
+The graph directory (`.krav/graph/`) is version-controlled. You can reconstruct any historical state by checking out the NDJSON files at the baseline's commit SHA. This avoids duplicating the entire graph inside the baseline record (which would be expensive and redundant), while remaining fully reproducible.
 
-The tradeoff: if git history is rewritten (force push, rebase) and the baseline's commit SHA becomes unreachable, the baseline is unresolvable. This is intentional, because it surfaces history tampering. Projects that need tamper-evident baselines should protect the branch containing `.arci/` from force pushes.
+The tradeoff: if git history is rewritten (force push, rebase) and the baseline's commit SHA becomes unreachable, the baseline is unresolvable. This is intentional, because it surfaces history tampering. Projects that need tamper-evident baselines should protect the branch containing `.krav/` from force pushes.
 
 ### Statistics
 
@@ -85,11 +85,11 @@ The `statistics` field captures a denormalized snapshot of graph counts at basel
 }
 ```
 
-The `verificationCoverage` field records the ratio of requirements that have at least one passing verification. The `suspectLinks` count records how many links ARCI marked suspect at baseline time; a healthy baseline should have zero.
+The `verificationCoverage` field records the ratio of requirements that have at least one passing verification. The `suspectLinks` count records how many links Krav marked suspect at baseline time; a healthy baseline should have zero.
 
 ## Prose files
 
-Most baselines are adequately described by `description`. Baselines that mark major milestones or carry complex justifications (release baselines, phase gates with deferred defects, baselines with known caveats) may need a prose file at `.arci/baselines/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
+Most baselines are adequately described by `description`. Baselines that mark major milestones or carry complex justifications (release baselines, phase gates with deferred defects, baselines with known caveats) may need a prose file at `.krav/baselines/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
 
 ## Scope
 
@@ -103,13 +103,13 @@ The module field determines the root of the scope. Baselining the root module wi
 
 ```bash
 # Baseline the whole project
-arci baseline create --module MOD-OAPSROOT --title "Architecture baseline"
+Krav baseline create --module MOD-OAPSROOT --title "Architecture baseline"
 
 # Baseline a subsystem
-arci baseline create --module MOD-A4F8R2X1 --title "Parser design baseline" --scope subtree
+Krav baseline create --module MOD-A4F8R2X1 --title "Parser design baseline" --scope subtree
 
 # Baseline a single component
-arci baseline create --module MOD-L3X3R001 --title "Lexer implementation baseline" --scope module-only
+Krav baseline create --module MOD-L3X3R001 --title "Lexer implementation baseline" --scope module-only
 ```
 
 ## Lifecycle
@@ -164,7 +164,7 @@ policies:
   - name: require-baseline-before-advance
     description: Ensure the current phase is baselined before advancing
     match:
-      tool: arci
+      tool: krav
       args:
         - match: "module"
           position: 0
@@ -184,12 +184,12 @@ policies:
 When phase advancement triggers a baseline:
 
 1. The CLI commits any pending changes to the NDJSON files
-2. ARCI creates a BSL-* record with the current commit SHA
-3. ARCI computes statistics from the current graph state
+2. Krav creates a BSL-* record with the current commit SHA
+3. Krav computes statistics from the current graph state
 4. If the user enables auto-approve, the baseline enters `approved` status immediately
 5. Phase advancement proceeds
 
-The resulting baseline records exactly what existed when the module left that phase. Later, `arci baseline diff` can show what changed between phases.
+The resulting baseline records exactly what existed when the module left that phase. Later, `krav baseline diff` can show what changed between phases.
 
 ### Cross-module synchronization
 
@@ -201,9 +201,9 @@ The primary analytical operation on baselines is semantic diff: given two baseli
 
 ### Reconstruction
 
-To diff two baselines, ARCI materializes the graph at each commit:
+To diff two baselines, Krav materializes the graph at each commit:
 
-1. Read the NDJSON files at baseline A's commit SHA (via `git show <sha>:.arci/graph/*.ndjson`)
+1. Read the NDJSON files at baseline A's commit SHA (via `git show <sha>:.krav/graph/*.ndjson`)
 2. Read the NDJSON files at baseline B's commit SHA (or current working tree)
 3. Hydrate both into in-memory DuckDB instances
 4. Scope each graph to the baseline's module subtree
@@ -226,7 +226,7 @@ Statistics delta compares the aggregate counts between baselines.
 ### CLI output
 
 ```text
-$ arci baseline diff BSL-4RCH0001 BSL-D3S1GN01
+$ krav baseline diff BSL-4RCH0001 BSL-D3S1GN01
 
 Comparing "Architecture baseline" → "Design baseline" for MOD-OAPSROOT
   Time span: 2026-01-15 → 2026-02-28
@@ -278,25 +278,25 @@ Baselines for the same module and phase form a temporal sequence via their `crea
 
 ```bash
 # Create
-arci baseline create --module MOD-OAPSROOT --title "Architecture baseline"
-arci baseline create --module MOD-OAPSROOT --title "Architecture baseline" \
+Krav baseline create --module MOD-OAPSROOT --title "Architecture baseline"
+Krav baseline create --module MOD-OAPSROOT --title "Architecture baseline" \
   --phase architecture --auto-approve --approved-by tony
 
 # List and show
-arci baseline list
-arci baseline list --module MOD-OAPSROOT
-arci baseline list --module MOD-OAPSROOT --phase architecture
-arci baseline show BSL-R3L3AS31
+Krav baseline list
+Krav baseline list --module MOD-OAPSROOT
+Krav baseline list --module MOD-OAPSROOT --phase architecture
+Krav baseline show BSL-R3L3AS31
 
 # Approve
-arci baseline approve BSL-R3L3AS31 --approved-by tony
+Krav baseline approve BSL-R3L3AS31 --approved-by tony
 
 # Diff
-arci baseline diff BSL-4RCH0001 BSL-D3S1GN01
-arci baseline diff BSL-D3S1GN01              # Compare against current state
+Krav baseline diff BSL-4RCH0001 BSL-D3S1GN01
+Krav baseline diff BSL-D3S1GN01              # Compare against current state
 
 # Verify integrity
-arci baseline verify BSL-R3L3AS31            # Check commit is reachable, statistics match
+Krav baseline verify BSL-R3L3AS31            # Check commit is reachable, statistics match
 ```
 
 See [Baseline](../../cli/commands/baseline.md) for full CLI documentation.
@@ -364,4 +364,4 @@ Baselines provide named references into git history that capture the knowledge g
 - Semantic diff produces structured changelogs at the graph level (not NDJSON line diffs)
 - Statistics snapshot enables quick inspection and integrity verification
 - Temporal sequencing via lifecycle (draft → approved → superseded)
-- Stored as rows in the `baselines` vertex table (`.arci/graph/baselines.ndjson` on disk)
+- Stored as rows in the `baselines` vertex table (`.krav/graph/baselines.ndjson` on disk)

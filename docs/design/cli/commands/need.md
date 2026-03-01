@@ -4,7 +4,7 @@ The need command group manages stakeholder needs, expectations expressed from th
 
 ## Synopsis
 
-    arci need <subcommand> [options]
+    krav need <subcommand> [options]
 
 ## Description
 
@@ -16,7 +16,7 @@ Needs capture what stakeholders expect a module to do or be. These commands hand
 
 Creates a need node.
 
-    arci need create --module <module-id> --stakeholder <stakeholder> \
+    krav need create --module <module-id> --stakeholder <stakeholder> \
       --statement <statement>
 
 **Flags:**
@@ -33,13 +33,13 @@ Creates a need node.
 
 Displays detailed information about a need, including metadata, relationships, and derivation status.
 
-    arci need show <need-id>
+    krav need show <need-id>
 
 ### `list`
 
 Lists needs, optionally filtered by module or stakeholder.
 
-    arci need list [options]
+    krav need list [options]
 
 **Flags:**
 
@@ -52,7 +52,7 @@ Lists needs, optionally filtered by module or stakeholder.
 
 Modifies need fields.
 
-    arci need update <need-id> [flags]
+    krav need update <need-id> [flags]
 
 **Flags:**
 
@@ -66,13 +66,13 @@ Modifies need fields.
 
 Removes a need node from the graph.
 
-    arci need delete <need-id>
+    krav need delete <need-id>
 
 ### `transition`
 
 Advances or changes the need's lifecycle state with validation.
 
-    arci need transition <need-id> --to <status>
+    krav need transition <need-id> --to <status>
 
 **Flags:**
 
@@ -82,7 +82,7 @@ Advances or changes the need's lifecycle state with validation.
 
 Records stakeholder validation of a need. Transitions the need to `validated` status.
 
-    arci need validate <need-id> --evidence <evidence>
+    krav need validate <need-id> --evidence <evidence>
 
 **Flags:**
 
@@ -92,13 +92,13 @@ Records stakeholder validation of a need. Transitions the need to `validated` st
 
 Produces verifiable requirements from a validated need. Creates REQ-* records with derivesFrom relationships back to the need.
 
-    arci need derive <need-id>
+    krav need derive <need-id>
 
 ### `link`
 
 Creates relationships between a need and other nodes.
 
-    arci need link <need-id> [flags]
+    krav need link <need-id> [flags]
 
 **Flags:**
 
@@ -108,7 +108,7 @@ Creates relationships between a need and other nodes.
 
 Displays the full traceability chain for a need: concept to need to derived requirements.
 
-    arci need trace <need-id>
+    krav need trace <need-id>
 
 ## See also
 

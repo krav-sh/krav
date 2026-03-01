@@ -92,7 +92,7 @@ State transitions:
 
 ## Stakeholder relationship
 
-Each need references one or more stakeholders via the `stakeholder` object property. Stakeholders are project-defined STK-* nodes representing the actual parties who have expectations about the system. ARCI provides no fixed taxonomy of stakeholder types; each project defines whatever stakeholders make sense for its context.
+Each need references one or more stakeholders via the `stakeholder` object property. Stakeholders are project-defined STK-* nodes representing the actual parties who have expectations about the system. Krav provides no fixed taxonomy of stakeholder types; each project defines whatever stakeholders make sense for its context.
 
 A need may reference multiple stakeholders when they share the expectation. "The system shall produce machine-readable error output" might serve both a CI/CD pipeline operator and a tool integration developer. The `stakeholder` edge table captures this relationship; a need with multiple stakeholders has multiple rows in `stakeholder.ndjson`.
 
@@ -100,7 +100,7 @@ See [Stakeholders](stakeholders.md) for the full STK-* node specification.
 
 ## Storage model
 
-ARCI stores need vertex data in the `needs` table (`needs.ndjson` on disk). Edge tables hold all relationships separately.
+Krav stores need vertex data in the `needs` table (`needs.ndjson` on disk). Edge tables hold all relationships separately.
 
 ```json
 {"id": "NEED-B7G3M9K2", "type": "Need", "title": "Quick parsing feedback", "statement": "Users need quick feedback when parsing fails", "rationale": "Slow error reporting disrupts developer flow", "status": "validated", "priority": "must"}
@@ -142,7 +142,7 @@ The `module`, `stakeholder`, and `derivesFrom` predicates live in their respecti
 
 ## Prose files
 
-The `statement`, `rationale`, and `validationEvidence` fields capture most needs. Needs backed by extensive user research, interview synthesis, or detailed stakeholder analysis may need a prose file at `.arci/needs/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
+The `statement`, `rationale`, and `validationEvidence` fields capture most needs. Needs backed by extensive user research, interview synthesis, or detailed stakeholder analysis may need a prose file at `.krav/needs/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
 
 ## Priority levels
 
@@ -196,7 +196,7 @@ In `derives_from.ndjson`:
 When stakeholders validate a need, derivation produces requirements:
 
 ```bash
-arci need derive NEED-B7G3M9K2
+Krav need derive NEED-B7G3M9K2
 ```
 
 This process:
@@ -213,7 +213,7 @@ A single need typically produces 1-5 requirements. The team may decompose comple
 Validation confirms that the need accurately captures stakeholder expectations:
 
 ```bash
-arci need validate NEED-B7G3M9K2 --evidence "User interviews Jan 2026"
+Krav need validate NEED-B7G3M9K2 --evidence "User interviews Jan 2026"
 ```
 
 Validation methods:
@@ -230,24 +230,24 @@ Validation methods:
 
 ```bash
 # CRUD
-arci need create --module MOD-A4F8R2X1 --stakeholder STK-H5N7P3Q9 \
+Krav need create --module MOD-A4F8R2X1 --stakeholder STK-H5N7P3Q9 \
   --statement "Users need quick feedback when parsing fails"
-arci need show NEED-B7G3M9K2
-arci need list
-arci need list --module MOD-A4F8R2X1 --stakeholder STK-H5N7P3Q9
-arci need update NEED-B7G3M9K2 --priority must
-arci need delete NEED-B7G3M9K2
+Krav need show NEED-B7G3M9K2
+Krav need list
+Krav need list --module MOD-A4F8R2X1 --stakeholder STK-H5N7P3Q9
+Krav need update NEED-B7G3M9K2 --priority must
+Krav need delete NEED-B7G3M9K2
 
 # Lifecycle
-arci need transition NEED-B7G3M9K2 --to proposed
-arci need validate NEED-B7G3M9K2 --evidence "..."
-arci need derive NEED-B7G3M9K2
+Krav need transition NEED-B7G3M9K2 --to proposed
+Krav need validate NEED-B7G3M9K2 --evidence "..."
+Krav need derive NEED-B7G3M9K2
 
 # Relationships
-arci need link NEED-B7G3M9K2 --derives-from CON-K7M3NP2Q
+Krav need link NEED-B7G3M9K2 --derives-from CON-K7M3NP2Q
 
 # Traceability
-arci need trace NEED-B7G3M9K2  # Show concept → need → requirements chain
+Krav need trace NEED-B7G3M9K2  # Show concept → need → requirements chain
 ```
 
 See [Need](../../cli/commands/need.md) for full CLI documentation.
@@ -311,7 +311,7 @@ Needs capture stakeholder expectations:
 - Serve as derivation source for requirements
 - Maintain traceability via derivesFrom relationships
 - Progress from draft through validated to satisfied
-- Stored as rows in the `needs` vertex table (`.arci/graph/needs.ndjson` on disk)
+- Stored as rows in the `needs` vertex table (`.krav/graph/needs.ndjson` on disk)
 - Implemented following three-layer architecture (core/io/service)
 
 Needs are the bridge between exploration (concepts) and obligation (requirements), ensuring that what the system delivers traces back to what stakeholders actually need.

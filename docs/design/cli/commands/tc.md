@@ -4,7 +4,7 @@ The `tc` command group manages test cases, verification specifications that prov
 
 ## Synopsis
 
-    arci tc <subcommand> [options]
+    krav tc <subcommand> [options]
 
 ## Description
 
@@ -16,7 +16,7 @@ Test cases define what to check and how, using one of four INCOSE verification m
 
 Creates a test case node.
 
-    arci tc create --module <module-id> --title <title> --method <method>
+    krav tc create --module <module-id> --title <title> --method <method>
 
 **Flags:**
 
@@ -33,13 +33,13 @@ Creates a test case node.
 
 Displays detailed information about a test case, including metadata, linked requirements, and execution results.
 
-    arci tc show <tc-id>
+    krav tc show <tc-id>
 
 ### `list`
 
 Lists test cases, optionally filtered by module or result.
 
-    arci tc list [options]
+    krav tc list [options]
 
 **Flags:**
 
@@ -52,7 +52,7 @@ Lists test cases, optionally filtered by module or result.
 
 Modifies test case fields.
 
-    arci tc update <tc-id> [flags]
+    krav tc update <tc-id> [flags]
 
 **Flags:**
 
@@ -68,13 +68,13 @@ Modifies test case fields.
 
 Removes a test case node from the graph.
 
-    arci tc delete <tc-id>
+    krav tc delete <tc-id>
 
 ### `link`
 
 Creates a verifies relationship between a test case and a requirement.
 
-    arci tc link <tc-id> --verifies <req-id>
+    krav tc link <tc-id> --verifies <req-id>
 
 **Flags:**
 
@@ -84,7 +84,7 @@ Creates a verifies relationship between a test case and a requirement.
 
 Removes a verifies relationship between a test case and a requirement.
 
-    arci tc unlink <tc-id> --verifies <req-id>
+    krav tc unlink <tc-id> --verifies <req-id>
 
 **Flags:**
 
@@ -94,7 +94,7 @@ Removes a verifies relationship between a test case and a requirement.
 
 Records an execution result for a test case. Updates `currentResult` and `lastRunAt`.
 
-    arci tc record <tc-id> --result <result>
+    krav tc record <tc-id> --result <result>
 
 **Flags:**
 
@@ -106,7 +106,7 @@ Records an execution result for a test case. Updates `currentResult` and `lastRu
 
 Reports verification coverage, the ratio of requirements with at least one passing test case.
 
-    arci tc coverage [options]
+    krav tc coverage [options]
 
 **Flags:**
 
@@ -116,7 +116,7 @@ Reports verification coverage, the ratio of requirements with at least one passi
 
 Lists requirements that have no linked test cases.
 
-    arci tc untested
+    krav tc untested
 
 ## See also
 

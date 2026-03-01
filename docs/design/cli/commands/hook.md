@@ -1,6 +1,6 @@
 # Hook
 
-The `arci hook` command group contains all hook-related commands: the Claude Code integration point (`apply`), policy management (`list`, `enable`, `disable`, `explain`, `test`, `verify`), execution logs (`logs`), and aggregated metrics (`stats`).
+The `krav hook` command group contains all hook-related commands: the Claude Code integration point (`apply`), policy management (`list`, `enable`, `disable`, `explain`, `test`, `verify`), execution logs (`logs`), and aggregated metrics (`stats`).
 
 ## Apply
 
@@ -9,7 +9,7 @@ The apply subcommand is the primary integration point with Claude Code. It reads
 ### Synopsis
 
 ```bash
-arci hook apply --event <type>
+Krav hook apply --event <type>
 ```
 
 ### Description
@@ -40,12 +40,12 @@ See [exit-codes.md](../exit-codes.md) for full exit code reference.
 
 ## List
 
-Lists all policies in the merged configuration. For each policy, it displays the name, source file, priority, enabled status, event types, and rule count. The `arci hook policies` command is an alias.
+Lists all policies in the merged configuration. For each policy, it displays the name, source file, priority, enabled status, event types, and rule count. The `krav hook policies` command is an alias.
 
 ### Synopsis
 
 ```bash
-arci hook list
+Krav hook list
 ```
 
 ### Description
@@ -53,11 +53,11 @@ arci hook list
 Policy commands operate on the merged configuration, which combines all configuration sources in precedence order. Commands that accept a selector can target one or more policies by name or pattern. See [Selectors](#selectors) for the full selector syntax.
 
 ```text
-$ arci hook list
+$ krav hook list
 NAME                        SOURCE                              PRIORITY  STATUS   EVENTS           RULES
-security-baseline           ~/.config/arci/policies.d/    high      enabled  pre_tool_call    3
-coding-standards-injection  .arci/policies.d/             medium    enabled  pre_tool_call    2
-session-tracking            ~/.config/arci/policies.d/    low       enabled  pre_tool_call    2
+security-baseline           ~/.config/krav/policies.d/    high      enabled  pre_tool_call    3
+coding-standards-injection  .krav/policies.d/             medium    enabled  pre_tool_call    2
+session-tracking            ~/.config/krav/policies.d/    low       enabled  pre_tool_call    2
 ```
 
 ---
@@ -69,14 +69,14 @@ Enables one or more policies matching the selector.
 ### Synopsis
 
 ```bash
-arci hook enable <selector>
+Krav hook enable <selector>
 ```
 
 ### Examples
 
 ```bash
 # Enable all policies matching a pattern
-arci hook enable 'security-*'
+Krav hook enable 'security-*'
 ```
 
 ---
@@ -88,19 +88,19 @@ Disables one or more policies matching the selector.
 ### Synopsis
 
 ```bash
-arci hook disable <selector>
+Krav hook disable <selector>
 ```
 
 ### Examples
 
 ```bash
 # Disable a specific policy
-arci hook disable coding-standards-injection
+Krav hook disable coding-standards-injection
 ```
 
 ### Enable and turn-off state
 
-Enable and turn-off state lives in a sidecar file at each configuration layer (`~/.config/arci/policies.json` or `.arci/policies.json`). This keeps policy definitions clean and makes enable/turn-off state a separate concern.
+Enable and turn-off state lives in a sidecar file at each configuration layer (`~/.config/krav/policies.json` or `.krav/policies.json`). This keeps policy definitions clean and makes enable/turn-off state a separate concern.
 
 Open design questions:
 
@@ -119,15 +119,15 @@ Shows detailed information about matching policies. For a single match, it displ
 ### Synopsis
 
 ```bash
-arci hook explain <selector>
+Krav hook explain <selector>
 ```
 
 ### Examples
 
 ```text
-$ arci hook explain security-baseline
+$ krav hook explain security-baseline
 POLICY: security-baseline
-SOURCE: ~/.config/arci/policies.d/security-baseline.yaml
+SOURCE: ~/.config/krav/policies.d/security-baseline.yaml
 PRIORITY: high
 STATUS: enabled
 
@@ -165,7 +165,7 @@ Dry-runs policies against sample input. Shows which matching policies and rules 
 ### Synopsis
 
 ```bash
-arci hook test <selector> [options]
+Krav hook test <selector> [options]
 ```
 
 ### Options
@@ -179,13 +179,13 @@ When many policies match the selector, the command tests each one against the in
 
 ```bash
 # Test a specific policy
-arci hook test security-baseline --input '{"tool_name":"Bash","tool_input":{"command":"rm -rf /tmp"}}'
+Krav hook test security-baseline --input '{"tool_name":"Bash","tool_input":{"command":"rm -rf /tmp"}}'
 
 # Test from a file
-arci hook test security-baseline --input @test-cases/dangerous-rm.json
+Krav hook test security-baseline --input @test-cases/dangerous-rm.json
 
 # Test all policies matching a pattern
-arci hook test 'security-*' --event pre_tool_call --input '{"tool_name":"Bash","tool_input":{"command":"git push --force"}}'
+Krav hook test 'security-*' --event pre_tool_call --input '{"tool_name":"Bash","tool_input":{"command":"git push --force"}}'
 ```
 
 ---
@@ -197,13 +197,13 @@ Checks all policy and rule expressions, confirming that conditions parse correct
 ### Synopsis
 
 ```bash
-arci hook verify
+Krav hook verify
 ```
 
 ### Examples
 
 ```text
-$ arci hook verify
+$ krav hook verify
 Validating 12 policies...
   security-baseline: OK (3 rules)
   coding-standards-injection: OK (2 rules)
@@ -228,12 +228,12 @@ The logs subcommand provides access to hook execution logs. By default it tails 
 ### Synopsis
 
 ```bash
-arci hook logs [options]
+Krav hook logs [options]
 ```
 
 ### Description
 
-This command reads from the hook execution logs that ARCI writes on every evaluation. It supports both streaming (tail-like) and bounded query modes. When the caller supplies `--since` or `--until` without `--follow`, the command performs a bounded search and exits after displaying results.
+This command reads from the hook execution logs that Krav writes on every evaluation. It supports both streaming (tail-like) and bounded query modes. When the caller supplies `--since` or `--until` without `--follow`, the command performs a bounded search and exits after displaying results.
 
 ### Options
 
@@ -250,19 +250,19 @@ This command reads from the hook execution logs that ARCI writes on every evalua
 
 ## Stats
 
-The stats subcommand aggregates metrics from the project-level hook logs that ARCI writes on every evaluation. This works regardless of whether you use the server or direct execution mode.
+The stats subcommand aggregates metrics from the project-level hook logs that Krav writes on every evaluation. This works regardless of whether you use the server or direct execution mode.
 
 ### Synopsis
 
 ```bash
-arci hook stats [options]
+Krav hook stats [options]
 ```
 
 ### Description
 
 By default the command shows a summary including total invocations, block/allow counts, policy match frequencies, rule match frequencies, and action execution counts by type. The filtering options below scope the analysis.
 
-You can combine filters to narrow results: `arci hook stats --policy 'security-*' --since 'last week'` shows statistics for security policies over the past week.
+You can combine filters to narrow results: `krav hook stats --policy 'security-*' --since 'last week'` shows statistics for security policies over the past week.
 
 ### Options
 
@@ -277,13 +277,13 @@ You can combine filters to narrow results: `arci hook stats --policy 'security-*
 
 ```bash
 # Show overall summary
-arci hook stats
+Krav hook stats
 
 # Security policy stats for the past week
-arci hook stats --policy 'security-*' --since 'last week'
+Krav hook stats --policy 'security-*' --since 'last week'
 
 # JSON output for scripting
-arci hook stats --format json --since '2024-01-01'
+Krav hook stats --format json --since '2024-01-01'
 ```
 
 ---
@@ -297,7 +297,7 @@ Selectors identify one or more policies (and optionally rules within them) for c
 The simplest selector is an exact policy name:
 
 ```bash
-arci hook explain security-baseline
+Krav hook explain security-baseline
 ```
 
 This matches the single policy named `security-baseline`.
@@ -312,10 +312,10 @@ Selectors support glob patterns for matching more than one policy:
 
 ```bash
 # Enable all security policies
-arci hook enable 'security-*'
+Krav hook enable 'security-*'
 
 # Disable all policies (use with care)
-arci hook disable '*'
+Krav hook disable '*'
 ```
 
 ### Policy:rule syntax
@@ -336,13 +336,13 @@ The rule part also supports glob patterns:
 
 ```bash
 # Explain a specific rule
-arci hook explain security-baseline:blocked-commands
+Krav hook explain security-baseline:blocked-commands
 
 # Test all rules in a policy
-arci hook test security-baseline:*
+Krav hook test security-baseline:*
 
 # Test tracking rules across all policies
-arci hook test '*:track-*' --input @test-input.json
+Krav hook test '*:track-*' --input @test-input.json
 ```
 
 Rule-level selectors are useful with `explain` and `test` commands when you want to focus on specific behavior within a policy.

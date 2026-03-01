@@ -1,6 +1,6 @@
 # Match schema design
 
-ARCI separates structural matching from conditional logic following patterns established by Kubernetes admission control. Unlike Kubernetes, ARCI uses a unified `Policy` type that can contain both mutations and validations.
+Krav separates structural matching from conditional logic following patterns established by Kubernetes admission control. Unlike Kubernetes, Krav uses a unified `Policy` type that can contain both mutations and validations.
 
 ## Schema
 
@@ -9,7 +9,7 @@ ARCI separates structural matching from conditional logic following patterns est
 The policy declares what it's capable of handling (structural) and when it should apply (conditional).
 
 ```yaml
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: typescript-quality
@@ -57,7 +57,7 @@ spec:
 The binding specifies deployment scope using structural selectors only. No CEL here.
 
 ```yaml
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: typescript-quality-prod
@@ -86,7 +86,7 @@ spec:
 
 ## Matching semantics
 
-ARCI follows Kubernetes ValidatingAdmissionPolicy matching semantics closely. Understanding the AND/OR logic at each level is essential for predictable policy behavior.
+Krav follows Kubernetes ValidatingAdmissionPolicy matching semantics closely. Understanding the AND/OR logic at each level is essential for predictable policy behavior.
 
 ### Within array fields: OR logic
 
@@ -359,7 +359,7 @@ When the user omits fields:
 ### Policy that only makes sense for TypeScript
 
 ```yaml
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: typescript-strict
@@ -379,7 +379,7 @@ spec:
 ### Binding that narrows to src/ on main branch
 
 ```yaml
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: typescript-strict-prod
@@ -399,7 +399,7 @@ spec:
 ### Policy with conditional matching via params
 
 ```yaml
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: strict-mode-checks
@@ -422,7 +422,7 @@ spec:
 
 ```yaml
 # Binding for normal work
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: strict-mode-normal
@@ -435,7 +435,7 @@ spec:
 
 ---
 # Binding for experiments directory
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: strict-mode-experiments
@@ -455,11 +455,11 @@ In the second binding, the policy's matchConditions fail because `params.strictM
 
 ## Future considerations
 
-Kubernetes ValidatingAdmissionPolicy includes additional matching properties that ARCI may adopt in future versions:
+Kubernetes ValidatingAdmissionPolicy includes additional matching properties that Krav may adopt in future versions:
 
 ### resourceNames
 
-Allowlist specific resource names within matched types. In ARCI's context, this could allow matching specific tool invocations by name or specific file names (not just patterns).
+Allowlist specific resource names within matched types. In Krav's context, this could allow matching specific tool invocations by name or specific file names (not just patterns).
 
 ```yaml
 # Hypothetical future syntax
@@ -473,7 +473,7 @@ matchConstraints:
 
 ### Scope
 
-Constrain to different scopes. In ARCI's context, this could distinguish session-scoped vs project-scoped operations.
+Constrain to different scopes. In Krav's context, this could distinguish session-scoped vs project-scoped operations.
 
 ```yaml
 # Hypothetical future syntax
@@ -483,7 +483,7 @@ matchConstraints:
 
 ### Label selectors
 
-Kubernetes uses `namespaceSelector` and `objectSelector` for label-based filtering. In ARCI, this could enable matching based on project metadata or file labels.
+Kubernetes uses `namespaceSelector` and `objectSelector` for label-based filtering. In Krav, this could enable matching based on project metadata or file labels.
 
 ```yaml
 # Hypothetical future syntax
@@ -494,4 +494,4 @@ matchConstraints:
       environment: production
 ```
 
-ARCI adds these extensions only if real-world usage patterns demonstrate clear need.
+Krav adds these extensions only if real-world usage patterns demonstrate clear need.

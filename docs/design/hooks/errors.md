@@ -8,19 +8,19 @@ Common troubleshooting scenarios and how to approach them.
 
 ### A rule is not matching
 
-Start with `arci hook policy test <rule-selector> --input @sample.json` to see if the rule matches against known input. If it does not match, the test command shows which part of the condition evaluated to false.
+Start with `krav hook policy test <rule-selector> --input @sample.json` to see if the rule matches against known input. If it does not match, the test command shows which part of the condition evaluated to false.
 
-Confirm that the configuration enables the rule with `arci hook policy explain <rule-selector>`. The output shows enabled status and source file.
+Confirm that the configuration enables the rule with `krav hook policy explain <rule-selector>`. The output shows enabled status and source file.
 
 Verify the event type filter. A rule with `events: [PostToolUse]` does not match `PreToolUse` hooks.
 
-Check priority and terminal rules. A higher-priority terminal rule may stop evaluation before your rule runs. Use `arci hook logs --rule <rule-selector>` to see if the engine evaluates the rule at all.
+Check priority and terminal rules. A higher-priority terminal rule may stop evaluation before your rule runs. Use `krav hook logs --rule <rule-selector>` to see if the engine evaluates the rule at all.
 
-Enable debug logging with `ARCI_LOG_LEVEL=debug` to see expression evaluation details.
+Enable debug logging with `KRAV_LOG_LEVEL=debug` to see expression evaluation details.
 
 ### A rule is matching when it should not
 
-Use `arci hook policy test <rule-selector> --input @sample.json` with input that should not match. The test output shows the evaluation trace.
+Use `krav hook policy test <rule-selector> --input @sample.json` with input that should not match. The test output shows the evaluation trace.
 
 Check for overly broad conditions. A condition like `tool.name =~ /rm/` matches `transform` as well as `rm`.
 
@@ -34,21 +34,21 @@ Check that the action type is compatible with the hook type. Some actions only m
 
 Review timeout configuration. Shell commands have a default timeout, and the runtime may stop long-running commands before completion.
 
-Check action handler output with debug logging. ARCI logs invalid output from an action handler as a warning.
+Check action handler output with debug logging. Krav logs invalid output from an action handler as a warning.
 
 For shell actions, verify the command path is correct and executable. The shell action runs in the project directory by default.
 
 ## Diagnostic commands
 
-### ARCI hook policy explain
+### Krav hook policy explain
 
 The explain command shows everything about a rule:
 
 ```text
-$ arci hook policy explain block-rm-rf
+$ krav hook policy explain block-rm-rf
 
 Rule: block-rm-rf
-Source: ~/.config/arci/rules.yaml:15
+Source: ~/.config/krav/rules.yaml:15
 Priority: critical
 Enabled: true
 Events: PreToolUse
@@ -73,13 +73,13 @@ Enable detailed logging for hook evaluation:
 
 ```bash
 # All debug output
-ARCI_LOG_LEVEL=debug arci run --event PreToolUse
+KRAV_LOG_LEVEL=debug krav run --event PreToolUse
 ```
 
-The `ARCI_LOG_LEVEL` environment variable sets the global log level. For more on diagnostic tracing, see [CLI logging](../cli/logging.md).
+The `KRAV_LOG_LEVEL` environment variable sets the global log level. For more on diagnostic tracing, see [CLI logging](../cli/logging.md).
 
 ## See also
 
 - [CLI errors](../cli/errors.md): CLI error presentation and health checks
 - [Server errors](../server/errors.md): server troubleshooting and recovery
-- [Hook event logging](logging.md): the `arci hook apply` output contract and event log schema
+- [Hook event logging](logging.md): the `krav hook apply` output contract and event log schema

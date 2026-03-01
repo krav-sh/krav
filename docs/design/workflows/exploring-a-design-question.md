@@ -36,9 +36,9 @@ One or more CON-* nodes in `exploring` or `crystallized` status, with prose cont
 
 ### Skills
 
-The `arci:explore` skill builds this workflow. Preprocessing loads existing concepts for the module the developer is working in, so the agent has context about what has already gone through exploration. This matters for linking new exploration to prior decisions: if a caching concept depends on an earlier data model concept, preprocessing surfaces that relationship.
+The `krav:explore` skill builds this workflow. Preprocessing loads existing concepts for the module the developer is working in, so the agent has context about what has already gone through exploration. This matters for linking new exploration to prior decisions: if a caching concept depends on an earlier data model concept, preprocessing surfaces that relationship.
 
-The skill's instructed commands let the agent query for related concepts during the conversation, create new CON-* nodes, and transition concept status as the exploration progresses. The skill is freeform compared to transformation skills like `arci:formalize` (it gives the agent latitude to follow the developer's thinking rather than enforcing a rigid sequence).
+The skill's instructed commands let the agent query for related concepts during the conversation, create new CON-* nodes, and transition concept status as the exploration progresses. The skill is freeform compared to transformation skills like `krav:formalize` (it gives the agent latitude to follow the developer's thinking rather than enforcing a rigid sequence).
 
 ### Policies
 
@@ -48,7 +48,7 @@ The `mutation-feedback` policy fires after concept creation and status transitio
 
 ### Task types
 
-Exploration itself doesn't create tasks, but its outcomes often lead to them. A crystallized concept might produce a `decide-architecture` task if the decision needs formal evaluation and recording. If the exploration reveals uncertainty that needs hands-on investigation, a `spike` task captures that as time-boxed work. These tasks aren't created by the `arci:explore` skill directly; they emerge when the developer decides to act on what the exploration revealed, typically through `arci:decompose`.
+Exploration itself doesn't create tasks, but its outcomes often lead to them. A crystallized concept might produce a `decide-architecture` task if the decision needs formal evaluation and recording. If the exploration reveals uncertainty that needs hands-on investigation, a `spike` task captures that as time-boxed work. These tasks aren't created by the `krav:explore` skill directly; they emerge when the developer decides to act on what the exploration revealed, typically through `krav:decompose`.
 
 ## Open questions
 

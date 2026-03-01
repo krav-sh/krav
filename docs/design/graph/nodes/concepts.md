@@ -46,7 +46,7 @@ state "superseded" as superseded : Replaced by newer\nunderstanding
 [*] --> draft
 draft --> exploring : begin exploration
 exploring --> crystallized : understanding settled
-crystallized --> formalized : arci concept formalize
+crystallized --> formalized : krav concept formalize
 formalized --> superseded : supersedes
 draft --> superseded : supersedes
 exploring --> superseded : supersedes
@@ -60,14 +60,14 @@ superseded --> [*]
 | draft        | Initial capture, incomplete thinking                   |
 | exploring    | Active exploration, evaluating options                 |
 | crystallized | Thinking complete, ready to formalize into needs       |
-| formalized   | ARCI derived needs from this; concept is reference material |
+| formalized   | Krav derived needs from this; concept is reference material |
 | superseded   | Replaced by newer understanding                        |
 
 State transitions:
 
 - `draft → exploring`: Work begins on fleshing out the concept
 - `exploring → crystallized`: Exploration complete, understanding settled
-- `crystallized → formalized`: the user ran `arci concept formalize`
+- `crystallized → formalized`: the user ran `krav concept formalize`
 - `* → superseded`: New concept replaces this one (via supersedes relationship)
 
 ## Concept types
@@ -85,7 +85,7 @@ The `conceptType` field categorizes the nature of the exploration:
 
 ## Storage model
 
-ARCI stores concept vertex data in the `concepts` table (`concepts.ndjson` on disk). Edge tables hold all relationships separately.
+Krav stores concept vertex data in the `concepts` table (`concepts.ndjson` on disk). Edge tables hold all relationships separately.
 
 ```json
 {"id": "CON-C0NC3PT5", "type": "Concept", "title": "Parser architecture", "status": "exploring", "conceptType": "architectural"}
@@ -110,7 +110,7 @@ Fields:
 
 ## Prose files
 
-Concepts almost always have a prose file since exploration is their purpose. The file lives at `.arci/concepts/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier rather than stored on the node. See [Prose files](../schema.md#prose-files) for the full convention.
+Concepts almost always have a prose file since exploration is their purpose. The file lives at `.krav/concepts/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier rather than stored on the node. See [Prose files](../schema.md#prose-files) for the full convention.
 
 Concept prose files have flexible structure, but commonly include:
 
@@ -216,7 +216,7 @@ In `informs.ndjson`:
 When a concept crystallizes, formalization extracts stakeholder expectations as needs:
 
 ```bash
-arci concept formalize CON-C0NC3PT5
+Krav concept formalize CON-C0NC3PT5
 ```
 
 This interactive process:
@@ -232,20 +232,20 @@ A single concept may produce multiple needs for different stakeholders or differ
 
 ```bash
 # CRUD
-arci concept create --title "Parser architecture" --type architectural
-arci concept show CON-C0NC3PT5
-arci concept list
-arci concept list --status exploring --type architectural
-arci concept update CON-C0NC3PT5 --status crystallized
-arci concept delete CON-C0NC3PT5
+Krav concept create --title "Parser architecture" --type architectural
+Krav concept show CON-C0NC3PT5
+Krav concept list
+Krav concept list --status exploring --type architectural
+Krav concept update CON-C0NC3PT5 --status crystallized
+Krav concept delete CON-C0NC3PT5
 
 # Lifecycle
-arci concept transition CON-C0NC3PT5 --to crystallized
-arci concept formalize CON-C0NC3PT5
+Krav concept transition CON-C0NC3PT5 --to crystallized
+Krav concept formalize CON-C0NC3PT5
 
 # Relationships
-arci concept link CON-C0NC3PT5 --supersedes CON-0LD3R123
-arci concept link CON-C0NC3PT5 --informs MOD-P4RS3R01
+Krav concept link CON-C0NC3PT5 --supersedes CON-0LD3R123
+Krav concept link CON-C0NC3PT5 --informs MOD-P4RS3R01
 ```
 
 See [Concept](../../cli/commands/concept.md) for full CLI documentation.
@@ -255,7 +255,7 @@ See [Concept](../../cli/commands/concept.md) for full CLI documentation.
 ### Architectural concept
 
 ```json
-{"id": "CON-K7M3NP2Q", "type": "Concept", "title": "arci data model", "status": "crystallized", "conceptType": "architectural"}
+{"id": "CON-K7M3NP2Q", "type": "Concept", "title": "krav data model", "status": "crystallized", "conceptType": "architectural"}
 ```
 
 With an `informs` edge: `{"src": "CON-K7M3NP2Q", "dst": "MOD-OAPSROOT"}`
@@ -293,8 +293,8 @@ Concepts capture exploration and crystallized thinking:
 
 - Progress from draft through exploring to crystallized
 - Typed by nature of exploration (architectural, technical, process, etc.)
-- Stored as rows in the `concepts` vertex table (`.arci/graph/concepts.ndjson` on disk)
-- Formalize into needs via `arci concept formalize`
+- Stored as rows in the `concepts` vertex table (`.krav/graph/concepts.ndjson` on disk)
+- Formalize into needs via `krav concept formalize`
 - Maintain traceability via derivesFrom relationships
 - Can inform modules via informal `informs` relationship
 - Implemented following three-layer architecture (core/io/service)

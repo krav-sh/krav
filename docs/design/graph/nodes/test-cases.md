@@ -132,7 +132,7 @@ Unit-level testcases verify a component module's requirements. Integration testc
 
 ## Storage model
 
-ARCI stores test case vertex data in the `test_cases` table (`test_cases.ndjson` on disk). Edge tables hold all relationships separately.
+Krav stores test case vertex data in the `test_cases` table (`test_cases.ndjson` on disk). Edge tables hold all relationships separately.
 
 ```json
 {"id": "TC-D9J5Q1R3", "type": "TestCase", "title": "Parser error latency benchmark", "description": "Verifies error reporting meets 50ms requirement", "method": "test", "level": "unit", "status": "executable", "currentResult": "pass", "lastRunAt": "2026-01-15T14:30:00Z", "acceptanceCriteria": "p99 latency < 50ms across 1000 iterations", "implementation": "tests/parser/error_latency_test.ts"}
@@ -165,7 +165,7 @@ The `module` and `verifies` predicates live in their respective edge tables.
 
 ## Prose files
 
-`acceptanceCriteria` and the type-specific fields (`checklist`, `procedure`, `approach`) fully describe most testcases. Complex testcases (detailed analysis methods, multi-step demonstration procedures, environment-specific setup) may need a prose file at `.arci/test-cases/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
+`acceptanceCriteria` and the type-specific fields (`checklist`, `procedure`, `approach`) fully describe most testcases. Complex testcases (detailed analysis methods, multi-step demonstration procedures, environment-specific setup) may need a prose file at `.krav/test-cases/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
 
 ## Relationships
 
@@ -254,10 +254,10 @@ This decoupling means:
 Coverage tracks which requirements have verification:
 
 ```bash
-arci tc coverage                         # Overall coverage report
-arci tc coverage --module MOD-A4F8R2X1   # Module-specific
-arci tc untested                         # Requirements without test cases
-arci tc gaps                             # Requirements with insufficient coverage
+Krav tc coverage                         # Overall coverage report
+Krav tc coverage --module MOD-A4F8R2X1   # Module-specific
+Krav tc untested                         # Requirements without test cases
+Krav tc gaps                             # Requirements with insufficient coverage
 ```
 
 Coverage analysis considers:
@@ -270,26 +270,26 @@ Coverage analysis considers:
 
 ```bash
 # CRUD
-arci tc create --module MOD-A4F8R2X1 --title "Error latency test case" \
+Krav tc create --module MOD-A4F8R2X1 --title "Error latency test case" \
   --method test --implementation "tests/parser/error_latency_test.ts"
-arci tc show TC-D9J5Q1R3
-arci tc list
-arci tc list --module MOD-A4F8R2X1 --result fail
-arci tc update TC-D9J5Q1R3 --status implemented
-arci tc delete TC-D9J5Q1R3
+Krav tc show TC-D9J5Q1R3
+Krav tc list
+Krav tc list --module MOD-A4F8R2X1 --result fail
+Krav tc update TC-D9J5Q1R3 --status implemented
+Krav tc delete TC-D9J5Q1R3
 
 # Relationships
-arci tc link TC-D9J5Q1R3 --verifies REQ-C2H6N4P8
-arci tc unlink TC-D9J5Q1R3 --verifies REQ-C2H6N4P8
+Krav tc link TC-D9J5Q1R3 --verifies REQ-C2H6N4P8
+Krav tc unlink TC-D9J5Q1R3 --verifies REQ-C2H6N4P8
 
 # Execution tracking
-arci tc record TC-D9J5Q1R3 --result pass --duration 1250 --details "p99: 42ms"
-arci tc record TC-D9J5Q1R3 --result fail --details "p99: 67ms (exceeds 50ms)"
+Krav tc record TC-D9J5Q1R3 --result pass --duration 1250 --details "p99: 42ms"
+Krav tc record TC-D9J5Q1R3 --result fail --details "p99: 67ms (exceeds 50ms)"
 
 # Coverage
-arci tc coverage
-arci tc coverage --module MOD-A4F8R2X1
-arci tc untested
+Krav tc coverage
+Krav tc coverage --module MOD-A4F8R2X1
+Krav tc untested
 ```
 
 See [Tc](../../cli/commands/tc.md) for full CLI documentation.
@@ -352,7 +352,7 @@ Test cases are verification specifications:
 - `acceptanceCriteria` field defines explicit pass/fail criteria
 - Implementation is a task deliverable, decoupled from the specification
 - Enable coverage analysis and gap identification
-- Stored as rows in the `test_cases` vertex table (`.arci/graph/test_cases.ndjson` on disk)
+- Stored as rows in the `test_cases` vertex table (`.krav/graph/test_cases.ndjson` on disk)
 - Implemented following three-layer architecture (core/io/service)
 
 Test cases close the loop from requirements to evidence, proving that the system meets its obligations.

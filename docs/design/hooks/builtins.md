@@ -1,21 +1,21 @@
 # Builtins
 
-ARCI ships with a collection of curated builtin policies that users can opt into. These policies encode common safety patterns, workflow guardrails, and productivity enhancements that apply broadly across projects and Claude Code. Builtins use a rules-only extension that ships with the core package, sitting at the lowest precedence level so users can easily override or turn off any policy.
+Krav ships with a collection of curated builtin policies that users can opt into. These policies encode common safety patterns, workflow guardrails, and productivity enhancements that apply broadly across projects and Claude Code. Builtins use a rules-only extension that ships with the core package, sitting at the lowest precedence level so users can easily override or turn off any policy.
 
 ## Design rationale
 
-Many ARCI users want sensible defaults without having to author policies from scratch. Dangerous command patterns, git hygiene practices, and tool usage guidance are universal concerns that don't vary much across projects. Rather than expecting every user to rediscover and encode these patterns, ARCI provides a curated set of builtin policies that capture community best practices.
+Many Krav users want sensible defaults without having to author policies from scratch. Dangerous command patterns, git hygiene practices, and tool usage guidance are universal concerns that don't vary much across projects. Rather than expecting every user to rediscover and encode these patterns, Krav provides a curated set of builtin policies that capture community best practices.
 
 Builtins must not impose opinions on users who don't want them. Some teams have legitimate reasons to run `rm -rf /` or force-push to main. Builtins are opt-in at the category level and individually overridable. The precedence system ensures that any user or project policy with the same name replaces the builtin version.
 
-Builtins also serve as documentation. Even users who turn off certain policies can see what patterns ARCI considers worth addressing. The builtin policies show expression language features, action patterns, and state management techniques that users can adapt for their own policies.
+Builtins also serve as documentation. Even users who turn off certain policies can see what patterns Krav considers worth addressing. The builtin policies show expression language features, action patterns, and state management techniques that users can adapt for their own policies.
 
 ## Architecture
 
-Builtins use a rules-only extension within the ARCI package itself. The `arci/builtins/` directory contains YAML policy files organized by category. At server startup, the standard extension mechanism discovers these policies and loads them at the lowest precedence level.
+Builtins use a rules-only extension within the Krav package itself. The `krav/builtins/` directory contains YAML policy files organized by category. At server startup, the standard extension mechanism discovers these policies and loads them at the lowest precedence level.
 
 ```text
-arci/
+krav/
   builtins/
     extension.toml           # Extension manifest for builtin registration
     policies.d/
@@ -29,7 +29,7 @@ The `extension.toml` declares the builtin extension:
 
 ```toml
 [extension]
-name = "arci-builtins"
+name = "krav-builtins"
 version = "0.1.0"
 description = "Built-in policies for common safety and workflow patterns"
 
@@ -45,21 +45,21 @@ Builtins are off by default. Users opt in by enabling specific categories in the
 
 ```json
 {
-  "$schema": "https://arci.dev/schemas/policies.json",
+  "$schema": "https://krav.sh/schemas/policies.json",
   "defaultBehavior": "all-enabled",
   "enabled": [
-    "arci:block-dangerous-rm",
-    "arci:block-curl-pipe-shell",
-    "arci:block-chmod-dangerous",
-    "arci:warn-env-file-read"
+    "krav:block-dangerous-rm",
+    "krav:block-curl-pipe-shell",
+    "krav:block-chmod-dangerous",
+    "krav:warn-env-file-read"
   ]
 }
 ```
 
-Or, users can enable entire categories using a glob pattern in their `arci.yaml`:
+Or, users can enable entire categories using a glob pattern in their `krav.yaml`:
 
 ```yaml
-# <user-config-dir>/arci/arci.yaml
+# <user-config-dir>/krav/krav.yaml
 builtins:
   safety: true
   git: true
@@ -74,7 +74,7 @@ This category-based approach balances convenience with control. Users don't need
 Project configuration can also enable builtins:
 
 ```yaml
-# .arci/arci.yaml
+# .krav/krav.yaml
 builtins:
   safety: true
   git: true
@@ -88,14 +88,14 @@ Builtin policies use namespaced names to prevent collisions and make their origi
 
 ```yaml
 version: 1
-name: arci:block-dangerous-rm
+name: krav:block-dangerous-rm
 ```
 
-The `arci:` prefix identifies these as builtin policies. Users overriding a builtin policy reference the same name in their `policies.json`:
+The `krav:` prefix identifies these as builtin policies. Users overriding a builtin policy reference the same name in their `policies.json`:
 
 ```json
 {
-  "disabled": ["arci:block-dangerous-rm"]
+  "disabled": ["krav:block-dangerous-rm"]
 }
 ```
 
@@ -107,11 +107,11 @@ Or provide a complete policy definition in their `policies.d/` directory with th
 
 The safety category provides protection against dangerous operations that could cause data loss or system compromise.
 
-**`arci:block-dangerous-rm`** blocks recursive deletion of root or home directories.
+**`krav:block-dangerous-rm`** blocks recursive deletion of root or home directories.
 
 ```yaml
 version: 1
-name: arci:block-dangerous-rm
+name: krav:block-dangerous-rm
 
 metadata:
   description: Block rm -rf on root, home, or other critical paths
@@ -135,16 +135,16 @@ rules:
         Blocked potentially destructive rm command targeting critical path.
         Command: {{ command }}
 
-        If this operation is intentional, override arci:block-dangerous-rm
+        If this operation is intentional, override krav:block-dangerous-rm
         in your project configuration.
       action: deny
 ```
 
-**`arci:block-curl-pipe-shell`** blocks piping curl/wget output directly to shell interpreters.
+**`krav:block-curl-pipe-shell`** blocks piping curl/wget output directly to shell interpreters.
 
 ```yaml
 version: 1
-name: arci:block-curl-pipe-shell
+name: krav:block-curl-pipe-shell
 
 metadata:
   description: Block curl/wget piped to sh/bash for remote code execution
@@ -173,11 +173,11 @@ rules:
       action: deny
 ```
 
-**`arci:block-chmod-dangerous`** blocks overly permissive chmod operations.
+**`krav:block-chmod-dangerous`** blocks overly permissive chmod operations.
 
 ```yaml
 version: 1
-name: arci:block-chmod-dangerous
+name: krav:block-chmod-dangerous
 
 metadata:
   description: Block chmod 777 and similar overly permissive modes
@@ -203,11 +203,11 @@ rules:
       action: deny
 ```
 
-**`arci:warn-env-file-read`** warns when reading files that may contain secrets.
+**`krav:warn-env-file-read`** warns when reading files that may contain secrets.
 
 ```yaml
 version: 1
-name: arci:warn-env-file-read
+name: krav:warn-env-file-read
 
 metadata:
   description: Warn when reading files that commonly contain secrets
@@ -246,11 +246,11 @@ rules:
 
 The git category provides guardrails for common git workflow mistakes.
 
-**`arci:convert-force-to-lease`** converts `--force` to `--force-with-lease` for safer force pushes.
+**`krav:convert-force-to-lease`** converts `--force` to `--force-with-lease` for safer force pushes.
 
 ```yaml
 version: 1
-name: arci:convert-force-to-lease
+name: krav:convert-force-to-lease
 
 metadata:
   description: Convert git push --force to --force-with-lease
@@ -299,11 +299,11 @@ rules:
         when: always
 ```
 
-**`arci:warn-main-branch-push`** warns before pushing directly to main or master.
+**`krav:warn-main-branch-push`** warns before pushing directly to main or master.
 
 ```yaml
 version: 1
-name: arci:warn-main-branch-push
+name: krav:warn-main-branch-push
 
 metadata:
   description: Warn before pushing to main/master branch
@@ -337,11 +337,11 @@ rules:
       action: warn
 ```
 
-**`arci:block-force-push-main`** blocks force pushing to protected branches.
+**`krav:block-force-push-main`** blocks force pushing to protected branches.
 
 ```yaml
 version: 1
-name: arci:block-force-push-main
+name: krav:block-force-push-main
 
 metadata:
   description: Block force push to main/master
@@ -371,15 +371,15 @@ rules:
         Blocked force push to protected branch.
         Force pushing to main/master rewrites shared history.
 
-        If this is intentional, override arci:block-force-push-main.
+        If this is intentional, override krav:block-force-push-main.
       action: deny
 ```
 
-**`arci:warn-uncommitted-changes`** warns when certain operations run with uncommitted changes.
+**`krav:warn-uncommitted-changes`** warns when certain operations run with uncommitted changes.
 
 ```yaml
 version: 1
-name: arci:warn-uncommitted-changes
+name: krav:warn-uncommitted-changes
 
 metadata:
   description: Warn about uncommitted changes before destructive git operations
@@ -415,11 +415,11 @@ rules:
 
 The tool guidance category helps Claude Code use appropriate tools for common operations.
 
-**`arci:redirect-bash-find`** suggests using the Glob tool instead of bash find.
+**`krav:redirect-bash-find`** suggests using the Glob tool instead of bash find.
 
 ```yaml
 version: 1
-name: arci:redirect-bash-find
+name: krav:redirect-bash-find
 
 metadata:
   description: Suggest Glob tool instead of bash find
@@ -447,11 +447,11 @@ rules:
       action: warn
 ```
 
-**`arci:redirect-bash-grep`** suggests using the Grep tool instead of bash grep.
+**`krav:redirect-bash-grep`** suggests using the Grep tool instead of bash grep.
 
 ```yaml
 version: 1
-name: arci:redirect-bash-grep
+name: krav:redirect-bash-grep
 
 metadata:
   description: Suggest Grep tool instead of bash grep/rg
@@ -479,11 +479,11 @@ rules:
       action: warn
 ```
 
-**`arci:redirect-bash-cat`** suggests using the Read tool instead of bash cat.
+**`krav:redirect-bash-cat`** suggests using the Read tool instead of bash cat.
 
 ```yaml
 version: 1
-name: arci:redirect-bash-cat
+name: krav:redirect-bash-cat
 
 metadata:
   description: Suggest Read tool instead of bash cat
@@ -517,11 +517,11 @@ rules:
 
 The code quality category encourages fixing issues rather than suppressing them.
 
-**`arci:warn-type-ignore`** warns when adding type: ignore comments.
+**`krav:warn-type-ignore`** warns when adding type: ignore comments.
 
 ```yaml
 version: 1
-name: arci:warn-type-ignore
+name: krav:warn-type-ignore
 
 metadata:
   description: Warn when adding type ignore comments
@@ -555,11 +555,11 @@ rules:
       action: warn
 ```
 
-**`arci:warn-noqa`** warns when adding noqa comments.
+**`krav:warn-noqa`** warns when adding noqa comments.
 
 ```yaml
 version: 1
-name: arci:warn-noqa
+name: krav:warn-noqa
 
 metadata:
   description: Warn when adding noqa comments
@@ -590,11 +590,11 @@ rules:
       action: warn
 ```
 
-**`arci:warn-eslint-disable`** warns when adding `eslint-disable` comments.
+**`krav:warn-eslint-disable`** warns when adding `eslint-disable` comments.
 
 ```yaml
 version: 1
-name: arci:warn-eslint-disable
+name: krav:warn-eslint-disable
 
 metadata:
   description: Warn when adding eslint-disable comments
@@ -629,11 +629,11 @@ rules:
 
 Some builtin policies show state-dependent patterns using the state store. These policies show how to build escalating warnings that transition from warn to deny after repeated occurrences.
 
-**`arci:escalating-warning-template`** shows the warn-then-block pattern. This template warns on the first two occurrences and blocks on the third.
+**`krav:escalating-warning-template`** shows the warn-then-block pattern. This template warns on the first two occurrences and blocks on the third.
 
 ```yaml
 version: 1
-name: arci:escalating-warning-template
+name: krav:escalating-warning-template
 
 metadata:
   description: Template for warn-then-block patterns using session state
@@ -651,7 +651,7 @@ variables:
   - name: matches_risky_pattern
     expression: 'command.matches("some-risky-pattern")'
   - name: attempt_count
-    expression: '$session_get("arci:escalation:risky-pattern", 0)'
+    expression: '$session_get("krav:escalation:risky-pattern", 0)'
   - name: max_warnings
     expression: '2'
 
@@ -662,7 +662,7 @@ rules:
     effects:
       - type: setState
         scope: session
-        key: arci:escalation:risky-pattern
+        key: krav:escalation:risky-pattern
         value: '{{ attempt_count + 1 }}'
         when: always
 
@@ -695,13 +695,13 @@ The command-line tool provides commands to inspect which builtins are active:
 
 ```bash
 # List all policies including builtins
-arci hook policy list
+Krav hook policy list
 
 # Show policies from the builtins extension
-arci hook policy list --source builtins
+Krav hook policy list --source builtins
 
 # Show a specific builtin policy
-arci hook policy get arci:block-dangerous-rm
+Krav hook policy get krav:block-dangerous-rm
 ```
 
 The dashboard also displays enabled builtins alongside user and project policies, with clear visual distinction for their origin.
@@ -714,7 +714,7 @@ To turn off a specific policy without replacing it, add it to `disabled` in `pol
 
 ```json
 {
-  "disabled": ["arci:warn-type-ignore"]
+  "disabled": ["krav:warn-type-ignore"]
 }
 ```
 
@@ -722,7 +722,7 @@ To fully redefine a policy, create a policy with the same name in your `policies
 
 ```yaml
 version: 1
-name: arci:block-dangerous-rm
+name: krav:block-dangerous-rm
 
 metadata:
   description: Custom dangerous rm policy for production paths
@@ -760,4 +760,4 @@ Security policies could extend the safety category with patterns for preventing 
 
 Workflow policies could provide templates for common multi-step workflows like "test before commit" or "lint on save" that users can enable and customize.
 
-New categories follow the same opt-in model. Upgrading ARCI never automatically enables new builtin categories. Users must explicitly opt in after reviewing what's included.
+New categories follow the same opt-in model. Upgrading Krav never automatically enables new builtin categories. Users must explicitly opt in after reviewing what's included.

@@ -1,6 +1,6 @@
 # Server
 
-The ARCI server is a long-running process that owns the knowledge graph, caches compiled configuration, and serves the dashboard and REST API for a single project. It runs in the foreground via `arci server` and stops with Ctrl+C.
+The Krav server is a long-running process that owns the knowledge graph, caches compiled configuration, and serves the dashboard and REST API for a single project. It runs in the foreground via `krav server` and stops with Ctrl+C.
 
 The server serves two distinct roles. For hook evaluation, it is a performance optimization: the CLI can evaluate policies directly without a running server, but the server provides sub-10 ms evaluation by keeping configuration pre-compiled and the DuckDB instance warm. For knowledge graph operations, the server is essential: it owns the in-memory DuckDB instance containing the hydrated graph, serializes mutations through a single process, and enforces invariants that direct CLI access cannot safely coordinate.
 
@@ -18,9 +18,9 @@ Configuration management comes first. The server loads the merged configuration 
 
 The server owns the hook evaluation engine. It compiles policy expressions once and reuses them for each evaluation, avoiding the per-invocation cost of parsing. This drops evaluation overhead from 50 to 200 ms (direct mode) to single-digit milliseconds.
 
-Knowledge graph ownership is the server's most critical role. The knowledge graph is a shared mutable resource. When multiple Claude Code subagents run tasks concurrently, or a human and an agent both issue graph mutations, the server serializes writes through its single DuckDB instance. Without the server, concurrent graph mutations would require external coordination. Read-only graph queries can work in direct mode by reading the NDJSON files (DuckDB's `read_json` function handles NDJSON natively), but any mutation requires the server. On startup, the server hydrates the graph from `.arci/graph/*.ndjson` into DuckDB tables and creates the SQL/PGQ property graph. On checkpoint or graceful shutdown, it dehydrates modified graph state back to NDJSON.
+Knowledge graph ownership is the server's most critical role. The knowledge graph is a shared mutable resource. When multiple Claude Code subagents run tasks concurrently, or a human and an agent both issue graph mutations, the server serializes writes through its single DuckDB instance. Without the server, concurrent graph mutations would require external coordination. Read-only graph queries can work in direct mode by reading the NDJSON files (DuckDB's `read_json` function handles NDJSON natively), but any mutation requires the server. On startup, the server hydrates the graph from `.krav/graph/*.ndjson` into DuckDB tables and creates the SQL/PGQ property graph. On checkpoint or graceful shutdown, it dehydrates modified graph state back to NDJSON.
 
-State store management handles the file-backed DuckDB database at `.arci/state.duckdb`, attached to the same DuckDB instance as the in-memory graph via the `ATTACH` mechanism, so queries can join across both domains without a separate connection pool.
+State store management handles the file-backed DuckDB database at `.krav/state.duckdb`, attached to the same DuckDB instance as the in-memory graph via the `ATTACH` mechanism, so queries can join across both domains without a separate connection pool.
 
 Metrics accumulation tracks policy match counts, action executions, errors, and timing information in memory. The API exposes these metrics, and the dashboard displays them. Metrics reset on server restart; the project may add persistent metrics later but in-memory suffices for diagnostics.
 
@@ -36,7 +36,7 @@ The dashboard uses Go's `html/template` with Sprig for server-side rendering and
 
 ```mermaid
 flowchart TB
-    subgraph server["arci server"]
+    subgraph server["krav server"]
         subgraph http_server["HTTP server"]
             subgraph routes["Routes"]
                 apply_ep["POST /apply"]
@@ -86,13 +86,13 @@ Bubble Tea (charmbracelet/bubbletea) powers the TUI, using an Elm-style architec
 
 ## Operating modes
 
-ARCI operates in two modes: direct execution and server-delegated execution. Both use the same evaluation engine; the difference is where configuration loading and state management happen.
+Krav operates in two modes: direct execution and server-delegated execution. Both use the same evaluation engine; the difference is where configuration loading and state management happen.
 
-In direct execution mode, `arci hook apply` loads configuration, compiles policy expressions, and evaluates policies on every invocation. This requires no setup beyond installing ARCI and writing policies.
+In direct execution mode, `krav hook apply` loads configuration, compiles policy expressions, and evaluates policies on every invocation. This requires no setup beyond installing Krav and writing policies.
 
-In server-delegated mode, `arci hook apply` sends requests to the running server, which maintains cached configuration and pre-compiled expressions. The server also handles graph mutations, state management, and metrics.
+In server-delegated mode, `krav hook apply` sends requests to the running server, which maintains cached configuration and pre-compiled expressions. The server also handles graph mutations, state management, and metrics.
 
-The CLI determines which mode to use by checking for a `.arci/server.json` lockfile in the project directory (see [discovery](discovery.md)). If the lockfile exists and the server process is alive, the CLI delegates. If not, the behavior depends on the operation: hook evaluation falls back to direct execution silently, while graph-mutating commands produce an error telling the user to start the server.
+The CLI determines which mode to use by checking for a `.krav/server.json` lockfile in the project directory (see [discovery](discovery.md)). If the lockfile exists and the server process is alive, the CLI delegates. If not, the behavior depends on the operation: hook evaluation falls back to direct execution silently, while graph-mutating commands produce an error telling the user to start the server.
 
 ## API design
 
@@ -144,11 +144,11 @@ Serves the dashboard web interface. Returns HTML pages rendered with Go template
 
 ## Lifecycle
 
-The server runs in the foreground via `arci server`. It determines the project root using the same walk-up-the-tree logic as all other `arci` commands (looking for `.arci/` or other project markers), respecting `--project-dir` and `ARCI_PROJECT_DIR` overrides.
+The server runs in the foreground via `krav server`. It determines the project root using the same walk-up-the-tree logic as all other `krav` commands (looking for `.krav/` or other project markers), respecting `--project-dir` and `KRAV_PROJECT_DIR` overrides.
 
-On startup, the server selects a port by trying the configured base port (default 7680) and incrementing until it finds a free port, up to a small scan limit. It then creates the in-memory DuckDB instance and loads the DuckPGQ extension, hydrates the knowledge graph from `.arci/graph/*.ndjson` into DuckDB vertex and edge tables, creates the SQL/PGQ property graph definition over those tables, attaches the file-backed state database at `.arci/state.duckdb`, writes `.arci/server.json` to the project directory (see [discovery](discovery.md)), initializes the HTTP server and registers routes, starts the file watcher for configuration directories, and begins accepting requests.
+On startup, the server selects a port by trying the configured base port (default 7680) and incrementing until it finds a free port, up to a small scan limit. It then creates the in-memory DuckDB instance and loads the DuckPGQ extension, hydrates the knowledge graph from `.krav/graph/*.ndjson` into DuckDB vertex and edge tables, creates the SQL/PGQ property graph definition over those tables, attaches the file-backed state database at `.krav/state.duckdb`, writes `.krav/server.json` to the project directory (see [discovery](discovery.md)), initializes the HTTP server and registers routes, starts the file watcher for configuration directories, and begins accepting requests.
 
-On shutdown (SIGTERM, SIGINT, or Ctrl+C), the server stops accepting new connections, waits for in-flight requests to complete (with a timeout), dehydrates the graph state back to sorted NDJSON files under `.arci/graph/`, stops the file watcher, closes the DuckDB instance, removes `.arci/server.json`, and exits. Dehydration also occurs on explicit save commands and baseline creation, not on every write.
+On shutdown (SIGTERM, SIGINT, or Ctrl+C), the server stops accepting new connections, waits for in-flight requests to complete (with a timeout), dehydrates the graph state back to sorted NDJSON files under `.krav/graph/`, stops the file watcher, closes the DuckDB instance, removes `.krav/server.json`, and exits. Dehydration also occurs on explicit save commands and baseline creation, not on every write.
 
 The lockfile is the single artifact of a running server. If the server crashes without cleaning up, the discovery mechanism detects and handles the stale lockfile.
 
@@ -156,17 +156,17 @@ The lockfile is the single artifact of a running server. If the server crashes w
 
 Each server instance owns exactly one project. The server knows its project root because that directory is where it started (or the directory specified by `--project-dir`). Configuration loading, graph operations, and state management are all scoped to that project.
 
-Running multiple ARCI servers for different projects is straightforward: each binds its own port and writes its own `.arci/server.json`. The auto-detection scan handles port conflicts between projects; the second server simply takes the next available port.
+Running multiple Krav servers for different projects is straightforward: each binds its own port and writes its own `.krav/server.json`. The auto-detection scan handles port conflicts between projects; the second server simply takes the next available port.
 
 ## Process management
 
-ARCI takes a foreground-first approach: the server never forks, backgrounds, or detaches from the terminal. Users choose how to manage its lifecycle using external tools that are purpose-built for process supervision.
+Krav takes a foreground-first approach: the server never forks, backgrounds, or detaches from the terminal. Users choose how to manage its lifecycle using external tools that are purpose-built for process supervision.
 
 Running the server in a terminal, tmux session, or screen works well for development. The TUI makes this pane actively useful rather than a stream of logs to ignore.
 
 For persistent installations, system service managers are the recommended approach. On Linux, systemd user services (`systemctl --user`) provide automatic restart, resource limits, and logging integration without requiring root. On macOS, launchd launch agents offer similar capabilities and run at user login.
 
-Process supervisors like supervisord provide cross-platform management without root access. Container-based deployment works by running `arci server` as the container entrypoint.
+Process supervisors like supervisord provide cross-platform management without root access. Container-based deployment works by running `krav server` as the container entrypoint.
 
 ## Error isolation
 

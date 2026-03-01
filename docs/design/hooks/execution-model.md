@@ -1,10 +1,10 @@
 # Execution model
 
-This document describes how ARCI evaluates policies when a hook event arrives. It covers the evaluation pipeline, priority cascading, result aggregation, and the data flow through the system.
+This document describes how Krav evaluates policies when a hook event arrives. It covers the evaluation pipeline, priority cascading, result aggregation, and the data flow through the system.
 
 ## Overview
 
-When Claude Code fires a hook (such as before executing a Bash command), ARCI receives the event and evaluates all matching policies to produce a response. The response determines whether the tool call proceeds, any mutations to apply, warnings to surface, and side effects to execute.
+When Claude Code fires a hook (such as before executing a Bash command), Krav receives the event and evaluates all matching policies to produce a response. The response determines whether the tool call proceeds, any mutations to apply, warnings to surface, and side effects to execute.
 
 The evaluation pipeline has these stages: structural matching filters policies quickly using indexable criteria, condition evaluation applies CEL expressions with runtime context, rule evaluation runs the actual validations and mutations, effect execution handles side actions, and result aggregation combines outcomes from all matching policies into a single response.
 
@@ -257,7 +257,7 @@ The audit trail is available through the dashboard, API, and log output.
 
 ## Fail-open semantics
 
-ARCI operates as a guardrail, not a gate. Errors in the policy system should not block Claude from operating. Only explicit deny decisions block tool calls.
+Krav operates as a guardrail, not a gate. Errors in the policy system should not block Claude from operating. Only explicit deny decisions block tool calls.
 
 ### Error handling
 
@@ -274,13 +274,13 @@ The principle is: uncertainty defaults to allowing the operation. Users must exp
 
 ### Server unavailability
 
-When the ARCI command-line tool can't reach the server:
+When the Krav command-line tool can't reach the server:
 
 - `server.on_unavailable: fallback`: the command-line tool falls back to direct execution
 - `server.on_unavailable: start`: the command-line tool attempts to spawn the server
 - `server.on_unavailable: fail`: the command-line tool fails (still doesn't block Claude; the assistant's hook system handles command-line tool failures)
 
-Even if ARCI fails entirely, Claude continues operating. The assistant's native hook system treats hook script failures as non-blocking by default.
+Even if Krav fails entirely, Claude continues operating. The assistant's native hook system treats hook script failures as non-blocking by default.
 
 ## Performance considerations
 
@@ -323,7 +323,7 @@ The following diagram illustrates the end-to-end hook evaluation pipeline, from 
 title Hook Evaluation Pipeline
 
 Person(claude, "Claude Code", "Fires hook events")
-System(cli, "arci CLI", "Hook entry point (arci hook apply)")
+System(cli, "krav CLI", "Hook entry point (krav hook apply)")
 System(engine, "Evaluation Engine", "Policy evaluation pipeline")
 SystemDb(state, "State Store", "Session and project state")
 

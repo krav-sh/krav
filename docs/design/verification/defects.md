@@ -172,7 +172,7 @@ When a confirmed defect needs work, `generates` links to the remediation task. T
 
 ## Interaction with reviews
 
-A review in ARCI is a verification-phase task (task_type: `architecture-review`, `design-review`, `code-review`, `requirements-review`). The review task produces two kinds of output:
+A review in Krav is a verification-phase task (task_type: `architecture-review`, `design-review`, `code-review`, `requirements-review`). The review task produces two kinds of output:
 
 **Review report** (task deliverable): a prose document capturing the review's analysis, observations, recommendations, and aggregate disposition. This is where neutral observations, suggestions, and commentary live. The report is a file in the module's deliverables directory.
 
@@ -201,7 +201,7 @@ policies:
   - name: require-defect-for-verification-failure
     description: Verification failures must have an associated defect
     match:
-      tool: arci
+      tool: krav
       args:
         - match: "verification"
           position: 0
@@ -323,7 +323,7 @@ BLOCKING_SEVERITIES: frozenset[Severity] = frozenset({
 })
 ```
 
-### Core layer (`arci.core.defect`)
+### Core layer (`krav.core.defect`)
 
 Pure functions:
 
@@ -353,7 +353,7 @@ def defects_for_subject(graph: Graph, subject_id: str) -> tuple[DefectNode, ...]
 def defects_by_review(graph: Graph, task_id: str) -> tuple[DefectNode, ...]: ...
 ```
 
-### Service layer (`arci.service.defect`)
+### Service layer (`krav.service.defect`)
 
 Orchestrates core and IO:
 
@@ -399,36 +399,36 @@ def reopen(store: GraphStore, defect_id: str) -> DefectNode: ...
 
 ```bash
 # CRUD
-arci defect create --module MOD-A4F8R2X1 --severity major \
+Krav defect create --module MOD-A4F8R2X1 --severity major \
   --statement "Error messages don't include source location" \
   --subject REQ-3RR0R001 --category incomplete
-arci defect show DEF-F1L4T7W5
-arci defect list
-arci defect list --module MOD-A4F8R2X1 --severity critical --status open
-arci defect update DEF-F1L4T7W5 --severity critical
-arci defect delete DEF-F1L4T7W5
+Krav defect show DEF-F1L4T7W5
+Krav defect list
+Krav defect list --module MOD-A4F8R2X1 --severity critical --status open
+Krav defect update DEF-F1L4T7W5 --severity critical
+Krav defect delete DEF-F1L4T7W5
 
 # Disposition
-arci defect confirm DEF-F1L4T7W5
-arci defect reject DEF-F1L4T7W5 --rationale "By design: errors use structured output"
-arci defect defer DEF-F1L4T7W5 --rationale "Low priority for v1" --target "v2.0"
+Krav defect confirm DEF-F1L4T7W5
+Krav defect reject DEF-F1L4T7W5 --rationale "By design: errors use structured output"
+Krav defect defer DEF-F1L4T7W5 --rationale "Low priority for v1" --target "v2.0"
 
 # Resolution
-arci defect generate-task DEF-F1L4T7W5
-arci defect resolve DEF-F1L4T7W5 --notes "Added line/column to all error types"
-arci defect verify DEF-F1L4T7W5
-arci defect close DEF-F1L4T7W5
-arci defect reopen DEF-F1L4T7W5
+Krav defect generate-task DEF-F1L4T7W5
+Krav defect resolve DEF-F1L4T7W5 --notes "Added line/column to all error types"
+Krav defect verify DEF-F1L4T7W5
+Krav defect close DEF-F1L4T7W5
+Krav defect reopen DEF-F1L4T7W5
 
 # Queries
-arci defect open                           # All open/confirmed defects
-arci defect open --module MOD-A4F8R2X1     # Open for module
-arci defect blocking                       # Defects blocking phase advancement
-arci defect deferred                       # All deferred defects
-arci defect by-review TSK-R3V13W01         # Defects from a specific review
-arci defect by-subject REQ-C2H6N4P8        # Defects about a specific node
-arci defect by-category ambiguous          # Defects by category
-arci defect summary                        # Aggregate counts by status/severity
+Krav defect open                           # All open/confirmed defects
+Krav defect open --module MOD-A4F8R2X1     # Open for module
+Krav defect blocking                       # Defects blocking phase advancement
+Krav defect deferred                       # All deferred defects
+Krav defect by-review TSK-R3V13W01         # Defects from a specific review
+Krav defect by-subject REQ-C2H6N4P8        # Defects about a specific node
+Krav defect by-category ambiguous          # Defects by category
+Krav defect summary                        # Aggregate counts by status/severity
 ```
 
 ## Examples

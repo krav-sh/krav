@@ -1,6 +1,6 @@
 # Configuration
 
-This document describes the `arci.yaml` configuration file format, including schema versioning and extension mechanisms.
+This document describes the `krav.yaml` configuration file format, including schema versioning and extension mechanisms.
 
 ## Loading architecture
 
@@ -15,7 +15,7 @@ This separation keeps the core pure and testable. The core has no knowledge of Y
 Configuration files use YAML format with a required `$schema` field for version identification:
 
 ```yaml
-$schema: https://arci.dev/schemas/arci/v1.yaml
+$schema: https://krav.sh/schemas/krav/v1.yaml
 
 log_level: info
 
@@ -27,10 +27,10 @@ default:
 
 ## Schema versioning
 
-Every `arci.yaml` file requires the `$schema` field. It identifies the configuration schema version and enables tooling support (editor autocompletion, validation).
+Every `krav.yaml` file requires the `$schema` field. It identifies the configuration schema version and enables tooling support (editor autocompletion, validation).
 
 ```yaml
-$schema: https://arci.dev/schemas/arci/v1.yaml
+$schema: https://krav.sh/schemas/krav/v1.yaml
 ```
 
 Schema versions follow semantic versioning. Breaking changes increment the major version. The loader validates files against their declared schema and reports errors for unknown or incompatible versions.
@@ -69,7 +69,7 @@ default:
 The `extends` field allows a configuration file to inherit from other files:
 
 ```yaml
-$schema: https://arci.dev/schemas/arci/v1.yaml
+$schema: https://krav.sh/schemas/krav/v1.yaml
 
 extends:
   - ../shared/team-base.yaml
@@ -109,7 +109,7 @@ This is a critical safety property. With `allow`, configuration errors never blo
 
 ### Server
 
-Controls the ARCI server process that owns the knowledge graph, caches configuration, and serves the dashboard and REST API.
+Controls the Krav server process that owns the knowledge graph, caches configuration, and serves the dashboard and REST API.
 
 ```yaml
 default:
@@ -126,7 +126,7 @@ default:
 | `hot_reload`      | Watch config files and reload on change | `true`  |
 | `metrics.enabled` | Expose Prometheus metrics at `/metrics` | `true`  |
 
-The server always binds to `127.0.0.1`. The configured port is a starting point; if it is in use, the server increments until it finds a free port. The server records the actual port in `.arci/server.json` for discovery. When no server is running, the CLI performs direct evaluation for hooks and reports an error for graph mutations.
+The server always binds to `127.0.0.1`. The configured port is a starting point; if it is in use, the server increments until it finds a free port. The server records the actual port in `.krav/server.json` for discovery. When no server is running, the CLI performs direct evaluation for hooks and reports an error for graph mutations.
 
 ### State
 
@@ -161,7 +161,7 @@ default:
 
     team-config:
       type: file
-      path: .arci/team.json
+      path: .krav/team.json
       watch: true
 ```
 
@@ -180,7 +180,7 @@ See [policy-model.md](../hooks/policy-model.md) for details on parameter resolut
 
 Settings can be overridden via environment variables. The mapping follows these rules:
 
-1. Prefix with `ARCI_`
+1. Prefix with `KRAV_`
 2. Convert to uppercase
 3. Replace dots and nested keys with double-underscore separators
 
@@ -188,8 +188,8 @@ Examples:
 
 | Setting                  | Environment Variable          |
 | ------------------------ | ----------------------------- |
-| `default.log_level`      | `ARCI_LOG_LEVEL`        |
-| `default.server.port`    | `ARCI_SERVER__PORT`     |
+| `default.log_level`      | `KRAV_LOG_LEVEL`        |
+| `default.server.port`    | `KRAV_SERVER__PORT`     |
 
 ## Validation
 
@@ -203,13 +203,13 @@ The CLI provides validation commands:
 
 ```bash
 # Validate all configuration files in the cascade
-arci config validate
+Krav config validate
 
 # Validate a specific file
-arci config validate --file .arci/arci.yaml
+Krav config validate --file .krav/krav.yaml
 
 # Show the effective merged configuration
-arci config show
+Krav config show
 ```
 
 ## Error handling
@@ -220,7 +220,7 @@ The system logs and reports errors through:
 
 - CLI output when running commands
 - Server dashboard status panel
-- The `arci config validate` command
+- The `krav config validate` command
 
 Managed/required configuration is the exception. Errors in required managed config cause a hard failure, as proceeding without enterprise security policies would violate the security model.
 
@@ -240,7 +240,7 @@ Requests in flight complete with the old configuration. New requests use the new
 ### Minimal project configuration
 
 ```yaml
-$schema: https://arci.dev/schemas/arci/v1.yaml
+$schema: https://krav.sh/schemas/krav/v1.yaml
 
 default:
   log_level: info
@@ -249,7 +249,7 @@ default:
 ### Development configuration with debugging
 
 ```yaml
-$schema: https://arci.dev/schemas/arci/v1.yaml
+$schema: https://krav.sh/schemas/krav/v1.yaml
 
 default:
   log_level: debug
@@ -257,13 +257,13 @@ default:
     hot_reload: true
 ```
 
-### Enterprise configuration with ARCI specs integration
+### Enterprise configuration with Krav specs integration
 
 ```yaml
-$schema: https://arci.dev/schemas/arci/v1.yaml
+$schema: https://krav.sh/schemas/krav/v1.yaml
 
 extends:
-  - /etc/arci/managed/recommended/arci.yaml
+  - /etc/krav/managed/recommended/krav.yaml
 
 default:
   failure_policy: deny
@@ -284,7 +284,7 @@ default:
 ### Personal user configuration
 
 ```yaml
-$schema: https://arci.dev/schemas/arci/v1.yaml
+$schema: https://krav.sh/schemas/krav/v1.yaml
 
 default:
   log_level: warn

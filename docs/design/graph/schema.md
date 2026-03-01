@@ -2,13 +2,13 @@
 
 ## Overview
 
-This document defines the ontology schema (T-Box) for the ARCI knowledge graph: the node types, properties, identifier scheme, and vocabulary that constitute the graph's formal structure. Node types map to DuckDB vertex tables, predicates map to edge tables, and the SQL/PGQ property graph is a view layer over these relational tables.
+This document defines the ontology schema (T-Box) for the Krav knowledge graph: the node types, properties, identifier scheme, and vocabulary that constitute the graph's formal structure. Node types map to DuckDB vertex tables, predicates map to edge tables, and the SQL/PGQ property graph is a view layer over these relational tables.
 
 ## Storage model
 
 The knowledge graph runtime is an in-memory DuckDB instance with the DuckPGQ community extension (SQL/PGQ, part of the SQL:2023 standard). Each node type maps to a DuckDB vertex table (`concepts`, `modules`, `needs`, `requirements`, `test_cases`, `tasks`, `defects`, `baselines`, `stakeholders`, `test_plans`, `developers`, `agents`). Each predicate maps to an edge table (`child_of`, `derives_from`, `allocates_to`, `depends_on`, `verified_by`, `module`, `stakeholder`, `subject`, `detected_by`, `generates`, `informs`, `implements`, `operator`, `parent_agent`). DuckPGQ creates a SQL/PGQ property graph over these tables, making the same data queryable with both standard SQL (filtering, aggregation, analytics) and SQL/PGQ pattern matching syntax (graph traversals, shortest paths, variable-length paths).
 
-On-disk serialization uses per-table NDJSON files under `.arci/graph/`. Vertex tables serialize to files named after the table (`concepts.ndjson`, `needs.ndjson`, `requirements.ndjson`, `tasks.ndjson`, etc.). Edge tables serialize the same way (`derives_from.ndjson`, `verified_by.ndjson`, etc.). Each file sorts deterministically (vertex tables by `id`, edge tables by all columns) for stable git diffs. The `HydrateFromDir` / `DehydrateToDir` pattern loads NDJSON files into DuckDB tables on server startup and writes them back on checkpoint or shutdown.
+On-disk serialization uses per-table NDJSON files under `.krav/graph/`. Vertex tables serialize to files named after the table (`concepts.ndjson`, `needs.ndjson`, `requirements.ndjson`, `tasks.ndjson`, etc.). Edge tables serialize the same way (`derives_from.ndjson`, `verified_by.ndjson`, etc.). Each file sorts deterministically (vertex tables by `id`, edge tables by all columns) for stable git diffs. The `HydrateFromDir` / `DehydrateToDir` pattern loads NDJSON files into DuckDB tables on server startup and writes them back on checkpoint or shutdown.
 
 The NDJSON format uses plain JSON keys (`id`, `type`, `title`, `status`) rather than JSON-LD keys (`@id`, `@type`, `@context`). Object property values use plain ID strings (`"module": "MOD-A4F8R2X1"`) rather than JSON-LD reference objects (`"module": {"@id": "MOD-A4F8R2X1"}`). Multi-valued references use arrays of ID strings.
 
@@ -16,18 +16,18 @@ The DuckPGQ spike at `experiments/duckpgq/` validates this architecture with sub
 
 ## Vocabulary
 
-The ARCI schema defines a vocabulary in the `arci:` namespace (`https://arci.dev/schema#`) that aligns with external ontologies (Dublin Core, PROV-O, OSLC) as a design reference for semantic interoperability. The runtime data model is relational tables queried via SQL/PGQ, not RDF triples. The RDF vocabulary alignment serves as design-time metadata documenting the conceptual mapping between ARCI's property graph and established engineering ontologies. See [Vocabulary alignment](vocabulary-alignment.md) for the complete mapping.
+The Krav schema defines a vocabulary in the `krav:` namespace (`https://krav.sh/schema#`) that aligns with external ontologies (Dublin Core, PROV-O, OSLC) as a design reference for semantic interoperability. The runtime data model is relational tables queried via SQL/PGQ, not RDF triples. The RDF vocabulary alignment serves as design-time metadata documenting the conceptual mapping between Krav's property graph and established engineering ontologies. See [Vocabulary alignment](vocabulary-alignment.md) for the complete mapping.
 
-**Namespace**: `https://arci.dev/schema#`
-**Prefix**: `arci`
+**Namespace**: `https://krav.sh/schema#`
+**Prefix**: `krav`
 
-The vocabulary maps compact property names to their canonical IRIs in the ARCI, Dublin Core, PROV-O, and OSLC namespaces:
+The vocabulary maps compact property names to their canonical IRIs in the Krav, Dublin Core, PROV-O, and OSLC namespaces:
 
 ```json
 {
   "@context": {
-    "@vocab": "https://arci.dev/schema#",
-    "arci": "https://arci.dev/schema#",
+    "@vocab": "https://krav.sh/schema#",
+    "krav": "https://krav.sh/schema#",
     "dcterms": "http://purl.org/dc/terms/",
     "prov": "http://www.w3.org/ns/prov#",
     "oslc_rm": "http://open-services.net/ns/rm#",
@@ -36,32 +36,32 @@ The vocabulary maps compact property names to their canonical IRIs in the ARCI, 
     "oslc_config": "http://open-services.net/ns/config#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
 
-    "Module": "arci:Module",
-    "Concept": "arci:Concept",
-    "Need": "arci:Need",
-    "Requirement": "arci:Requirement",
-    "TestCase": "arci:TestCase",
-    "Task": "arci:Task",
-    "Defect": "arci:Defect",
-    "Baseline": "arci:Baseline",
-    "Stakeholder": "arci:Stakeholder",
-    "TestPlan": "arci:TestPlan",
-    "Developer": "arci:Developer",
-    "Agent": "arci:Agent",
+    "Module": "krav:Module",
+    "Concept": "krav:Concept",
+    "Need": "krav:Need",
+    "Requirement": "krav:Requirement",
+    "TestCase": "krav:TestCase",
+    "Task": "krav:Task",
+    "Defect": "krav:Defect",
+    "Baseline": "krav:Baseline",
+    "Stakeholder": "krav:Stakeholder",
+    "TestPlan": "krav:TestPlan",
+    "Developer": "krav:Developer",
+    "Agent": "krav:Agent",
 
-    "childOf": {"@id": "arci:childOf", "@type": "@id"},
-    "derivesFrom": {"@id": "arci:derivesFrom", "@type": "@id"},
-    "allocatesTo": {"@id": "arci:allocatesTo", "@type": "@id"},
-    "dependsOn": {"@id": "arci:dependsOn", "@type": "@id"},
-    "verifiedBy": {"@id": "arci:verifiedBy", "@type": "@id"},
-    "subject": {"@id": "arci:subject", "@type": "@id"},
-    "detectedBy": {"@id": "arci:detectedBy", "@type": "@id"},
-    "generates": {"@id": "arci:generates", "@type": "@id"},
-    "informs": {"@id": "arci:informs", "@type": "@id"},
-    "module": {"@id": "arci:module", "@type": "@id"},
-    "stakeholder": {"@id": "arci:stakeholder", "@type": "@id"},
-    "operator": {"@id": "arci:operator", "@type": "@id"},
-    "parentAgent": {"@id": "arci:parentAgent", "@type": "@id"},
+    "childOf": {"@id": "krav:childOf", "@type": "@id"},
+    "derivesFrom": {"@id": "krav:derivesFrom", "@type": "@id"},
+    "allocatesTo": {"@id": "krav:allocatesTo", "@type": "@id"},
+    "dependsOn": {"@id": "krav:dependsOn", "@type": "@id"},
+    "verifiedBy": {"@id": "krav:verifiedBy", "@type": "@id"},
+    "subject": {"@id": "krav:subject", "@type": "@id"},
+    "detectedBy": {"@id": "krav:detectedBy", "@type": "@id"},
+    "generates": {"@id": "krav:generates", "@type": "@id"},
+    "informs": {"@id": "krav:informs", "@type": "@id"},
+    "module": {"@id": "krav:module", "@type": "@id"},
+    "stakeholder": {"@id": "krav:stakeholder", "@type": "@id"},
+    "operator": {"@id": "krav:operator", "@type": "@id"},
+    "parentAgent": {"@id": "krav:parentAgent", "@type": "@id"},
 
     "implements": {"@id": "oslc_cm:implementsRequirement", "@type": "@id"},
     "generatedBy": {"@id": "prov:wasGeneratedBy", "@type": "@id"},
@@ -69,20 +69,20 @@ The vocabulary maps compact property names to their canonical IRIs in the ARCI, 
 
     "title": "dcterms:title",
     "description": "dcterms:description",
-    "statement": "arci:statement",
-    "status": "arci:status",
-    "phase": "arci:phase",
-    "processPhase": "arci:processPhase",
-    "conceptType": "arci:conceptType",
-    "priority": "arci:priority",
-    "severity": "arci:severity",
-    "category": "arci:category",
-    "summary": "arci:summary",
-    "sessionId": "arci:sessionId",
-    "subagentId": "arci:subagentId",
+    "statement": "krav:statement",
+    "status": "krav:status",
+    "phase": "krav:phase",
+    "processPhase": "krav:processPhase",
+    "conceptType": "krav:conceptType",
+    "priority": "krav:priority",
+    "severity": "krav:severity",
+    "category": "krav:category",
+    "summary": "krav:summary",
+    "sessionId": "krav:sessionId",
+    "subagentId": "krav:subagentId",
     "created": {"@id": "dcterms:created", "@type": "xsd:dateTime"},
     "updated": {"@id": "dcterms:modified", "@type": "xsd:dateTime"},
-    "tags": "arci:tags"
+    "tags": "krav:tags"
   }
 }
 ```
@@ -154,23 +154,23 @@ All node types share these properties:
 
 Every node type can have an associated markdown file for extended prose that doesn't fit in structured fields. The system derives the path from the node's identifier rather than storing it on the node.
 
-Prose files live in flat, type-specific directories under `.arci/`:
+Prose files live in flat, type-specific directories under `.krav/`:
 
 | Node type   | Directory              |
 |-------------|------------------------|
-| Concept     | `.arci/concepts/`      |
-| Module      | `.arci/modules/`       |
-| Stakeholder | `.arci/stakeholders/`  |
-| Need        | `.arci/needs/`         |
-| Requirement | `.arci/requirements/`  |
-| Test case   | `.arci/test-cases/`    |
-| Task        | `.arci/tasks/`         |
-| Defect      | `.arci/defects/`       |
-| Baseline    | `.arci/baselines/`     |
-| Developer   | `.arci/developers/`    |
-| Agent       | `.arci/agents/`        |
+| Concept     | `.krav/concepts/`      |
+| Module      | `.krav/modules/`       |
+| Stakeholder | `.krav/stakeholders/`  |
+| Need        | `.krav/needs/`         |
+| Requirement | `.krav/requirements/`  |
+| Test case   | `.krav/test-cases/`    |
+| Task        | `.krav/tasks/`         |
+| Defect      | `.krav/defects/`       |
+| Baseline    | `.krav/baselines/`     |
+| Developer   | `.krav/developers/`    |
+| Agent       | `.krav/agents/`        |
 
-Filenames follow the pattern `{timestamp}-{NANOID}-{slug}.md`. The timestamp is `YYYYMMDDHHMMSS` and provides filesystem sort order. The nanoid is the same 8-character identifier from the node's `@id`. The slug is a human-readable kebab-case label. As an example, concept `CON-K7M3NP2Q` titled "Parser architecture" would have its prose at `.arci/concepts/20260103164500-K7M3NP2Q-parser-architecture.md`.
+Filenames follow the pattern `{timestamp}-{NANOID}-{slug}.md`. The timestamp is `YYYYMMDDHHMMSS` and provides filesystem sort order. The nanoid is the same 8-character identifier from the node's `@id`. The slug is a human-readable kebab-case label. As an example, concept `CON-K7M3NP2Q` titled "Parser architecture" would have its prose at `.krav/concepts/20260103164500-K7M3NP2Q-parser-architecture.md`.
 
 Resolution is mechanical: the node type determines the directory, and the nanoid matches the second segment of the filename when split by `-`. The timestamp and slug are filesystem conveniences for sorting and readability; the graph stores neither.
 

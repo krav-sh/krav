@@ -4,7 +4,7 @@ The stakeholder command group manages project stakeholders: the named parties wh
 
 ## Synopsis
 
-    arci stakeholder <subcommand> [options]
+    krav stakeholder <subcommand> [options]
 
 ## Description
 
@@ -18,7 +18,7 @@ No fixed taxonomy of stakeholder types exists. A solo developer's side project m
 
 Creates a stakeholder node.
 
-    arci stakeholder create --title <title> [options]
+    krav stakeholder create --title <title> [options]
 
 **Flags:**
 
@@ -31,13 +31,13 @@ Creates a stakeholder node.
 
 Displays detailed information about a stakeholder, including metadata, concerns, and linked needs.
 
-    arci stakeholder show <stakeholder-id>
+    krav stakeholder show <stakeholder-id>
 
 ### `list`
 
 Lists stakeholders, optionally filtered by status.
 
-    arci stakeholder list [options]
+    krav stakeholder list [options]
 
 **Flags:**
 
@@ -47,7 +47,7 @@ Lists stakeholders, optionally filtered by status.
 
 Modifies stakeholder fields.
 
-    arci stakeholder update <stakeholder-id> [flags]
+    krav stakeholder update <stakeholder-id> [flags]
 
 **Flags:**
 
@@ -60,7 +60,7 @@ Modifies stakeholder fields.
 
 Removes a stakeholder node from the graph. Fails if any needs still reference this stakeholder, unless the user passes `--force`.
 
-    arci stakeholder delete <stakeholder-id>
+    krav stakeholder delete <stakeholder-id>
 
 **Flags:**
 
@@ -70,13 +70,13 @@ Removes a stakeholder node from the graph. Fails if any needs still reference th
 
 Transitions a stakeholder to `archived` status. Archived stakeholders remain in the graph and their need references remain valid, but formalization workflows exclude them by default.
 
-    arci stakeholder archive <stakeholder-id>
+    krav stakeholder archive <stakeholder-id>
 
 ### `needs`
 
 Lists all needs linked to a stakeholder.
 
-    arci stakeholder needs <stakeholder-id> [options]
+    krav stakeholder needs <stakeholder-id> [options]
 
 **Flags:**
 

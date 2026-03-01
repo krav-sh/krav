@@ -1,10 +1,10 @@
 # Structural code analysis with GritQL
 
-GritQL is a query language for structural code search and transformation. Unlike regular expressions, which operate on text, GritQL understands syntax trees and can match code patterns regardless of formatting, whitespace, or superficial differences. ARCI integrates GritQL as an optional feature for policies that need to analyze code structure rather than raw text.
+GritQL is a query language for structural code search and transformation. Unlike regular expressions, which operate on text, GritQL understands syntax trees and can match code patterns regardless of formatting, whitespace, or superficial differences. Krav integrates GritQL as an optional feature for policies that need to analyze code structure rather than raw text.
 
 The key insight of GritQL is that any valid code snippet in backticks is a valid pattern. Policy authors don't need to understand abstract syntax trees or parser internals. Writing `` `console.log($msg)` `` matches any console.log call and captures the argument as `$msg`. This makes structural matching accessible without requiring deep language knowledge.
 
-ARCI delegates to the grit command-line tool rather than embedding TreeSitter grammars directly. This keeps the ARCI package lightweight and ensures users get the latest GritQL features and language support without ARCI releases. If the grit command-line tool is not installed, GritQL support logs a warning and the engine skips it entirely, maintaining fail-open semantics.
+Krav delegates to the grit command-line tool rather than embedding TreeSitter grammars directly. This keeps the Krav package lightweight and ensures users get the latest GritQL features and language support without Krav releases. If the grit command-line tool is not installed, GritQL support logs a warning and the engine skips it entirely, maintaining fail-open semantics.
 
 ## Use cases
 
@@ -140,7 +140,7 @@ Matching variable declarations: `` `const $name = $value` `` or `` `let $name = 
 
 ## GritQL functions
 
-ARCI provides two CEL functions for GritQL pattern matching.
+Krav provides two CEL functions for GritQL pattern matching.
 
 ### $gritql_matching
 
@@ -244,7 +244,7 @@ This policy first applies structural matching via the `paths` field, then uses a
 
 ## Fail-open behavior
 
-GritQL integration follows ARCI's fail-open semantics. If the grit command-line tool is not installed, GritQL functions return false (for `$gritql_matching`) or an empty result (for `$gritql_matches`) and log a warning. Policy evaluation continues, and missing tooling does not block operations.
+GritQL integration follows Krav's fail-open semantics. If the grit command-line tool is not installed, GritQL functions return false (for `$gritql_matching`) or an empty result (for `$gritql_matches`) and log a warning. Policy evaluation continues, and missing tooling does not block operations.
 
 Specific fail-open scenarios:
 
@@ -269,11 +269,11 @@ brew install grit
 npm install -g @getgrit/cli
 ```
 
-The `arci doctor` command includes a check for grit availability and reports whether GritQL features work.
+The `krav doctor` command includes a check for grit availability and reports whether GritQL features work.
 
 ## Example policies
 
-These examples show common uses of GritQL in ARCI policies.
+These examples show common uses of GritQL in Krav policies.
 
 ### Warn about console.log in production code
 
@@ -415,7 +415,7 @@ rules:
 
 ## Relationship to other tools
 
-GritQL complements rather than replaces other pattern matching capabilities in ARCI.
+GritQL complements rather than replaces other pattern matching capabilities in Krav.
 
 CEL's `.contains()` and `.matches()` methods remain the primary tools for simple text matching. They're faster, require no external dependencies, and handle most validation needs.
 
@@ -423,4 +423,4 @@ Shell effects can invoke any external tool, including dedicated linters or analy
 
 GritQL fills the gap between simple regular expressions and full static analysis. When you need to understand code structure but do not need a complete type system or data flow analysis, GritQL provides the right level of power without the complexity of embedding a full analyzer.
 
-For teams already using GritQL for code transformation (via grit's rewrite capabilities), the integration allows reusing patterns between ARCI policies and standalone grit workflows. You can promote a pattern developed for ARCI to a grit transformation, or vice versa.
+For teams already using GritQL for code transformation (via grit's rewrite capabilities), the integration allows reusing patterns between Krav policies and standalone grit workflows. You can promote a pattern developed for Krav to a grit transformation, or vice versa.

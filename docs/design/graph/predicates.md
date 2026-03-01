@@ -240,7 +240,7 @@ Predicates that link work items to the obligations they satisfy.
 
 #### Builds
 
-Links tasks to the requirements they exist to satisfy. Uses `oslc_cm:implementsRequirement` directly because ARCI adds no additional semantics (no suspect propagation, no DAG enforcement).
+Links tasks to the requirements they exist to satisfy. Uses `oslc_cm:implementsRequirement` directly because Krav adds no additional semantics (no suspect propagation, no DAG enforcement).
 
 | Aspect | Value |
 |--------|-------|

@@ -1,6 +1,6 @@
 # Graph overview
 
-The ARCI knowledge graph stores typed nodes connected by semantic predicates. It is the source of truth for what the project must build and why. The runtime engine is DuckDB with the DuckPGQ extension, providing both standard SQL for filtering and aggregation and SQL/PGQ (SQL:2023 standard) for property graph pattern matching. On-disk serialization uses per-table NDJSON files under `.arci/graph/` for git-friendly version control.
+The Krav knowledge graph stores typed nodes connected by semantic predicates. It is the source of truth for what the project must build and why. The runtime engine is DuckDB with the DuckPGQ extension, providing both standard SQL for filtering and aggregation and SQL/PGQ (SQL:2023 standard) for property graph pattern matching. On-disk serialization uses per-table NDJSON files under `.krav/graph/` for git-friendly version control.
 
 ## Reading order
 

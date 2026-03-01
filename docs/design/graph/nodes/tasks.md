@@ -117,34 +117,34 @@ TASK-test-parser ←───────── TASK-review-parser
 ### DAG queries
 
 ```bash
-arci task ancestors TASK-R7V3W9Y1      # What does this depend on?
-arci task descendants TASK-G5M2R8X4    # What depends on this?
-arci task blocking TASK-R7V3W9Y1       # Incomplete ancestors
-arci task ready                        # Tasks with no incomplete dependencies
-arci task critical-path TASK-R7V3W9Y1  # Longest path to target
+Krav task ancestors TASK-R7V3W9Y1      # What does this depend on?
+Krav task descendants TASK-G5M2R8X4    # What depends on this?
+Krav task blocking TASK-R7V3W9Y1       # Incomplete ancestors
+Krav task ready                        # Tasks with no incomplete dependencies
+Krav task critical-path TASK-R7V3W9Y1  # Longest path to target
 ```
 
 ### "Plans" as queries
 
-ARCI has no plan containers. Work organization emerges from queries:
+Krav has no plan containers. Work organization emerges from queries:
 
 ```bash
 # "What's the plan for the parser?"
-arci task list --module MOD-A4F8R2X1 --include-descendants
+Krav task list --module MOD-A4F8R2X1 --include-descendants
 
 # "What's in release 1.0?"
-arci task ancestors TASK-R7V3W9Y1
+Krav task ancestors TASK-R7V3W9Y1
 
 # "What's blocking release?"
-arci task blocking TASK-R7V3W9Y1
+Krav task blocking TASK-R7V3W9Y1
 
 # "What's ready to work on?"
-arci task ready
+Krav task ready
 ```
 
 ## Storage model
 
-ARCI stores task vertex data in the `tasks` table (`tasks.ndjson` on disk). Edge tables hold all relationships separately.
+Krav stores task vertex data in the `tasks` table (`tasks.ndjson` on disk). Edge tables hold all relationships separately.
 
 ```json
 {"id": "TASK-E3K8S6V2", "type": "Task", "title": "Implement lexer tokenization", "processPhase": "implementation", "taskType": "implement-feature", "status": "complete", "priority": "high", "summary": "Lexer needs to handle Unicode identifiers and produce a flat token stream. State machine approach preferred."}
@@ -206,7 +206,7 @@ With edge: `module` → MOD-A4F8R2X1.
 
 ## Prose files
 
-Most tasks get by with the `summary` field for a paragraph or two of inline context. Complex tasks that need more room can have a prose file at `.arci/tasks/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
+Most tasks get by with the `summary` field for a paragraph or two of inline context. Complex tasks that need more room can have a prose file at `.krav/tasks/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
 
 When a task has a prose file, it typically contains:
 
@@ -275,7 +275,7 @@ In `depends_on.ndjson`:
 
 ## Task type definitions
 
-A markdown file with YAML frontmatter defines each task type. The frontmatter carries structural metadata that ARCI uses for validation and gating. The markdown body is a template that `arci task render` processes and the `arci:task` skill inlines into the agent's prompt at execution time.
+A markdown file with YAML frontmatter defines each task type. The frontmatter carries structural metadata that Krav uses for validation and gating. The markdown body is a template that `krav task render` processes and the `krav:task` skill inlines into the agent's prompt at execution time.
 
 ```markdown
 ---
@@ -290,7 +290,7 @@ completionCriteria:
   requireDeliverables: true
   requireTests: false
 createdBy:
-  - arci:decompose
+  - krav:decompose
   - manual
 ---
 
@@ -310,9 +310,9 @@ each file you create or modify as a deliverable. Commit your work
 with a message that references the task ID.
 ```
 
-When `arci task create` runs with `--task-type implement-feature`, it resolves the type definition from the cascade, validates that it exists, and copies the frontmatter's structural fields (`expectedDeliverables`, `completionCriteria`) onto the TASK-* node. The system freezes these fields at creation time: if the type definition's frontmatter changes later, existing tasks keep the contract from their original creation.
+When `krav task create` runs with `--task-type implement-feature`, it resolves the type definition from the cascade, validates that it exists, and copies the frontmatter's structural fields (`expectedDeliverables`, `completionCriteria`) onto the TASK-* node. The system freezes these fields at creation time: if the type definition's frontmatter changes later, existing tasks keep the contract from their original creation.
 
-The template body is not frozen. `arci task render` resolves the type definition fresh from the cascade at execution time, assembles a context object from the task's graph neighborhood, and processes the template. Instruction improvements propagate to any task that nobody has executed yet without changing its completion contract.
+The template body is not frozen. `krav task render` resolves the type definition fresh from the cascade at execution time, assembles a context object from the task's graph neighborhood, and processes the template. Instruction improvements propagate to any task that nobody has executed yet without changing its completion contract.
 
 ### Definition file format
 
@@ -328,11 +328,11 @@ The frontmatter supports these fields:
 
 `completionCriteria` contains additional conditions beyond deliverable presence. The completion gate checks fields like `requireDeliverables`, `requireTests`, and `requireExplicitAssessment`.
 
-`createdBy` lists the skills and creation modes that produce tasks of this type. This is documentation, not enforcement: any skill or manual `arci task create` can create any type.
+`createdBy` lists the skills and creation modes that produce tasks of this type. This is documentation, not enforcement: any skill or manual `krav task create` can create any type.
 
 ### Template context
 
-The context object available to templates during rendering is the same data that `arci context` assembles for the task. Template authors can reference:
+The context object available to templates during rendering is the same data that `krav context` assembles for the task. Template authors can reference:
 
 `task` contains the task's own fields: `id`, `title`, `summary`, `status`, `priority`, `processPhase`, `taskType`, `tags`.
 
@@ -353,7 +353,7 @@ This context is a stable contract. Adding fields is non-breaking; removing or re
 Task type definitions load from a cascade that follows the same layering as policies, with whole-file replacement semantics:
 
 ```text
-Built-in task types (ship with arci)
+Built-in task types (ship with krav)
     ↓
 <system config dir>/task-types.d/*.md
     ↓
@@ -366,25 +366,25 @@ Built-in task types (ship with arci)
 
 Resolution is by `name` in frontmatter, not filename. A type at a higher-precedence layer with the same name replaces the lower-precedence definition. No partial merging: if you override `implement-feature` at the project level, you provide the entire definition, both frontmatter and template body. Partial merging of template bodies would be nonsensical, and partial merging of frontmatter would create confusing hybrid definitions.
 
-Qualified names work the same way as policies: `arci task-type show implement-feature` resolves to the highest-precedence layer, while `arci task-type show builtin/implement-feature` gets the built-in version. Layer names for qualification are `builtin`, `system`, `user`, `project`, `project-local`.
+Qualified names work the same way as policies: `krav task-type show implement-feature` resolves to the highest-precedence layer, while `krav task-type show builtin/implement-feature` gets the built-in version. Layer names for qualification are `builtin`, `system`, `user`, `project`, `project-local`.
 
-Custom task types are how teams extend ARCI for domain-specific work. An ML team might define `train-model` in their project's `task-types.d/`, and the `arci:decompose` skill or a developer via `arci task create --task-type train-model` can use it immediately. See [Task types](../../workflows/tasks/index.md#extensibility) for more on how custom types participate in decomposition.
+Custom task types are how teams extend Krav for domain-specific work. An ML team might define `train-model` in their project's `task-types.d/`, and the `krav:decompose` skill or a developer via `krav task create --task-type train-model` can use it immediately. See [Task types](../../workflows/tasks/index.md#extensibility) for more on how custom types participate in decomposition.
 
 ## Execution
 
-Tasks execute in atomic Claude Code sessions. The `arci:task` skill uses command inlining to assemble the agent's prompt from two CLI commands:
+Tasks execute in atomic Claude Code sessions. The `krav:task` skill uses command inlining to assemble the agent's prompt from two CLI commands:
 
 ```text
 Context:
 
-!`arci context TASK-E3K8S6V2`
+!`krav context TASK-E3K8S6V2`
 
 Workflow:
 
-!`arci task render TASK-E3K8S6V2`
+!`krav task render TASK-E3K8S6V2`
 ```
 
-`arci context` produces the graph context: task details, module information, related requirements, dependency status, and previous session notes. `arci task render` produces the rendered task type template: workflow instructions, approach guidance, and completion expectations specific to this type of work. The skill itself is a thin orchestration layer that wires these two outputs together without knowing anything about template engines or cascade resolution.
+`krav context` produces the graph context: task details, module information, related requirements, dependency status, and previous session notes. `krav task render` produces the rendered task type template: workflow instructions, approach guidance, and completion expectations specific to this type of work. The skill itself is a thin orchestration layer that wires these two outputs together without knowing anything about template engines or cascade resolution.
 
 A custom task type works the moment its definition file lands in a `task-types.d/` directory. No skill changes, no plugin updates.
 
@@ -396,43 +396,43 @@ During execution, session state tracks the active task, phase constraints, progr
 
 ```bash
 # CRUD
-arci task create --module MOD-A4F8R2X1 --title "Implement lexer" \
+Krav task create --module MOD-A4F8R2X1 --title "Implement lexer" \
   --phase implementation --task-type implement-feature
-arci task show TASK-E3K8S6V2
-arci task list
-arci task list --module MOD-A4F8R2X1 --phase implementation --status ready
-arci task update TASK-E3K8S6V2 --status in_progress
-arci task delete TASK-E3K8S6V2
+Krav task show TASK-E3K8S6V2
+Krav task list
+Krav task list --module MOD-A4F8R2X1 --phase implementation --status ready
+Krav task update TASK-E3K8S6V2 --status in_progress
+Krav task delete TASK-E3K8S6V2
 
 # Dependencies
-arci task depend TASK-E3K8S6V2 --on TASK-G5M2R8X4
-arci task undepend TASK-E3K8S6V2 --on TASK-G5M2R8X4
+Krav task depend TASK-E3K8S6V2 --on TASK-G5M2R8X4
+Krav task undepend TASK-E3K8S6V2 --on TASK-G5M2R8X4
 
 # DAG queries
-arci task ancestors TASK-E3K8S6V2
-arci task descendants TASK-E3K8S6V2
-arci task blocking TASK-E3K8S6V2
-arci task ready
-arci task critical-path TASK-R7V3W9Y1
+Krav task ancestors TASK-E3K8S6V2
+Krav task descendants TASK-E3K8S6V2
+Krav task blocking TASK-E3K8S6V2
+Krav task ready
+Krav task critical-path TASK-R7V3W9Y1
 
 # Execution
-arci task start TASK-E3K8S6V2      # Mark in_progress
-arci task complete TASK-E3K8S6V2   # Mark complete
-arci task block TASK-E3K8S6V2 --reason "Waiting on API decision"
-arci task cancel TASK-E3K8S6V2 --reason "No longer needed"
+Krav task start TASK-E3K8S6V2      # Mark in_progress
+Krav task complete TASK-E3K8S6V2   # Mark complete
+Krav task block TASK-E3K8S6V2 --reason "Waiting on API decision"
+Krav task cancel TASK-E3K8S6V2 --reason "No longer needed"
 
 # Deliverables
-arci task deliverable TASK-E3K8S6V2 --kind commit --sha a1b2c3d4
-arci task deliverables TASK-E3K8S6V2  # List deliverables
+Krav task deliverable TASK-E3K8S6V2 --kind commit --sha a1b2c3d4
+Krav task deliverables TASK-E3K8S6V2  # List deliverables
 
 # Context and rendering
-arci context TASK-E3K8S6V2
-arci task render TASK-E3K8S6V2
+Krav context TASK-E3K8S6V2
+Krav task render TASK-E3K8S6V2
 
 # Task type definitions
-arci task-type list
-arci task-type show implement-feature
-arci task-type show builtin/implement-feature
+Krav task-type list
+Krav task-type show implement-feature
+Krav task-type show builtin/implement-feature
 ```
 
 See [Task](../../cli/commands/task.md) for full CLI documentation.
@@ -481,7 +481,7 @@ Tasks are atomic work units that:
 - Record deliverables with kind-specific fields
 - Execute in atomic Claude Code sessions
 - Replace plan containers with graph queries
-- Stored as rows in the `tasks` vertex table (`.arci/graph/tasks.ndjson` on disk)
+- Stored as rows in the `tasks` vertex table (`.krav/graph/tasks.ndjson` on disk)
 - Implemented following three-layer architecture (core/io/service)
 
 The task DAG is the work organization: milestones are downstream tasks, scopes are transitive closures, and `the plan` is a query over the graph.

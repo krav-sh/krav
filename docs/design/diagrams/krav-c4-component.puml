@@ -1,18 +1,18 @@
-@startuml arci-c4-component
+@startuml krav-c4-component
 !include <C4/C4_Component>
 
-title Component diagram for arci CLI / Server
+title Component diagram for krav CLI / Server
 
 Container_Ext(claude_code, "Claude Code", "Hook events via stdin/stdout JSON,\ngraph queries via CLI invocation")
 ContainerDb_Ext(state_store, "State Store", "DuckDB")
 ContainerDb_Ext(graph_db, "Knowledge Graph", "DuckDB + DuckPGQ")
-ContainerDb_Ext(prose_files, "Prose Files", ".arci/ Markdown")
+ContainerDb_Ext(prose_files, "Prose Files", ".krav/ Markdown")
 ContainerDb_Ext(policy_config, "Policies + Settings", "")
 ContainerDb_Ext(harness_config, "Agent Harness", "Markdown / YAML")
 System_Ext(git, "Git", "Branch context")
 System_Ext(param_providers, "Parameter providers", "Dynamic policy params")
 
-Container_Boundary(arci_binary, "arci binary") {
+Container_Boundary(krav_binary, "krav binary") {
 
     Component(cli_commands, "CLI Commands", "", "Command router. Dispatches hook\nevaluation, graph CRUD, queries,\ntemplate instantiation, server control.")
 
@@ -31,7 +31,7 @@ Container_Boundary(arci_binary, "arci binary") {
 
         Component(duckdb_engine, "DuckDB Engine", "", "Unified data engine. In-memory\ngraph DB + file-backed state DB\nvia ATTACH. NDJSON hydrate/dehydrate.\nSQL + SQL/PGQ queries.")
 
-        Component(graph_store, "Graph Store", "", "NDJSON serialization: hydrate from\n.arci/graph/*.ndjson into DuckDB\ntables, dehydrate back to sorted\nNDJSON. Prose file handling.")
+        Component(graph_store, "Graph Store", "", "NDJSON serialization: hydrate from\n.krav/graph/*.ndjson into DuckDB\ntables, dehydrate back to sorted\nNDJSON. Prose file handling.")
 
         Component(param_resolver, "Parameter Resolver", "", "Resolves policy parameters from\nnamed providers, inline definitions,\nenv vars, and static values.\nCacheable with TTL.")
 

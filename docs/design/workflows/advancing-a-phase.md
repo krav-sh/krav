@@ -12,7 +12,7 @@ With module-scoped phase gating (C-PH1 removed), each module advances independen
 
 ## What happens in the graph
 
-The agent runs `arci moduleadvance MOD-X --to <target>` (or the equivalent check). The command evaluates:
+The agent runs `krav moduleadvance MOD-X --to <target>` (or the equivalent check). The command evaluates:
 
 All tasks for the current phase with `module = MOD-X` and `processPhase = current_phase` must have `status = complete`.
 
@@ -40,19 +40,19 @@ If successful: the module's `phase` field advances by one step. If blocked: no c
 
 ### Skills
 
-The `arci:advance` skill runs this workflow. Preprocessing loads the module's current phase, task completion status, open defects, review dispositions, and verification coverage. This gives the agent a complete picture of whether the module satisfies advancement criteria before the developer even asks.
+The `krav:advance` skill runs this workflow. Preprocessing loads the module's current phase, task completion status, open defects, review dispositions, and verification coverage. This gives the agent a complete picture of whether the module satisfies advancement criteria before the developer even asks.
 
-The skill's instructed commands run `arci moduleadvance` to attempt advancement and interpret the results. If criteria aren't met, the skill instructions guide the agent through reporting specific blockers and suggesting next steps (complete these tasks, resolve these defects, run these reviews). If advancement succeeds, the instructions suggest phase-appropriate follow-up work.
+The skill's instructed commands run `krav moduleadvance` to attempt advancement and interpret the results. If criteria aren't met, the skill instructions guide the agent through reporting specific blockers and suggesting next steps (complete these tasks, resolve these defects, run these reviews). If advancement succeeds, the instructions suggest phase-appropriate follow-up work.
 
 ### Policies
 
-The `phase-gate-defense` policy is the defining policy for this workflow. It fires on PreToolUse when the agent runs `arci moduleadvance` and independently validates that the module satisfies advancement preconditions, providing defense in depth alongside the CLI's own precondition checks. The denial message reports exactly what's blocking: open defects, incomplete tasks, insufficient verification coverage.
+The `phase-gate-defense` policy is the defining policy for this workflow. It fires on PreToolUse when the agent runs `krav moduleadvance` and independently validates that the module satisfies advancement preconditions, providing defense in depth alongside the CLI's own precondition checks. The denial message reports exactly what's blocking: open defects, incomplete tasks, insufficient verification coverage.
 
 The `session-context` policy surfaces the module's phase and blocking status at session start. The `mutation-feedback` policy fires after a successful advancement, injecting the module's new phase and suggesting next steps. The `graph-integrity` and `cli-auto-approve` policies apply as usual.
 
 ### Task types
 
-Advancement itself doesn't create tasks, but the `arci:advance` skill may create review and verification tasks as preconditions if they don't already exist. If a module is trying to advance from `implementation` to `integration` but has no `review-code` task, the skill creates one. If verification coverage is insufficient, it may create `execute-tests` tasks. These precondition tasks are verification-phase types: `review-code`, `review-design`, `review-architecture`, and `execute-tests`.
+Advancement itself doesn't create tasks, but the `krav:advance` skill may create review and verification tasks as preconditions if they don't already exist. If a module is trying to advance from `implementation` to `integration` but has no `review-code` task, the skill creates one. If verification coverage is insufficient, it may create `execute-tests` tasks. These precondition tasks are verification-phase types: `review-code`, `review-design`, `review-architecture`, and `execute-tests`.
 
 ## Open questions
 

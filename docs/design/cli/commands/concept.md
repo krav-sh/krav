@@ -4,7 +4,7 @@ The concept command group manages concept nodes, which capture explorations of h
 
 ## Synopsis
 
-    arci concept <subcommand> [options]
+    krav concept <subcommand> [options]
 
 ## Description
 
@@ -16,7 +16,7 @@ Concepts capture exploration and crystallized thinking that informs the project.
 
 Creates a concept node.
 
-    arci concept create --title <title> --type <concept-type>
+    krav concept create --title <title> --type <concept-type>
 
 **Flags:**
 
@@ -30,13 +30,13 @@ Creates a concept node.
 
 Displays detailed information about a concept, including metadata, relationships, and prose file location.
 
-    arci concept show <concept-id>
+    krav concept show <concept-id>
 
 ### `list`
 
 Lists concepts, optionally filtered by status or type.
 
-    arci concept list [options]
+    krav concept list [options]
 
 **Flags:**
 
@@ -47,7 +47,7 @@ Lists concepts, optionally filtered by status or type.
 
 Modifies concept fields.
 
-    arci concept update <concept-id> [flags]
+    krav concept update <concept-id> [flags]
 
 **Flags:**
 
@@ -61,13 +61,13 @@ Modifies concept fields.
 
 Removes a concept node from the graph.
 
-    arci concept delete <concept-id>
+    krav concept delete <concept-id>
 
 ### `transition`
 
 Advances or changes the concept's lifecycle state with validation.
 
-    arci concept transition <concept-id> --to <status>
+    krav concept transition <concept-id> --to <status>
 
 **Flags:**
 
@@ -77,13 +77,13 @@ Advances or changes the concept's lifecycle state with validation.
 
 Extracts stakeholder expectations from a crystallized concept and creates need nodes. This interactive process identifies stakeholders, extracts expectations, creates NEED-* records with derivesFrom relationships, and transitions the concept to `formalized` state.
 
-    arci concept formalize <concept-id>
+    krav concept formalize <concept-id>
 
 ### `link`
 
 Creates relationships between a concept and other nodes.
 
-    arci concept link <concept-id> [flags]
+    krav concept link <concept-id> [flags]
 
 **Flags:**
 

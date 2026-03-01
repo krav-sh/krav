@@ -40,13 +40,13 @@ Suspect flags cleared, downstream nodes updated, or defects created. Possibly fu
 
 ### Skills
 
-The `arci:suspect` skill builds this workflow. Preprocessing loads the suspect link report: which edges carry flags, what changed upstream, and what the downstream nodes currently contain. This gives the agent (or analyst subagent) a complete triage queue with the context needed to evaluate each suspect edge.
+The `krav:suspect` skill builds this workflow. Preprocessing loads the suspect link report: which edges carry flags, what changed upstream, and what the downstream nodes currently contain. This gives the agent (or analyst subagent) a complete triage queue with the context needed to evaluate each suspect edge.
 
 The skill's instructed commands clear suspect flags, update downstream nodes, create defects for inconsistencies, and optionally propagate suspect flags to deeper edges. The skill instructions guide the triage decision for each edge: compare the upstream change against the downstream node's content and determine whether the downstream artifact is still valid.
 
 ### Agents
 
-The `arci-analyst` subagent handles suspect link triage when the volume is large enough to benefit from a dedicated context window. For a handful of suspect links after a minor change, the main agent handles triage directly using the `arci:suspect` skill. For a major upstream modification that produces dozens of suspect flags, delegating to the analyst avoids consuming the main agent's context with graph traversal work.
+The `krav-analyst` subagent handles suspect link triage when the volume is large enough to benefit from a dedicated context window. For a handful of suspect links after a minor change, the main agent handles triage directly using the `krav:suspect` skill. For a major upstream modification that produces dozens of suspect flags, delegating to the analyst avoids consuming the main agent's context with graph traversal work.
 
 The analyst recommends dispositions (clear, update, create defect, propagate) but doesn't act on them unilaterally. The main agent or developer makes the final call, which is important because suspect link triage often involves judgment about whether an upstream change matters semantically.
 
@@ -54,11 +54,11 @@ The analyst recommends dispositions (clear, update, create defect, propagate) bu
 
 The `session-context` policy surfaces pending suspect links at session start, so the developer sees them immediately rather than discovering them during a phase advancement attempt. The `mutation-feedback` policy fires after the agent clears each suspect flag or creates a defect, keeping the running count of pending suspect links current.
 
-The `graph-integrity` and `cli-auto-approve` policies apply as usual. The `phase-gate-defense` policy is indirectly relevant: unresolved suspect links may block phase advancement, so triaging suspects is often a prerequisite for the `arci:advance` workflow.
+The `graph-integrity` and `cli-auto-approve` policies apply as usual. The `phase-gate-defense` policy is indirectly relevant: unresolved suspect links may block phase advancement, so triaging suspects is often a prerequisite for the `krav:advance` workflow.
 
 ### Task types
 
-Suspect link triage doesn't create tasks directly, but defects created from suspect links flow into the `arci:defect` workflow, which creates `remediate-defect` tasks. The connection is indirect but important: a suspect link that reveals an inconsistent requirement produces a defect, which produces a remediation task, which produces a fix.
+Suspect link triage doesn't create tasks directly, but defects created from suspect links flow into the `krav:defect` workflow, which creates `remediate-defect` tasks. The connection is indirect but important: a suspect link that reveals an inconsistent requirement produces a defect, which produces a remediation task, which produces a fix.
 
 ## Open questions
 

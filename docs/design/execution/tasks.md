@@ -83,11 +83,11 @@ TSK-test-parser ←───────── TSK-review-parser
 ### DAG queries
 
 ```bash
-arci taskancestors TSK-R7V3W9Y1      # What does this depend on?
-arci taskdescendants TSK-G5M2R8X4    # What depends on this?
-arci taskblocking TSK-R7V3W9Y1       # Incomplete ancestors
-arci taskready                        # Tasks with no incomplete dependencies
-arci taskcritical-path TSK-R7V3W9Y1  # Longest path to target
+Krav taskancestors TSK-R7V3W9Y1      # What does this depend on?
+Krav taskdescendants TSK-G5M2R8X4    # What depends on this?
+Krav taskblocking TSK-R7V3W9Y1       # Incomplete ancestors
+Krav taskready                        # Tasks with no incomplete dependencies
+Krav taskcritical-path TSK-R7V3W9Y1  # Longest path to target
 ```
 
 ### "Plans" as queries
@@ -96,16 +96,16 @@ No plan containers exist. Work organization emerges from queries:
 
 ```bash
 # "What's the plan for the parser?"
-arci tasklist --module MOD-A4F8R2X1 --include-descendants
+Krav tasklist --module MOD-A4F8R2X1 --include-descendants
 
 # "What's in release 1.0?"
-arci taskancestors TSK-R7V3W9Y1
+Krav taskancestors TSK-R7V3W9Y1
 
 # "What's blocking release?"
-arci taskblocking TSK-R7V3W9Y1
+Krav taskblocking TSK-R7V3W9Y1
 
 # "What's ready to work on?"
-arci taskready
+Krav taskready
 ```
 
 ## Storage model
@@ -128,7 +128,7 @@ Fields:
 - `status`: Lifecycle state (pending, ready, in_progress, blocked, complete, cancelled)
 - `priority`: high, medium, low
 - `assignee`: Who's working on this (optional)
-- `content`: Path to prose file relative to `.arci/` (optional)
+- `content`: Path to prose file relative to `.krav/` (optional)
 - `started`, `completed`: ISO 8601 timestamps (optional)
 - `created`, `updated`: ISO 8601 timestamps
 - `tags`: Array of strings (optional)
@@ -218,8 +218,8 @@ Example with relationships:
 Users create tasks from templates:
 
 ```bash
-arci taskcreate --template quick-review --module MOD-A4F8R2X1
-arci taskcreate --template feature-implementation --module MOD-A4F8R2X1 \
+Krav taskcreate --template quick-review --module MOD-A4F8R2X1
+Krav taskcreate --template feature-implementation --module MOD-A4F8R2X1 \
   --param priority=high
 ```
 
@@ -230,7 +230,7 @@ See CON-T3MPL8TZ for the templating system.
 Tasks execute in atomic Claude Code sessions:
 
 ```bash
-arci contexttask TSK-E3K8S6V2    # Load task context for session
+Krav contexttask TSK-E3K8S6V2    # Load task context for session
 ```
 
 The context includes:
@@ -282,7 +282,7 @@ class TaskNode:
 
 All fields use proper types. The IO layer creates TaskNode directly from JSON-LD records, preserving all type-specific fields like `process_phase`, `task_type`, and `deliverables`.
 
-### Core layer (`arci.core.task`)
+### Core layer (`krav.core.task`)
 
 Pure functions and typed data structures:
 
@@ -342,7 +342,7 @@ def blocking(graph: Graph, task_id: str) -> frozenset[str]: ...
 def critical_path(graph: Graph, task_id: str) -> tuple[str, ...]: ...
 ```
 
-### Service layer (`arci.service.task`)
+### Service layer (`krav.service.task`)
 
 Orchestrates core and IO:
 
@@ -384,37 +384,37 @@ def add_deliverable(store: GraphStore, task_id: str, deliverable: dict) -> TaskN
 
 ```bash
 # CRUD
-arci taskcreate --module MOD-A4F8R2X1 --title "Implement lexer" \
+Krav taskcreate --module MOD-A4F8R2X1 --title "Implement lexer" \
   --phase implementation --task-type feature-implementation
-arci taskshow TSK-E3K8S6V2
-arci tasklist
-arci tasklist --module MOD-A4F8R2X1 --phase implementation --status ready
-arci taskupdate TSK-E3K8S6V2 --status in_progress
-arci taskdelete TSK-E3K8S6V2
+Krav taskshow TSK-E3K8S6V2
+Krav tasklist
+Krav tasklist --module MOD-A4F8R2X1 --phase implementation --status ready
+Krav taskupdate TSK-E3K8S6V2 --status in_progress
+Krav taskdelete TSK-E3K8S6V2
 
 # Dependencies
-arci taskdepend TSK-E3K8S6V2 --on TSK-G5M2R8X4
-arci taskundepend TSK-E3K8S6V2 --on TSK-G5M2R8X4
+Krav taskdepend TSK-E3K8S6V2 --on TSK-G5M2R8X4
+Krav taskundepend TSK-E3K8S6V2 --on TSK-G5M2R8X4
 
 # DAG queries
-arci taskancestors TSK-E3K8S6V2
-arci taskdescendants TSK-E3K8S6V2
-arci taskblocking TSK-E3K8S6V2
-arci taskready
-arci taskcritical-path TSK-R7V3W9Y1
+Krav taskancestors TSK-E3K8S6V2
+Krav taskdescendants TSK-E3K8S6V2
+Krav taskblocking TSK-E3K8S6V2
+Krav taskready
+Krav taskcritical-path TSK-R7V3W9Y1
 
 # Execution
-arci taskstart TSK-E3K8S6V2      # Mark in_progress
-arci taskcomplete TSK-E3K8S6V2   # Mark complete
-arci taskblock TSK-E3K8S6V2 --reason "Waiting on API decision"
-arci taskcancel TSK-E3K8S6V2 --reason "No longer needed"
+Krav taskstart TSK-E3K8S6V2      # Mark in_progress
+Krav taskcomplete TSK-E3K8S6V2   # Mark complete
+Krav taskblock TSK-E3K8S6V2 --reason "Waiting on API decision"
+Krav taskcancel TSK-E3K8S6V2 --reason "No longer needed"
 
 # Deliverables
-arci taskdeliverable TSK-E3K8S6V2 --kind commit --sha a1b2c3d4
-arci taskdeliverables TSK-E3K8S6V2  # List deliverables
+Krav taskdeliverable TSK-E3K8S6V2 --kind commit --sha a1b2c3d4
+Krav taskdeliverables TSK-E3K8S6V2  # List deliverables
 
 # Context
-arci contexttask TSK-E3K8S6V2
+Krav contexttask TSK-E3K8S6V2
 ```
 
 ## Examples
@@ -447,8 +447,8 @@ arci contexttask TSK-E3K8S6V2
 
 | Layer | Status | Notes |
 |-------|--------|-------|
-| Core | Implemented | Typed node, operations, queries in `arci.core.task` |
-| IO | Implemented | JSON-LD serialization via `arci.io.graph` |
+| Core | Implemented | Typed node, operations, queries in `krav.core.task` |
+| IO | Implemented | JSON-LD serialization via `krav.io.graph` |
 | Service | Implemented | Full CRUD, transitions (start, complete, block, cancel), dependency management |
 | CLI | Implemented | 23 commands: CRUD, transitions, dependencies, deliverables, assign |
 

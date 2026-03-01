@@ -24,7 +24,7 @@ const (
 
 ## Hook apply exit codes
 
-The `arci hook apply` command uses a subset of exit codes with policy-specific meanings:
+The `krav hook apply` command uses a subset of exit codes with policy-specific meanings:
 
 - **0**: The operation should proceed (possibly with output modifications).
 - **2**: A deny decision from a validation rule blocks the operation.

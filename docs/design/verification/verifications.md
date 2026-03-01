@@ -149,10 +149,10 @@ For requirements verified through modeling or calculation:
 Coverage tracks which requirements have verification:
 
 ```bash
-arci verificationcoverage                    # Overall coverage report
-arci verificationcoverage --module MOD-A4F8R2X1  # Module-specific
-arci verificationuntested                    # Requirements without verifications
-arci verificationgaps                        # Requirements with insufficient coverage
+Krav verificationcoverage                    # Overall coverage report
+Krav verificationcoverage --module MOD-A4F8R2X1  # Module-specific
+Krav verificationuntested                    # Requirements without verifications
+Krav verificationgaps                        # Requirements with insufficient coverage
 ```
 
 Coverage analysis considers:
@@ -176,7 +176,7 @@ class VerificationNode:
     id: str
     title: str
     status: VerificationStatus             # Typed enum
-    method: VerificationMethod             # Typed enum (from arci.core.requirement._types)
+    method: VerificationMethod             # Typed enum (from krav.core.requirement._types)
     level: VerificationLevel               # Typed enum
     implementation: str = ""               # Path to verification code
     last_run: datetime | None = None
@@ -188,12 +188,12 @@ class VerificationNode:
 
 All fields use proper types. The IO layer creates VerificationNode directly from JSON-LD records, preserving all type-specific fields like `method`, `level`, and `implementation`.
 
-### Core layer (`arci.core.verification`)
+### Core layer (`krav.core.verification`)
 
 Pure functions and typed data structures:
 
 ```python
-# Types (arci.core.verification._types)
+# Types (krav.core.verification._types)
 class VerificationStatus(StrEnum):
     DRAFT = "draft"
     READY = "ready"
@@ -208,9 +208,9 @@ class VerificationLevel(StrEnum):
     SYSTEM = "system"
     ACCEPTANCE = "acceptance"
 
-# VerificationMethod is defined in arci.core.requirement._types
+# VerificationMethod is defined in krav.core.requirement._types
 # and imported by VerificationNode
-from arci.core.requirement._types import VerificationMethod
+from krav.core.requirement._types import VerificationMethod
 
 # Typed node
 @dataclass(frozen=True, slots=True)
@@ -235,7 +235,7 @@ def verifies(graph: Graph, verification_id: str) -> frozenset[str]: ...  # Retur
 def owning_module(graph: Graph, verification_id: str) -> str | None: ...
 ```
 
-### Service layer (`arci.service.verification`)
+### Service layer (`krav.service.verification`)
 
 Orchestrates core and IO:
 
@@ -269,26 +269,26 @@ def coverage_report(store: GraphStore, module_id: str | None = None) -> Coverage
 
 ```bash
 # CRUD
-arci verificationcreate --module MOD-A4F8R2X1 --title "Error latency verification" \
+Krav verificationcreate --module MOD-A4F8R2X1 --title "Error latency verification" \
   --method test --implementation "tests/parser/error_latency_test.ts"
-arci verificationshow VRF-D9J5Q1R3
-arci verificationlist
-arci verificationlist --module MOD-A4F8R2X1 --status failing
-arci verificationupdate VRF-D9J5Q1R3 --status passing
-arci verificationdelete VRF-D9J5Q1R3
+Krav verificationshow VRF-D9J5Q1R3
+Krav verificationlist
+Krav verificationlist --module MOD-A4F8R2X1 --status failing
+Krav verificationupdate VRF-D9J5Q1R3 --status passing
+Krav verificationdelete VRF-D9J5Q1R3
 
 # Relationships
-arci verificationlink VRF-D9J5Q1R3 --verifies REQ-C2H6N4P8
-arci verificationunlink VRF-D9J5Q1R3 --verifies REQ-C2H6N4P8
+Krav verificationlink VRF-D9J5Q1R3 --verifies REQ-C2H6N4P8
+Krav verificationunlink VRF-D9J5Q1R3 --verifies REQ-C2H6N4P8
 
 # Execution tracking
-arci verificationrecord VRF-D9J5Q1R3 --passed --duration 1250 --details "p99: 42ms"
-arci verificationrecord VRF-D9J5Q1R3 --failed --details "p99: 67ms (exceeds 50ms)"
+Krav verificationrecord VRF-D9J5Q1R3 --passed --duration 1250 --details "p99: 42ms"
+Krav verificationrecord VRF-D9J5Q1R3 --failed --details "p99: 67ms (exceeds 50ms)"
 
 # Coverage
-arci verificationcoverage
-arci verificationcoverage --module MOD-A4F8R2X1
-arci verificationuntested
+Krav verificationcoverage
+Krav verificationcoverage --module MOD-A4F8R2X1
+Krav verificationuntested
 ```
 
 ## Examples
@@ -331,8 +331,8 @@ Tasks can record verification execution results as deliverables.
 
 | Layer | Status | Notes |
 |-------|--------|-------|
-| Core | Implemented | Typed node, operations, queries in `arci.core.verification` |
-| IO | Implemented | JSON-LD serialization via `arci.io.graph` |
+| Core | Implemented | Typed node, operations, queries in `krav.core.verification` |
+| IO | Implemented | JSON-LD serialization via `krav.io.graph` |
 | Service | Partial | Basic CRUD and transitions; coverage report workflow not yet implemented |
 | CLI | Implemented | CRUD, transition, link, record commands; coverage/untested stubs |
 | Tests | Implemented | 46 integration tests in `tests/integration/commands/test_verification.py` |

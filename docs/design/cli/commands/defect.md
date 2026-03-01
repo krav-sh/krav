@@ -4,7 +4,7 @@ The defect command group tracks and manages defects, identified problems that de
 
 ## Synopsis
 
-    arci defect <subcommand> [options]
+    krav defect <subcommand> [options]
 
 ## Description
 
@@ -18,7 +18,7 @@ Defects record what went wrong, the severity, the disposition, and the resolutio
 
 Creates a defect node.
 
-    arci defect create --module <module-id> --severity <severity> \
+    krav defect create --module <module-id> --severity <severity> \
       --statement <statement> [flags]
 
 **Flags:**
@@ -35,13 +35,13 @@ Creates a defect node.
 
 Displays detailed information about a defect, including metadata, relationships, and resolution history.
 
-    arci defect show <defect-id>
+    krav defect show <defect-id>
 
 #### `list`
 
 Lists defects, optionally filtered by module, severity, or status.
 
-    arci defect list [options]
+    krav defect list [options]
 
 **Flags:**
 
@@ -53,7 +53,7 @@ Lists defects, optionally filtered by module, severity, or status.
 
 Modifies defect fields.
 
-    arci defect update <defect-id> [flags]
+    krav defect update <defect-id> [flags]
 
 **Flags:**
 
@@ -66,7 +66,7 @@ Modifies defect fields.
 
 Removes a defect node from the graph.
 
-    arci defect delete <defect-id>
+    krav defect delete <defect-id>
 
 ### Disposition
 
@@ -74,13 +74,13 @@ Removes a defect node from the graph.
 
 Confirms a defect as a real problem requiring remediation. Transitions from `open` to `confirmed`.
 
-    arci defect confirm <defect-id>
+    krav defect confirm <defect-id>
 
 #### `reject`
 
 Rejects a defect as not a problem (duplicate, by-design, invalid, or out of scope). Transitions from `open` to `rejected`. The user must provide a rationale.
 
-    arci defect reject <defect-id> --rationale <rationale>
+    krav defect reject <defect-id> --rationale <rationale>
 
 **Flags:**
 
@@ -90,7 +90,7 @@ Rejects a defect as not a problem (duplicate, by-design, invalid, or out of scop
 
 Postpones a confirmed defect with justification. Transitions from `confirmed` to `deferred`.
 
-    arci defect defer <defect-id> --rationale <rationale> --target <target>
+    krav defect defer <defect-id> --rationale <rationale> --target <target>
 
 **Flags:**
 
@@ -103,13 +103,13 @@ Postpones a confirmed defect with justification. Transitions from `confirmed` to
 
 Creates a remediation task linked to the defect via the `generates` relationship.
 
-    arci defect generate-task <defect-id>
+    krav defect generate-task <defect-id>
 
 #### `resolve`
 
 Marks a defect as remediated. Transitions from `confirmed` to `resolved`.
 
-    arci defect resolve <defect-id> --notes <notes>
+    krav defect resolve <defect-id> --notes <notes>
 
 **Flags:**
 
@@ -119,19 +119,19 @@ Marks a defect as remediated. Transitions from `confirmed` to `resolved`.
 
 Confirms a fix is adequate after re-examination. Transitions from `resolved` to `verified`.
 
-    arci defect verify <defect-id>
+    krav defect verify <defect-id>
 
 #### `close`
 
 Administrative closure of a verified defect. Transitions from `verified` to `closed`.
 
-    arci defect close <defect-id>
+    krav defect close <defect-id>
 
 #### `reopen`
 
 Reopens a defect that needs further attention.
 
-    arci defect reopen <defect-id>
+    krav defect reopen <defect-id>
 
 ### Queries
 
@@ -139,7 +139,7 @@ Reopens a defect that needs further attention.
 
 Lists all open or confirmed defects.
 
-    arci defect open [options]
+    krav defect open [options]
 
 **Flags:**
 
@@ -149,37 +149,37 @@ Lists all open or confirmed defects.
 
 Lists defects that block module phase advancement (critical and major severity with open/confirmed status).
 
-    arci defect blocking
+    krav defect blocking
 
 #### `deferred`
 
 Lists all deferred defects.
 
-    arci defect deferred
+    krav defect deferred
 
 #### `by-review`
 
 Lists defects found by a specific review or examination task.
 
-    arci defect by-review <task-id>
+    krav defect by-review <task-id>
 
 #### `by-subject`
 
 Lists defects about a specific node.
 
-    arci defect by-subject <node-id>
+    krav defect by-subject <node-id>
 
 #### `by-category`
 
 Lists defects matching a specific category.
 
-    arci defect by-category <category>
+    krav defect by-category <category>
 
 #### `summary`
 
 Displays aggregate defect counts grouped by status and severity.
 
-    arci defect summary
+    krav defect summary
 
 ## See also
 

@@ -1,6 +1,6 @@
 # Policy loading
 
-This document describes how ARCI loads and assembles policies from the configuration cascade. It complements [config-cascade.md](../configuration/config-cascade.md), which covers file locations and precedence rules, and [policy-model.md](policy-model.md), which describes the structure of individual policies. This document focuses on the loading algorithm, data structures, and design.
+This document describes how Krav loads and assembles policies from the configuration cascade. It complements [config-cascade.md](../configuration/config-cascade.md), which covers file locations and precedence rules, and [policy-model.md](policy-model.md), which describes the structure of individual policies. This document focuses on the loading algorithm, data structures, and design.
 
 ## Loading architecture
 
@@ -20,7 +20,7 @@ Policy loading requires two distinct phases because the merged manifest determin
 flowchart TB
     subgraph phase1["Phase 1: Manifest Loading"]
         discover1["Discover manifest paths"]
-        load1["Load arci-policies.yaml files"]
+        load1["Load krav-policies.yaml files"]
         merge1["Merge manifests across cascade"]
         result1["Merged PolicyManifest"]
     end
@@ -37,7 +37,7 @@ flowchart TB
     result1 --> filter
 ```
 
-In the first phase, the loader discovers and loads all `arci-policies.yaml` files from the cascade. These manifest files declare which policies to enable or turn off. The loader merges these manifests according to cascade precedence rules to produce a single effective manifest that controls policy state.
+In the first phase, the loader discovers and loads all `krav-policies.yaml` files from the cascade. These manifest files declare which policies to enable or turn off. The loader merges these manifests according to cascade precedence rules to produce a single effective manifest that controls policy state.
 
 In the second phase, the loader discovers and loads policy definition files from `policies.d/` directories. It applies the merged manifest to determine each policy's enforcement state, then assembles the final `PolicyCascade` with full provenance tracking.
 
@@ -45,12 +45,12 @@ A project can turn off a user-level policy, and turned-off policies remain loade
 
 ## Policy manifest loading
 
-The policy manifest file `arci-policies.yaml` controls which policies are active without modifying policy definitions. The `arci hook policy enable/disable` commands manage policy state programmatically through this file.
+The policy manifest file `krav-policies.yaml` controls which policies are active without modifying policy definitions. The `krav hook policy enable/disable` commands manage policy state programmatically through this file.
 
 ### File format
 
 ```yaml
-$schema: https://arci.dev/schemas/arci-policies/v1.yaml
+$schema: https://krav.sh/schemas/krav-policies/v1.yaml
 
 defaultBehavior: all-enabled
 
@@ -75,16 +75,16 @@ Manifest files use per-policy precedence: the highest-precedence layer that ment
 Consider this cascade:
 
 ```text
-# managed/recommended/arci-policies.yaml
+# managed/recommended/krav-policies.yaml
 defaultBehavior: all-enabled
 disabled:
   - dangerous-commands
 
-# user/arci-policies.yaml
+# user/krav-policies.yaml
 enabled:
   - dangerous-commands
 
-# project/arci-policies.yaml
+# project/krav-policies.yaml
 disabled:
   - dangerous-commands
 ```
@@ -94,12 +94,12 @@ The `dangerous-commands` policy ends up turned off because the project layer (hi
 Per-policy precedence means that policies not mentioned by higher layers keep their state from lower layers:
 
 ```text
-# user/arci-policies.yaml
+# user/krav-policies.yaml
 enabled:
   - my-preferences
   - verbose-logging
 
-# project/arci-policies.yaml
+# project/krav-policies.yaml
 enabled:
   - team-standards
 ```
@@ -124,11 +124,11 @@ This self-declaration acts as a hint that applies when no manifest explicitly re
 
 Self-declaration is useful for policies that ship off-by-default (opt-in features) or audit-by-default (new policies under evaluation). Without self-declaration, all policies inherit from `defaultBehavior`, which may not be appropriate for experimental or optional policies.
 
-Local manifest files (`arci-policies.local.yaml`) override their non-local counterparts at the same cascade level. A policy turned off in the local file stays off regardless of its state in the non-local file.
+Local manifest files (`krav-policies.local.yaml`) override their non-local counterparts at the same cascade level. A policy turned off in the local file stays off regardless of its state in the non-local file.
 
 ### Override files
 
-The `ARCI_POLICIES_FILE` environment variable replaces the entire manifest cascade with a single file. When set, the loader uses only this file for policy state determination. Managed/required manifests still apply on top for enterprise enforcement.
+The `KRAV_POLICIES_FILE` environment variable replaces the entire manifest cascade with a single file. When set, the loader uses only this file for policy state determination. Managed/required manifests still apply on top for enterprise enforcement.
 
 ## Policy definition loading
 
@@ -182,18 +182,18 @@ project/
 To override a project policy with a local variant, turn off the project policy in your local manifest and define a replacement in the local directory:
 
 ```yaml
-# .arci/arci-policies.local.yaml
+# .krav/krav-policies.local.yaml
 disabled:
   - team-standards
 
-# .arci/policies.local.d/my-standards.yaml defines the replacement
+# .krav/policies.local.d/my-standards.yaml defines the replacement
 ```
 
 This approach keeps the override intent explicit in the manifest rather than implicit through filename collisions.
 
 ### Override directories
 
-The `ARCI_POLICIES_DIR` environment variable replaces the entire policy definition cascade with a single directory. When set, the loader uses only files from this directory. Managed/required policies still apply for enterprise enforcement.
+The `KRAV_POLICIES_DIR` environment variable replaces the entire policy definition cascade with a single directory. When set, the loader uses only files from this directory. Managed/required policies still apply for enterprise enforcement.
 
 ## Qualified name resolution
 
@@ -221,7 +221,7 @@ The valid layer prefixes correspond to cascade levels:
 
 ### Resolution in manifests
 
-Policy names in `arci-policies.yaml` files also support qualified form. Enabling `user/security-baseline` enables only the user layer's definition, not any project-level policy with the same name.
+Policy names in `krav-policies.yaml` files also support qualified form. Enabling `user/security-baseline` enables only the user layer's definition, not any project-level policy with the same name.
 
 ```yaml
 enabled:
@@ -233,24 +233,24 @@ Qualified names give precise control when the same policy name exists at more th
 
 ## Error handling
 
-Policy loading follows fail-open semantics consistent with the ARCI design philosophy. Configuration errors should never block the AI assistant from operating.
+Policy loading follows fail-open semantics consistent with the Krav design philosophy. Configuration errors should never block the AI assistant from operating.
 
 ### Normal layers
 
 When loading from normal cascade layers (system, user, project, local), the loader logs errors in individual files as warnings and skips the file. Loading continues with the remaining files, so a syntax error in one policy file does not prevent other policies from loading.
 
 ```text
-warning: failed to parse /home/user/.config/arci/policies.d/broken.yaml: yaml: line 5: could not find expected ':'
+warning: failed to parse /home/user/.config/krav/policies.d/broken.yaml: yaml: line 5: could not find expected ':'
 ```
 
-The `arci hook policy validate` command and the server dashboard surface these warnings for users to investigate.
+The `krav hook policy validate` command and the server dashboard surface these warnings for users to investigate.
 
 ### Managed/required layer
 
 The loader treats errors in the managed/required layer differently. If the loader cannot load any required managed configuration, the entire policy loading process fails. Accidental (or intentional) corruption cannot bypass enterprise security policies.
 
 ```text
-error: failed to load required managed policies: /etc/arci/managed/required/policies.d/compliance.yaml: yaml: line 12: mapping values are not allowed in this context
+error: failed to load required managed policies: /etc/krav/managed/required/policies.d/compliance.yaml: yaml: line 12: mapping values are not allowed in this context
 ```
 
 This fail-closed behavior for managed/required ensures that critical security policies are never silently skipped.
@@ -267,10 +267,10 @@ Policy loading occurs as part of the broader configuration loading process but i
 
 ### Loading sequence
 
-The loader loads main configuration (`arci.yaml`) first because some settings may affect policy loading behavior (though currently none do). Policy manifest and definition loading follows. The sequence is:
+The loader loads main configuration (`krav.yaml`) first because some settings may affect policy loading behavior (though currently none do). Policy manifest and definition loading follows. The sequence is:
 
-1. Load and merge `arci.yaml` files from cascade
-2. Load and merge `arci-policies.yaml` files from cascade
+1. Load and merge `krav.yaml` files from cascade
+2. Load and merge `krav-policies.yaml` files from cascade
 3. Load policy definition files from `policies.d/` directories
 4. Apply manifest to determine enabled state
 5. Return unified `LoadedConfig` with both settings and policies
@@ -298,7 +298,7 @@ The policy loading infrastructure uses three key types to track policies and the
 
 ### Policy manifest type
 
-The `PolicyManifest` type represents the merged state of all `arci-policies.yaml` files. It contains the following fields:
+The `PolicyManifest` type represents the merged state of all `krav-policies.yaml` files. It contains the following fields:
 
 | Field | Description |
 |-------|-------------|
@@ -307,7 +307,7 @@ The `PolicyManifest` type represents the merged state of all `arci-policies.yaml
 | `Disabled` | Map of policy name to the cascade source that turned it off |
 | `Audit` | Map of policy name to the cascade source that set audit mode |
 
-The manifest tracks not just the enforcement state but which source in the cascade determined that state. The `arci hook policy explain` command uses this provenance to show why a policy has a given enforcement state.
+The manifest tracks not just the enforcement state but which source in the cascade determined that state. The `krav hook policy explain` command uses this provenance to show why a policy has a given enforcement state.
 
 ### Policy entry type
 
@@ -327,11 +327,11 @@ The `StateSource` field records the origin of the enforcement decision:
 
 | Value | Meaning |
 |-------|---------|
-| `from-manifest` | An explicit reference in an `arci-policies.yaml` file set this state |
+| `from-manifest` | An explicit reference in an `krav-policies.yaml` file set this state |
 | `from-self-declared` | The policy's own `config.default_state` field determined the state |
 | `from-default` | The layer's `defaultBehavior` setting applied as a fallback |
 
-The `arci hook policy explain` command uses `StateSource` to show not just the current state but the reason behind it.
+The `krav hook policy explain` command uses `StateSource` to show not just the current state but the reason behind it.
 
 ### Policy cascade type
 

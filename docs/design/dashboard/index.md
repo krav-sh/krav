@@ -1,6 +1,6 @@
 # Dashboard
 
-The ARCI dashboard is a web-based interface for monitoring and debugging hook activity. It provides real-time visibility into hook events, rule matching, configuration status, and state store contents.
+The Krav dashboard is a web-based interface for monitoring and debugging hook activity. It provides real-time visibility into hook events, rule matching, configuration status, and state store contents.
 
 The [server](../server/index.md) serves the dashboard on the same HTTP port as the API. It targets developers debugging their hook configurations, answering questions like: why did this rule fire? why didn't this rule fire? what's the current state? is the configuration valid?
 

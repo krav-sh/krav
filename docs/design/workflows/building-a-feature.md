@@ -32,13 +32,13 @@ A complete subgraph: concepts, needs, requirements, tasks (all or nearly all com
 
 ### Skills
 
-The `arci:feature` skill builds this workflow as a composite orchestrator. It has `disable-model-invocation: true` in its frontmatter because it has large side effects across the full transformation chain. The skill doesn't do the work itself; it sequences other skills: `arci:explore` for concept development, `arci:formalize` for need extraction, `arci:derive` for requirement derivation, `arci:decompose` for task planning, `arci:task` (repeated) for execution, `arci:testcase` and `arci:verify` for verification. The open question of how exactly this composition works (skill references by name, subagent delegation, or inline instruction) appears in the skills index.
+The `krav:feature` skill builds this workflow as a composite orchestrator. It has `disable-model-invocation: true` in its frontmatter because it has large side effects across the full transformation chain. The skill doesn't do the work itself; it sequences other skills: `krav:explore` for concept development, `krav:formalize` for need extraction, `krav:derive` for requirement derivation, `krav:decompose` for task planning, `krav:task` (repeated) for execution, `krav:testcase` and `krav:verify` for verification. The open question of how exactly this composition works (skill references by name, subagent delegation, or inline instruction) appears in the skills index.
 
 Preprocessing loads the module's current state to determine where in the chain to start. If crystallized concepts already exist, the orchestrator skips exploration. If requirements exist, it skips derivation. The skill body includes checkpoint logic for pausing at transitions that benefit from developer judgment.
 
 ### Agents
 
-The `arci-reviewer` subagent handles the review step, bringing isolated context and a critical evaluation posture to deliverables the main agent produced. The `arci-verifier` subagent handles test execution. The orchestrator launches both at the appropriate point in the chain, with the `subagent-context` policy injecting module requirements and deliverables at launch.
+The `krav-reviewer` subagent handles the review step, bringing isolated context and a critical evaluation posture to deliverables the main agent produced. The `krav-verifier` subagent handles test execution. The orchestrator launches both at the appropriate point in the chain, with the `subagent-context` policy injecting module requirements and deliverables at launch.
 
 ### Policies
 

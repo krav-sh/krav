@@ -9,13 +9,13 @@ The CLI uses the console for human-readable error output. The CLI formats errors
 ```text
 error: configuration validation failed
 
-  --> .arci/rules.yaml:15:3
+  --> .krav/rules.yaml:15:3
    |
 15 |   condition: tool.name =~ /rm/ && args contains "-rf"
    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    |
    = error: unknown operator 'contains', did you mean 'has'?
-   = help: see https://arci.dev/docs/expressions for expression syntax
+   = help: see https://krav.sh/docs/expressions for expression syntax
 ```
 
 For validation commands, the CLI collects errors and reports them together rather than failing on the first error:
@@ -23,22 +23,22 @@ For validation commands, the CLI collects errors and reports them together rathe
 ```text
 error: found 3 configuration errors
 
-.arci/rules.yaml:
+.krav/rules.yaml:
   line 15: unknown operator 'contains' in condition
   line 28: duplicate rule ID 'block-rm'
 
-~/.config/arci/config.yaml:
+~/.config/krav/config.yaml:
   line 5: unknown event type 'BeforeToolUse', did you mean 'PreToolUse'?
 ```
 
-## Health checks with `arci doctor`
+## Health checks with `krav doctor`
 
 The doctor command performs full health checks:
 
 ```text
-$ arci doctor
+$ krav doctor
 
-Installation      OK    arci 0.1.0 at /usr/local/bin/arci
+Installation      OK    krav 0.1.0 at /usr/local/bin/krav
 Claude Code       OK    hooks configured in ~/.claude/settings.json
 Configuration     OK    12 rules loaded from 3 sources
 Rule validation   WARN  1 rule has warnings (use --verbose for details)

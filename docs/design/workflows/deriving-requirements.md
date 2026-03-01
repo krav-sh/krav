@@ -34,9 +34,9 @@ Multiple REQ-* nodes in `draft` status, each with `derivesFrom` edges to source 
 
 ### Skills
 
-The `arci:derive` skill builds this workflow. Preprocessing loads the validated need's statement and rationale, the module's existing requirements (to avoid duplication and identify coverage gaps), and the module's domain context. This is one of the more heavily preprocessed skills because the agent needs substantial context to produce good shall-statements with appropriate verification methods and acceptance criteria.
+The `krav:derive` skill builds this workflow. Preprocessing loads the validated need's statement and rationale, the module's existing requirements (to avoid duplication and identify coverage gaps), and the module's domain context. This is one of the more heavily preprocessed skills because the agent needs substantial context to produce good shall-statements with appropriate verification methods and acceptance criteria.
 
-The skill's instructed commands create REQ-* nodes via `arci requirement create`, link them to their source needs, and set verification methods. The skill instructions emphasize the quality bar for requirements: verifiable, unambiguous, atomic, feasible. This is where the skill body carries the most instructional weight of any graph-building skill.
+The skill's instructed commands create REQ-* nodes via `krav requirement create`, link them to their source needs, and set verification methods. The skill instructions emphasize the quality bar for requirements: verifiable, unambiguous, atomic, feasible. This is where the skill body carries the most instructional weight of any graph-building skill.
 
 ### Policies
 
@@ -46,7 +46,7 @@ The `prompt-context` policy injects relevant state when the developer mentions s
 
 ### Task types
 
-Derivation doesn't create tasks directly. Requirements are the output, and they become inputs to `arci:decompose` for task creation. The connection is that each requirement's `verificationMethod` influences what task types the decompose skill produces: a requirement verified by test produces `implement-tests` and `execute-tests` tasks, while one verified by inspection produces a `review-code` or `review-design` task.
+Derivation doesn't create tasks directly. Requirements are the output, and they become inputs to `krav:decompose` for task creation. The connection is that each requirement's `verificationMethod` influences what task types the decompose skill produces: a requirement verified by test produces `implement-tests` and `execute-tests` tasks, while one verified by inspection produces a `review-code` or `review-design` task.
 
 ## Open questions
 

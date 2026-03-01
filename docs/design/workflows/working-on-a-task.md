@@ -10,7 +10,7 @@ This is the core execution loop. The task DAG expresses what needs to happen; th
 
 ## What happens in the graph
 
-If the developer asks `what's next?`, the agent runs `arci task ready` to find tasks with all dependencies satisfied. It presents the options (or picks the highest-priority one) and loads context via `arci context TASK-X`.
+If the developer asks `what's next?`, the agent runs `krav task ready` to find tasks with all dependencies satisfied. It presents the options (or picks the highest-priority one) and loads context via `krav context TASK-X`.
 
 The task transitions from `ready` to `in_progress`. The agent does the work: writing code, producing documents, whatever the task type calls for. Along the way it might discover blocked dependencies, in which case the task transitions to `blocked` with a reason.
 
@@ -32,9 +32,9 @@ The task in `complete` status with deliverables. Dependent tasks may transition 
 
 ### Skills
 
-The `arci:task` skill builds this workflow and is the core execution skill in ARCI's repertoire. Preprocessing is the richest of any skill: it injects the full task context including the task's requirements, deliverables expected, dependencies and their deliverables, module domain context, and any previous session notes. The !`command` directives call `arci context TASK-X` to assemble this context package before the agent sees its instructions.
+The `krav:task` skill builds this workflow and is the core execution skill in Krav's repertoire. Preprocessing is the richest of any skill: it injects the full task context including the task's requirements, deliverables expected, dependencies and their deliverables, module domain context, and any previous session notes. The !`command` directives call `krav context TASK-X` to assemble this context package before the agent sees its instructions.
 
-The skill body's instructions vary by `taskType`. An `implement-feature` task gets guidance on recording commits and modified files as deliverables. A `design-api` task gets guidance on producing spec documents. A `review-code` task gets guidance on evaluating against requirements (though review tasks typically run through `arci:review` in a subagent instead). Instructed commands let the agent record deliverables, update task status, and flag blockers during execution.
+The skill body's instructions vary by `taskType`. An `implement-feature` task gets guidance on recording commits and modified files as deliverables. A `design-api` task gets guidance on producing spec documents. A `review-code` task gets guidance on evaluating against requirements (though review tasks typically run through `krav:review` in a subagent instead). Instructed commands let the agent record deliverables, update task status, and flag blockers during execution.
 
 ### Policies
 
@@ -46,11 +46,11 @@ The `mutation-feedback` policy fires after each deliverable recording and status
 
 ### Task types
 
-Any of the 27 task types can execute through this workflow. The task's `taskType` field determines what the `arci:task` skill expects in terms of deliverables and completion criteria. Architecture-phase types like `decompose-module` and `define-interface` produce documents and diagrams. Coding-phase types like `implement-feature` and `refactor` produce commits and source files. Verification-phase types like `review-code` and `execute-tests` produce review reports and test results, though these typically execute via subagents rather than through this workflow directly.
+Any of the 27 task types can execute through this workflow. The task's `taskType` field determines what the `krav:task` skill expects in terms of deliverables and completion criteria. Architecture-phase types like `decompose-module` and `define-interface` produce documents and diagrams. Coding-phase types like `implement-feature` and `refactor` produce commits and source files. Verification-phase types like `review-code` and `execute-tests` produce review reports and test results, though these typically execute via subagents rather than through this workflow directly.
 
 ## Open questions
 
-**How much context should the skill load?** `arci context TASK-X` includes task details, module info, related requirements, dependency status, and previous session notes. But loading everything into the agent's context window is expensive. Should there be a tiered approach: load the essentials, and let the agent pull more context as needed?
+**How much context should the skill load?** `krav context TASK-X` includes task details, module info, related requirements, dependency status, and previous session notes. But loading everything into the agent's context window is expensive. Should there be a tiered approach: load the essentials, and let the agent pull more context as needed?
 
 **Session boundaries.** The design says tasks execute in "atomic Claude Code sessions." But what if a task takes multiple sessions? The task's prose content file can hold progress notes, and the graph knows what deliverables the agent recorded. But the specific in-progress state (which file the agent was editing, what approach it was taking) needs persistence. Where does that state live? In the task's prose file? In a session state store?
 

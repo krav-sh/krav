@@ -132,11 +132,11 @@ In the original DEF-* design, the lifecycle was open → acknowledged → addres
 
 ### Why verified before closed?
 
-A resolved defect isn't necessarily fixed correctly. The `verified` state requires someone (or some automated check) to confirm the fix is adequate. This prevents the pattern where a defect is `closed` but the fix introduced a new problem or didn't actually address the original issue. For automated verifications (method: test), ARCI can automate the `resolved → verified` transition when the relevant Tc node's `currentResult` returns to `pass`.
+A resolved defect isn't necessarily fixed correctly. The `verified` state requires someone (or some automated check) to confirm the fix is adequate. This prevents the pattern where a defect is `closed` but the fix introduced a new problem or didn't actually address the original issue. For automated verifications (method: test), Krav can automate the `resolved → verified` transition when the relevant Tc node's `currentResult` returns to `pass`.
 
 ## Storage model
 
-ARCI stores defect vertex data in the `defects` table (`defects.ndjson` on disk). Edge tables hold all relationships separately.
+Krav stores defect vertex data in the `defects` table (`defects.ndjson` on disk). Edge tables hold all relationships separately.
 
 ```json
 {"id": "DEF-F1L4T7W5", "type": "Defect", "title": "Error messages missing line numbers", "category": "incomplete", "severity": "major", "status": "confirmed", "statement": "Error messages report the error type but not the source location, making it difficult to locate problems in input files", "detectedInPhase": "design"}
@@ -181,7 +181,7 @@ The `module`, `subject`, `detectedBy`, and `generates` predicates live in their 
 
 ## Prose files
 
-Most defects are fully described by `statement` and `summary`. For defects that need more room (reproduction procedures, analysis logs, environmental details), a prose file can live at `.arci/defects/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
+Most defects are fully described by `statement` and `summary`. For defects that need more room (reproduction procedures, analysis logs, environmental details), a prose file can live at `.krav/defects/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
 
 ## Relationships
 
@@ -228,13 +228,13 @@ In `generates.ndjson`: `{"src": "DEF-F1L4T7W5", "dst": "TASK-F1X00001"}`
 
 ## Interaction with reviews
 
-A review in ARCI is a verification-phase task (task_type: `architecture-review`, `design-review`, `code-review`, `requirements-review`). The review task produces two kinds of output:
+A review in Krav is a verification-phase task (task_type: `architecture-review`, `design-review`, `code-review`, `requirements-review`). The review task produces two kinds of output:
 
 **Review report** (task deliverable): a prose document capturing the review's analysis, observations, recommendations, and disposition. This is where neutral observations, suggestions, and commentary live. The report is a file in the module's deliverables directory.
 
 **Defects** (DEF-* nodes): zero or more defect records for actual problems found. Each defect links back to the review task via `detectedBy`.
 
-The review task also has a **disposition**, the review outcome. ARCI captures this in the review report deliverable rather than on the task node itself, since disposition is specific to reviews and doesn't apply to other task types. Dispositions follow IEEE 1028:
+The review task also has a **disposition**, the review outcome. Krav captures this in the review report deliverable rather than on the task node itself, since disposition is specific to reviews and doesn't apply to other task types. Dispositions follow IEEE 1028:
 
 - **accepted**: reviewed item meets criteria, no blocking defects.
 - **conditionally accepted**: reviewed item is acceptable once identified defects reach resolution. The conditions are the open defects.
@@ -257,7 +257,7 @@ policies:
   - name: require-defect-for-verification-failure
     description: Verification failures must have an associated defect
     match:
-      tool: arci
+      tool: krav
       args:
         - match: "verification"
           position: 0
@@ -288,7 +288,7 @@ This avoids flooding the defect list with auto-generated items that may not be r
 
 Some operations create defects automatically:
 
-**Phase regression**: when a module regresses to an earlier phase, ARCI creates a defect to record why:
+**Phase regression**: when a module regresses to an earlier phase, Krav creates a defect to record why:
 
 ```json
 {"id": "DEF-R3GR3SS1", "type": "Defect", "title": "Module boundary unclear", "severity": "major", "status": "confirmed", "statement": "Boundary between lexer and tokenizer is unclear, causing interface confusion", "category": "ambiguous", "detectedInPhase": "design"}
@@ -302,36 +302,36 @@ This is one of the few cases where automatic creation justifies itself; phase re
 
 ```bash
 # CRUD
-arci defect create --module MOD-A4F8R2X1 --severity major \
+Krav defect create --module MOD-A4F8R2X1 --severity major \
   --statement "Error messages don't include source location" \
   --subject REQ-3RR0R001 --category incomplete
-arci defect show DEF-F1L4T7W5
-arci defect list
-arci defect list --module MOD-A4F8R2X1 --severity critical --status open
-arci defect update DEF-F1L4T7W5 --severity critical
-arci defect delete DEF-F1L4T7W5
+Krav defect show DEF-F1L4T7W5
+Krav defect list
+Krav defect list --module MOD-A4F8R2X1 --severity critical --status open
+Krav defect update DEF-F1L4T7W5 --severity critical
+Krav defect delete DEF-F1L4T7W5
 
 # Disposition
-arci defect confirm DEF-F1L4T7W5
-arci defect reject DEF-F1L4T7W5 --rationale "By design: errors use structured output"
-arci defect defer DEF-F1L4T7W5 --rationale "Low priority for v1" --target "v2.0"
+Krav defect confirm DEF-F1L4T7W5
+Krav defect reject DEF-F1L4T7W5 --rationale "By design: errors use structured output"
+Krav defect defer DEF-F1L4T7W5 --rationale "Low priority for v1" --target "v2.0"
 
 # Resolution
-arci defect generate-task DEF-F1L4T7W5
-arci defect resolve DEF-F1L4T7W5 --notes "Added line/column to all error types"
-arci defect verify DEF-F1L4T7W5
-arci defect close DEF-F1L4T7W5
-arci defect reopen DEF-F1L4T7W5
+Krav defect generate-task DEF-F1L4T7W5
+Krav defect resolve DEF-F1L4T7W5 --notes "Added line/column to all error types"
+Krav defect verify DEF-F1L4T7W5
+Krav defect close DEF-F1L4T7W5
+Krav defect reopen DEF-F1L4T7W5
 
 # Queries
-arci defect open                           # All open/confirmed defects
-arci defect open --module MOD-A4F8R2X1     # Open for module
-arci defect blocking                       # Defects blocking phase advancement
-arci defect deferred                       # All deferred defects
-arci defect by-review TASK-R3V13W01         # Defects from a specific review
-arci defect by-subject REQ-C2H6N4P8        # Defects about a specific node
-arci defect by-category ambiguous          # Defects by category
-arci defect summary                        # Aggregate counts by status/severity
+Krav defect open                           # All open/confirmed defects
+Krav defect open --module MOD-A4F8R2X1     # Open for module
+Krav defect blocking                       # Defects blocking phase advancement
+Krav defect deferred                       # All deferred defects
+Krav defect by-review TASK-R3V13W01         # Defects from a specific review
+Krav defect by-subject REQ-C2H6N4P8        # Defects about a specific node
+Krav defect by-category ambiguous          # Defects by category
+Krav defect summary                        # Aggregate counts by status/severity
 ```
 
 See [Defect](../../cli/commands/defect.md) for full CLI documentation.
@@ -389,5 +389,5 @@ Defects represent identified problems that need action:
 - Traced to the defective item via `subject` and the examination that found it via `detectedBy`
 - Remediated through generated tasks, verified before closure
 - Interact with baselines (clean baselines require no open blocking defects) and suspect links (reviewers create defects when suspect links reveal real problems)
-- Stored as rows in the `defects` vertex table (`.arci/graph/defects.ndjson` on disk)
+- Stored as rows in the `defects` vertex table (`.krav/graph/defects.ndjson` on disk)
 - Do not contain decisions, questions, observations, or recommendations; those belong in concepts, task context, and review deliverables respectively

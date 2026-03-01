@@ -1,23 +1,23 @@
 # Install / uninstall
 
-The install and uninstall commands manage integration with Claude Code. These commands change Claude Code configuration files to wire up ARCI hooks.
+The install and uninstall commands manage integration with Claude Code. These commands change Claude Code configuration files to wire up Krav hooks.
 
 ## Synopsis
 
 ```text
-arci install [options]
-arci uninstall [options]
+Krav install [options]
+Krav uninstall [options]
 ```
 
 ## Description
 
 ### Install
 
-The `arci install` command configures Claude Code to invoke ARCI. Without arguments, it enters an interactive mode that guides the user through configuration. With explicit flags, it can run non-interactively for scripting.
+The `krav install` command configures Claude Code to invoke Krav. Without arguments, it enters an interactive mode that guides the user through configuration. With explicit flags, it can run non-interactively for scripting.
 
 ### Uninstall
 
-The `arci uninstall` command reverses the installation, removing ARCI hook entries from Claude Code configuration.
+The `krav uninstall` command reverses the installation, removing Krav hook entries from Claude Code configuration.
 
 ## Options
 
@@ -31,25 +31,25 @@ The `arci uninstall` command reverses the installation, removing ARCI hook entri
 ### Uninstall options
 
 - `--scope <scope>`: Choose which level to uninstall from.
-- `--purge`: Also remove ARCI's own configuration directories.
+- `--purge`: Also remove Krav's own configuration directories.
 
 ## Examples
 
 ```bash
 # Interactive installation
-arci install
+Krav install
 
 # Non-interactive project-level install with starter files
-arci install --scope project --scaffold --non-interactive
+Krav install --scope project --scaffold --non-interactive
 
 # Preview what install would do
-arci install --dry-run
+Krav install --dry-run
 
-# Remove arci hooks from project config
-arci uninstall --scope project
+# Remove krav hooks from project config
+Krav uninstall --scope project
 
 # Full removal including config directories
-arci uninstall --purge
+Krav uninstall --purge
 ```
 
 ## See also

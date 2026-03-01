@@ -1,12 +1,12 @@
 # Hooks
 
-The hook subsystem is ARCI's policy engine for intercepting and controlling Claude Code tool execution. Hooks check policies against Claude Code hook events (tool calls, prompts, session lifecycle, and more) to enforce safety rules, inject context, track state, and automate workflows.
+The hook subsystem is Krav's policy engine for intercepting and controlling Claude Code tool execution. Hooks check policies against Claude Code hook events (tool calls, prompts, session lifecycle, and more) to enforce safety rules, inject context, track state, and automate workflows.
 
-Hooks are one component of ARCI's architecture. For the system design, see [architecture.md](../architecture.md). For how ARCI integrates with Claude Code's hook system, see [claude-code-integration.md](claude-code-integration.md).
+Hooks are one component of Krav's architecture. For the system design, see [architecture.md](../architecture.md). For how Krav integrates with Claude Code's hook system, see [claude-code-integration.md](claude-code-integration.md).
 
 ## How it works
 
-When Claude Code fires a hook event (such as before executing a Bash command), ARCI checks all matching policies and returns a response: allow, warn, or deny. Policies can also mutate tool inputs, inject context into the conversation, and trigger side effects like state tracking or notifications.
+When Claude Code fires a hook event (such as before executing a Bash command), Krav checks all matching policies and returns a response: allow, warn, or deny. Policies can also mutate tool inputs, inject context into the conversation, and trigger side effects like state tracking or notifications.
 
 ## Documentation
 
@@ -21,7 +21,7 @@ When Claude Code fires a hook event (such as before executing a Bash command), A
 - [Recipes](recipes.md): Practical policy examples for common use cases
 - [Claude Code integration](claude-code-integration.md): Claude Code hook events, input/output schemas, configuration
 - [Error troubleshooting](errors.md): troubleshooting workflows, diagnostic commands
-- [Hook event logging](logging.md): `arci hook apply` output contract, event log schema, querying
+- [Hook event logging](logging.md): `krav hook apply` output contract, event log schema, querying
 
 ## Examples
 

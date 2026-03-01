@@ -1,6 +1,6 @@
 # State store
 
-ARCI includes a persistent state store for tracking data across hook invocations. Rules that depend on history can use the state store: warning on first occurrence and blocking on third, or tracking cumulative token usage across a session. This document describes the state store design and usage.
+Krav includes a persistent state store for tracking data across hook invocations. Rules that depend on history can use the state store: warning on first occurrence and blocking on third, or tracking cumulative token usage across a session. This document describes the state store design and usage.
 
 ## Overview
 
@@ -225,7 +225,7 @@ Scripts run in a sandbox with no filesystem, network, or environment access unle
 
 ## Built-in state tracking
 
-ARCI can optionally track common state automatically. This is configurable and includes things like `arci.prompts.count` for total prompts in the session, `arci.tools.total_count` for total tool invocations, `arci.tools.<name>.count` for per-tool invocation counts, `arci.session.started_at` for session start timestamp, and similar metrics.
+Krav can optionally track common state automatically. This is configurable and includes things like `krav.prompts.count` for total prompts in the session, `krav.tools.total_count` for total tool invocations, `krav.tools.<name>.count` for per-tool invocation counts, `krav.session.started_at` for session start timestamp, and similar metrics.
 
 These built-in state updates happen after rule evaluation, so rules see the state from before the current event. This avoids confusion about whether the count includes the current event.
 
@@ -235,9 +235,9 @@ At runtime, the state store and the knowledge graph share the same DuckDB instan
 
 ## Database location
 
-The state database location depends on the configuration. For project-scoped state, the database lives within the project directory structure at `.arci/state.duckdb`.
+The state database location depends on the configuration. For project-scoped state, the database lives within the project directory structure at `.krav/state.duckdb`.
 
-For user-level state that spans projects, the database lives in the user config directory at `~/.config/arci/state.duckdb`.
+For user-level state that spans projects, the database lives in the user config directory at `~/.config/krav/state.duckdb`.
 
 The server manages the DuckDB instance directly. The DuckDB instance supports multiple connections for concurrent reads.
 
@@ -251,7 +251,7 @@ Project state persists indefinitely until someone explicitly deletes it.
 
 The server serializes all writes through a single DuckDB instance. DuckDB supports multiple concurrent readers, so dashboard queries and hook evaluations can read state without blocking each other. The server coordinates writes to avoid contention.
 
-The `atomic_increment` operation uses a single `INSERT ... ON CONFLICT` statement to ensure atomicity. When the server is not running, the CLI can open `.arci/state.duckdb` in read-only mode for diagnostics and state inspection.
+The `atomic_increment` operation uses a single `INSERT ... ON CONFLICT` statement to ensure atomicity. When the server is not running, the CLI can open `.krav/state.duckdb` in read-only mode for diagnostics and state inspection.
 
 ## Dashboard integration
 

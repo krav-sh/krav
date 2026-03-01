@@ -51,7 +51,7 @@ Archiving a stakeholder does not invalidate the needs linked to it. Those needs 
 
 ## Storage model
 
-ARCI stores stakeholder vertex data in the `stakeholders` table (`stakeholders.ndjson` on disk). Stakeholders have no outgoing relationship properties; needs reference them via the `stakeholder` edge table.
+Krav stores stakeholder vertex data in the `stakeholders` table (`stakeholders.ndjson` on disk). Stakeholders have no outgoing relationship properties; needs reference them via the `stakeholder` edge table.
 
 ```json
 {"id": "STK-H5N7P3Q9", "type": "Stakeholder", "title": "CLI end user", "description": "Developers who use the tool from the command line as part of their daily workflow", "concerns": "Usability, performance, clear error messages, predictable behavior", "status": "active"}
@@ -71,7 +71,7 @@ Fields:
 
 Stakeholders do not have a `module` property. They exist at the project level without scoping to a specific module. A stakeholder's concerns may span the entire system.
 
-The `description` and `concerns` fields fully describe most stakeholders. Stakeholders that accumulate extensive supporting material (interview transcripts, persona research, organizational context) can use `summary` for inline extended context and a prose file at `.arci/stakeholders/{timestamp}-{NANOID}-{slug}.md` for longer material. See [Prose files](../schema.md#prose-files) for the path convention.
+The `description` and `concerns` fields fully describe most stakeholders. Stakeholders that accumulate extensive supporting material (interview transcripts, persona research, organizational context) can use `summary` for inline extended context and a prose file at `.krav/stakeholders/{timestamp}-{NANOID}-{slug}.md` for longer material. See [Prose files](../schema.md#prose-files) for the path convention.
 
 ## Relationships
 
@@ -101,20 +101,20 @@ A single need may reference multiple stakeholders when multiple parties share an
 
 ```bash
 # CRUD
-arci stakeholder create --title "CLI end user" \
+Krav stakeholder create --title "CLI end user" \
   --description "Developers who use the tool from the command line" \
   --concerns "Usability, performance, clear error messages"
-arci stakeholder show STK-H5N7P3Q9
-arci stakeholder list
-arci stakeholder list --status active
-arci stakeholder update STK-H5N7P3Q9 --concerns "Updated concerns"
-arci stakeholder delete STK-H5N7P3Q9
+Krav stakeholder show STK-H5N7P3Q9
+Krav stakeholder list
+Krav stakeholder list --status active
+Krav stakeholder update STK-H5N7P3Q9 --concerns "Updated concerns"
+Krav stakeholder delete STK-H5N7P3Q9
 
 # Lifecycle
-arci stakeholder archive STK-H5N7P3Q9
+Krav stakeholder archive STK-H5N7P3Q9
 
 # Queries
-arci stakeholder needs STK-H5N7P3Q9  # Show all needs for this stakeholder
+Krav stakeholder needs STK-H5N7P3Q9  # Show all needs for this stakeholder
 ```
 
 See [Stakeholder](../../cli/commands/stakeholder.md) for full CLI documentation.
@@ -141,7 +141,7 @@ See [Stakeholder](../../cli/commands/stakeholder.md) for full CLI documentation.
 
 ## Design notes
 
-Stakeholders are intentionally lightweight. They carry a title, description, concerns, and an optional summary. ARCI provides no fixed taxonomy of stakeholder types, no required classification scheme, and no enumeration of valid stakeholder categories. Projects define whatever stakeholders make sense for their context: a solo developer's side project might have two stakeholders (the developer as user and the developer as maintainer), while a regulated enterprise system might have a dozen (patients, clinicians, regulatory bodies, hospital IT, biomedical engineers, insurance providers).
+Stakeholders are intentionally lightweight. They carry a title, description, concerns, and an optional summary. Krav provides no fixed taxonomy of stakeholder types, no required classification scheme, and no enumeration of valid stakeholder categories. Projects define whatever stakeholders make sense for their context: a solo developer's side project might have two stakeholders (the developer as user and the developer as maintainer), while a regulated enterprise system might have a dozen (patients, clinicians, regulatory bodies, hospital IT, biomedical engineers, insurance providers).
 
 The concerns field is freeform text rather than structured data. Stakeholder concerns are inherently qualitative and varied. Structuring them as typed categories would either be too rigid (missing real concerns) or too generic (not adding information beyond what the title and description already convey). The concerns field is a prompt for the formalization step: when the agent reads a stakeholder's concerns alongside a crystallized concept, it can identify which expectations that concept implies for that party.
 

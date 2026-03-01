@@ -1,6 +1,6 @@
 # Expression language
 
-ARCI uses two evaluation engines. CEL (Common Expression Language) provides type-safe evaluation for boolean conditions and data transformations. Go's `text/template` with the Sprig function library handles string interpolation and control flow. This separation matches each engine to its strength. CEL excels at evaluating expressions against structured data, while `text/template` excels at producing string output with interpolation.
+Krav uses two evaluation engines. CEL (Common Expression Language) provides type-safe evaluation for boolean conditions and data transformations. Go's `text/template` with the Sprig function library handles string interpolation and control flow. This separation matches each engine to its strength. CEL excels at evaluating expressions against structured data, while `text/template` excels at producing string output with interpolation.
 
 ## Where expressions appear
 
@@ -22,7 +22,7 @@ Go templates appear in action message fields like `validate.message` and effect 
 
 ## Evaluation modes
 
-ARCI distinguishes between two evaluation modes based on field semantics in policy definitions.
+Krav distinguishes between two evaluation modes based on field semantics in policy definitions.
 
 Condition and expression fields contain CEL expressions evaluated for truthiness or transformation. These expressions appear without any delimiters. The `conditions`, `validate.expression`, and `mutate.expression` fields use this mode.
 
@@ -183,13 +183,13 @@ The `jsonPointer` function is primarily useful when working with MCP tool inputs
 
 ## Built-in CEL functions and Go template functions
 
-ARCI extends both CEL and Go templates with domain-specific functions for common hook operations.
+Krav extends both CEL and Go templates with domain-specific functions for common hook operations.
 
 ### CEL condition functions
 
 CEL provides these built-in methods on strings: `startsWith()`, `endsWith()`, `contains()`, `matches()`, and `size()`. The `has()` macro checks field existence.
 
-ARCI adds custom CEL functions for domain-specific operations. You invoke these with a `$` prefix to distinguish them from CEL builtins.
+Krav adds custom CEL functions for domain-specific operations. You invoke these with a `$` prefix to distinguish them from CEL builtins.
 
 Path functions include `$file_exists(path)` which returns true if the path exists as a regular file, and `$matches_glob(path, pattern)` which checks whether a path matches a glob pattern.
 
@@ -231,7 +231,7 @@ conditions:
 
 ### Go template functions
 
-Go templates have access to Sprig functions and custom ARCI functions. Sprig provides `lower`, `upper`, `trim`, `replace`, `split`, `join`, `contains`, `hasPrefix`, `hasSuffix`, and many more. Custom ARCI template functions include `env`, `currentBranch`, `gitIsDirty`, `sessionGet`, `projectGet`, and `regexReplace`.
+Go templates have access to Sprig functions and custom Krav functions. Sprig provides `lower`, `upper`, `trim`, `replace`, `split`, `join`, `contains`, `hasPrefix`, `hasSuffix`, and many more. Custom Krav template functions include `env`, `currentBranch`, `gitIsDirty`, `sessionGet`, `projectGet`, and `regexReplace`.
 
 ```yaml
 message: "Running in {{ env \"NODE_ENV\" | default \"development\" }} mode"
@@ -263,7 +263,7 @@ rules:
         })
 ```
 
-Missing variables resolve to zero values rather than raising errors. ARCI configures templates with `missingkey=zero` for fail-safe behavior, preventing template errors from blocking evaluation.
+Missing variables resolve to zero values rather than raising errors. Krav configures templates with `missingkey=zero` for fail-safe behavior, preventing template errors from blocking evaluation.
 
 ### Conditionals
 
@@ -350,7 +350,7 @@ For `post_tool_call` events, the `tool_output` variable (CEL) or `.ToolOutput` (
 
 ### Git context
 
-When the current working directory is within a git repository, ARCI populates git-related context.
+When the current working directory is within a git repository, Krav populates git-related context.
 
 The `git_branch` variable (CEL) or `.GitBranch` (template) contains the current branch name, or empty string in detached HEAD state.
 

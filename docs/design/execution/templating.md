@@ -9,14 +9,14 @@ Two template types serve different scopes:
 - **Task templates**: single-task patterns (a code review, an architecture exploration, a test build)
 - **Decomposition templates**: Multi-task DAG patterns (full feature lifecycle, RFC process, quick fix)
 
-Templates are extendable. ARCI ships with built-in templates for common patterns, while projects define their own in `.arci/templates/`. Project templates override built-ins with the same id.
+Templates are extendable. Krav ships with built-in templates for common patterns, while projects define their own in `.krav/templates/`. Project templates override built-ins with the same id.
 
 ## Template resolution
 
 Templates resolve in order:
 
-1. `.arci/templates/tasks/` and `.arci/templates/decompositions/` (project-specific)
-2. Built-in templates bundled with ARCI
+1. `.krav/templates/tasks/` and `.krav/templates/decompositions/` (project-specific)
+2. Built-in templates bundled with Krav
 
 A project template with `id: full-feature` shadows the built-in `full-feature` template.
 
@@ -25,7 +25,7 @@ A project template with `id: full-feature` shadows the built-in `full-feature` t
 Task templates define single-task patterns. They specify the phase, task type, expected deliverables, and can include instructions that interpolate context.
 
 ```yaml
-# .arci/templates/tasks/quick-review.yaml
+# .krav/templates/tasks/quick-review.yaml
 id: quick-review
 name: Quick code review
 description: Single-pass review of implementation against requirements
@@ -87,7 +87,7 @@ deliverables:
 Decomposition templates define task DAG patterns. They compose multiple tasks (potentially referencing task templates) with dependency relationships.
 
 ```yaml
-# .arci/templates/decompositions/full-feature.yaml
+# .krav/templates/decompositions/full-feature.yaml
 id: full-feature
 name: Full phased feature
 description: Complete feature lifecycle from architecture through validation
@@ -210,7 +210,7 @@ graph:                           # Graph query helpers
 
 project:                         # Project-level info
   root_module: MOD-OAPSROOT
-  name: "arci"
+  name: "krav"
 
 params:                          # Caller-provided parameters
   skip_architecture: false
@@ -266,14 +266,14 @@ parameters:
     type: array
 ```
 
-Declared parameters appear in `arci template show <id>` output and the system validates them at invocation time.
+Declared parameters appear in `krav template show <id>` output and the system validates them at invocation time.
 
 ### Arbitrary parameters
 
 Beyond declared parameters, callers can pass any parameter. Undeclared parameters are available in `params.*` without validation:
 
 ```bash
-arci module decompose MOD-A4F8R2X1 \
+Krav module decompose MOD-A4F8R2X1 \
   --template full-feature \
   --param reviewer=@tony \
   --param priority=high \
@@ -288,7 +288,7 @@ All of these are available as `params.reviewer`, `params.priority`, `params.cust
 For complex invocations, parameters can come from a file:
 
 ```bash
-arci module decompose MOD-A4F8R2X1 \
+Krav module decompose MOD-A4F8R2X1 \
   --template full-feature \
   --params-file ./params/parser-feature.yaml
 ```
@@ -315,7 +315,7 @@ Templates use Jinja2 syntax for interpolation, including its inheritance system 
 Base templates define a structure with blocks that child templates can override:
 
 ```yaml
-# .arci/templates/decompositions/_base-feature.yaml
+# .krav/templates/decompositions/_base-feature.yaml
 id: _base-feature
 abstract: true
 
@@ -360,7 +360,7 @@ tasks:
 Child templates extend the base and override specific blocks:
 
 ```yaml
-# .arci/templates/decompositions/security-feature.yaml
+# .krav/templates/decompositions/security-feature.yaml
 {% extends "_base-feature.yaml" %}
 
 id: security-feature
@@ -390,7 +390,7 @@ description: Feature lifecycle with enhanced security review
 ```
 
 ```yaml
-# .arci/templates/decompositions/internal-feature.yaml
+# .krav/templates/decompositions/internal-feature.yaml
 {% extends "_base-feature.yaml" %}
 
 id: internal-feature
@@ -461,7 +461,7 @@ skip_if: "{{ module.requirements | length == 0 }}"
 
 ## Built-in templates
 
-ARCI ships with built-in templates for common patterns:
+Krav ships with built-in templates for common patterns:
 
 ### Task templates
 
@@ -492,34 +492,34 @@ ARCI ships with built-in templates for common patterns:
 
 ```bash
 # List all available templates
-arci template list
-arci template list --type task
-arci template list --type decomposition
+Krav template list
+Krav template list --type task
+Krav template list --type decomposition
 
 # Show template details
-arci template show full-feature
-arci template show quick-review --format yaml
+Krav template show full-feature
+Krav template show quick-review --format yaml
 
 # Create task from template
-arci task create --template quick-review --module MOD-A4F8R2X1
-arci task create --template quick-review --module MOD-A4F8R2X1 --param focus=security
+Krav task create --template quick-review --module MOD-A4F8R2X1
+Krav task create --template quick-review --module MOD-A4F8R2X1 --param focus=security
 
 # Decompose using template
-arci module decompose MOD-A4F8R2X1 --template full-feature
-arci module decompose MOD-A4F8R2X1 --template full-feature --param skip_architecture=true
-arci module decompose MOD-A4F8R2X1 --template quick-fix --param finding=DEF-X1Y2Z3A4
+Krav module decompose MOD-A4F8R2X1 --template full-feature
+Krav module decompose MOD-A4F8R2X1 --template full-feature --param skip_architecture=true
+Krav module decompose MOD-A4F8R2X1 --template quick-fix --param finding=DEF-X1Y2Z3A4
 
 # Validate a template
-arci template validate .arci/templates/tasks/my-custom-review.yaml
+Krav template validate .krav/templates/tasks/my-custom-review.yaml
 
 # Preview decomposition without creating tasks
-arci module decompose MOD-A4F8R2X1 --template full-feature --dry-run
+Krav module decompose MOD-A4F8R2X1 --template full-feature --dry-run
 ```
 
 ## Project template structure
 
 ```text
-.arci/
+.krav/
   templates/
     tasks/
       custom-review.yaml
@@ -537,7 +537,7 @@ arci module decompose MOD-A4F8R2X1 --template full-feature --dry-run
 | Task templates | ○ Not yet | No template storage or CLI commands |
 | Decomposition templates | ○ Not yet | No decomposition template support |
 | Built-in templates | ○ Not yet | None of the listed built-in templates exist |
-| CLI commands | ○ Not yet | No `arci template` command group |
+| CLI commands | ○ Not yet | No `krav template` command group |
 
 This document describes the target architecture for the templating system. The team plans to build this but has not yet started.
 

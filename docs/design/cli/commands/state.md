@@ -4,7 +4,7 @@ The state command group provides access to the state store.
 
 ## Synopsis
 
-    arci state <subcommand> [options]
+    krav state <subcommand> [options]
 
 ## Description
 
@@ -25,13 +25,13 @@ Shows all entries in the state store.
 
 Retrieves a specific entry, showing its value and metadata (creation time, last update, author).
 
-    arci state get <key>
+    krav state get <key>
 
 ### Set
 
 Sets a state entry.
 
-    arci state set <key> <value>
+    krav state set <key> <value>
 
 **Flags:**
 
@@ -41,7 +41,7 @@ Sets a state entry.
 
 Removes a specific entry.
 
-    arci state unset <key>
+    krav state unset <key>
 
 **Flags:**
 

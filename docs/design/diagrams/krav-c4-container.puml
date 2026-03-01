@@ -1,7 +1,7 @@
-@startuml arci-c4-container
+@startuml krav-c4-container
 !include <C4/C4_Container>
 
-title Container diagram for arci
+title Container diagram for krav
 
 Person(developer, "Developer", "Configures policies, manages graph,\nand reviews agent work")
 
@@ -10,9 +10,9 @@ System_Ext(git, "Git", "Local repo: branch context,\ncommit history, working tre
 System_Ext(github, "GitHub", "Remote repo, PRs, Discussions,\nActions CI/CD")
 System_Ext(param_providers, "Parameter providers", "HTTP APIs, config files, env vars\nfor dynamic policy parameters")
 
-System_Boundary(arci, "arci") {
+System_Boundary(krav, "krav") {
 
-    Container(cli, "arci CLI", "", "Unified entry point for hook\nevaluation, graph management,\ndeveloper commands, and\nserver/dashboard/MCP control.")
+    Container(cli, "krav CLI", "", "Unified entry point for hook\nevaluation, graph management,\ndeveloper commands, and\nserver/dashboard/MCP control.")
 
     Container(server, "Server", "", "Long-running process.\nCaches compiled policies and\nmaterialized graph. REST API,\nWebSocket events, config hot-reload.")
 
@@ -20,13 +20,13 @@ System_Boundary(arci, "arci") {
 
     Container(mcp, "MCP Server", "stdio", "Model Context Protocol server.\nExposes policy diagnostics and\ngraph queries to Claude Code.")
 
-    ContainerDb(state_store, "State Store", "DuckDB", "File-backed DuckDB at\n.arci/state.duckdb.\nHook state, metrics, sessions.")
+    ContainerDb(state_store, "State Store", "DuckDB", "File-backed DuckDB at\n.krav/state.duckdb.\nHook state, metrics, sessions.")
 
     ContainerDb(graph_db, "Knowledge Graph", "DuckDB + DuckPGQ", "Per-table NDJSON files hydrated\ninto in-memory DuckDB.\nSQL + SQL/PGQ queries.")
 
-    ContainerDb(prose_files, "Prose Files", ".arci/ Markdown", "Concept explorations, module docs,\ntask instructions, defect details.\nNo frontmatter.")
+    ContainerDb(prose_files, "Prose Files", ".krav/ Markdown", "Concept explorations, module docs,\ntask instructions, defect details.\nNo frontmatter.")
 
-    ContainerDb(policy_config, "Policies + Settings", "", "Hook policies, arci settings.\nUser, project, local layers.\nConfig cascade with precedence.")
+    ContainerDb(policy_config, "Policies + Settings", "", "Hook policies, krav settings.\nUser, project, local layers.\nConfig cascade with precedence.")
 
     ContainerDb(harness_config, "Agent Harness", "Markdown / YAML / JSON", "CLAUDE.md, hooks.json, agent skills,\ntask/decomposition templates.\nRead by Claude Code at session start.")
 }

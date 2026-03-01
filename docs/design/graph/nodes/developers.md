@@ -47,7 +47,7 @@ Archiving a developer does not invalidate provenance links. Nodes attributed to 
 
 ## Storage model
 
-ARCI stores developer vertex data in the `developers` table (`developers.ndjson` on disk). Developers have no outgoing relationship properties; agents reference them via the `operator` edge table, and any node can reference them via the `attributed_to` property.
+Krav stores developer vertex data in the `developers` table (`developers.ndjson` on disk). Developers have no outgoing relationship properties; agents reference them via the `operator` edge table, and any node can reference them via the `attributed_to` property.
 
 ```json
 {"id": "DEV-J4R8T2W6", "type": "Developer", "title": "Tony", "description": "Primary developer and project maintainer", "status": "active"}
@@ -66,7 +66,7 @@ Fields:
 
 Developers have no type-specific properties beyond the common fields. They are intentionally lightweight; the value is in their graph relationships (provenance links and operator references).
 
-Most developers are fully described by `title` and `description`. Developers that accumulate extensive context can use a prose file at `.arci/developers/{timestamp}-{NANOID}-{slug}.md`. See [Prose files](../schema.md#prose-files) for the path convention.
+Most developers are fully described by `title` and `description`. Developers that accumulate extensive context can use a prose file at `.krav/developers/{timestamp}-{NANOID}-{slug}.md`. See [Prose files](../schema.md#prose-files) for the path convention.
 
 ## Relationships
 
@@ -83,23 +83,23 @@ Developers have no outgoing object properties to other graph nodes. Agents refer
 
 ```bash
 # CRUD
-arci developer create --title "Tony" \
+Krav developer create --title "Tony" \
   --description "Primary developer and project maintainer"
-arci developer show DEV-J4R8T2W6
-arci developer list
-arci developer list --status active
-arci developer update DEV-J4R8T2W6 --description "Updated role"
-arci developer delete DEV-J4R8T2W6
+Krav developer show DEV-J4R8T2W6
+Krav developer list
+Krav developer list --status active
+Krav developer update DEV-J4R8T2W6 --description "Updated role"
+Krav developer delete DEV-J4R8T2W6
 
 # Lifecycle
-arci developer archive DEV-J4R8T2W6
+Krav developer archive DEV-J4R8T2W6
 
 # Queries
-arci developer sessions DEV-J4R8T2W6  # Show agent sessions for this developer
+Krav developer sessions DEV-J4R8T2W6  # Show agent sessions for this developer
 ```
 
 See Developer for full CLI documentation.
 
 ## Design notes
 
-Developers are intentionally lightweight. They exist so that provenance properties (`attributedTo`, `operator`) reference proper graph nodes rather than string fields. A solo project might have a single DEV-* node. A team project creates one per contributor. ARCI does not enforce linking developers to git authors or external identity providers; that mapping is a project-level convention, not a schema constraint.
+Developers are intentionally lightweight. They exist so that provenance properties (`attributedTo`, `operator`) reference proper graph nodes rather than string fields. A solo project might have a single DEV-* node. A team project creates one per contributor. Krav does not enforce linking developers to git authors or external identity providers; that mapping is a project-level convention, not a schema constraint.

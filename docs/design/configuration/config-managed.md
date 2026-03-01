@@ -10,12 +10,12 @@ Managed configuration allows enterprises to enforce policies across their fleet.
 <system config dir>/
 ├── managed/
 │   ├── recommended/    # Enterprise defaults, user/project can override
-│   │   ├── arci.yaml
-│   │   ├── arci-policies.yaml
+│   │   ├── krav.yaml
+│   │   ├── krav-policies.yaml
 │   │   └── policies.d/
 │   └── required/       # Enforced policies, cannot be overridden
-│       ├── arci.yaml
-│       ├── arci-policies.yaml
+│       ├── krav.yaml
+│       ├── krav-policies.yaml
 │       └── policies.d/
 ```
 
@@ -27,11 +27,11 @@ Managed recommended loads early in the cascade, after built-in defaults. Users, 
 
 Managed required loads last in the cascade, after all other sources including CLI flags. Nothing can override these settings, providing absolute enforcement for security-critical policies.
 
-If managed required configuration exists but fails to parse, ARCI fails closed: it refuses to run rather than proceeding without enterprise security policies. This is the only source with fail-closed semantics.
+If managed required configuration exists but fails to parse, Krav fails closed: it refuses to run rather than proceeding without enterprise security policies. This is the only source with fail-closed semantics.
 
 ## Bypass mechanism for policy developers
 
-Developers writing managed policies need to test their changes without production managed policies interfering. The custom config override (`ARCI_CONFIG_FILE`, etc.) doesn't help because managed required still applies on top.
+Developers writing managed policies need to test their changes without production managed policies interfering. The custom config override (`KRAV_CONFIG_FILE`, etc.) doesn't help because managed required still applies on top.
 
 A bypass mechanism allows authorized developers to turn off managed policy loading entirely. This requires cryptographic proof of authorization to prevent abuse.
 
@@ -75,7 +75,7 @@ The presence of the public key is itself the opt-in to bypass capability. A leak
 Bypass tokens are JSON payloads with an Ed25519 signature, base64-encoded for use in environment variables:
 
 ```text
-ARCI_BYPASS_MANAGED=<base64(payload + signature)>
+KRAV_BYPASS_MANAGED=<base64(payload + signature)>
 ```
 
 Payload structure:
@@ -102,7 +102,7 @@ Fields:
 
 ### Token validation
 
-When the user sets `ARCI_BYPASS_MANAGED`:
+When the user sets `KRAV_BYPASS_MANAGED`:
 
 1. Check if `<system config dir>/bypass.pub` exists. If not, ignore the token entirely (no warning, as this is the expected state on production machines).
 
@@ -136,31 +136,31 @@ A simple key generation flow:
 
 ```bash
 # Generate keypair (policy admin does this once)
-arci managed keygen --out bypass.key --pub bypass.pub
+Krav managed keygen --out bypass.key --pub bypass.pub
 
 # Generate a bypass token (developer does this as needed)
-arci managed token --key bypass.key \
+Krav managed token --key bypass.key \
   --expires 24h \
   --subject tony@example.com \
   --machine tony-mbp.local
 
-# Output: ARCI_BYPASS_MANAGED=eyJ2IjoxLC...
+# Output: KRAV_BYPASS_MANAGED=eyJ2IjoxLC...
 ```
 
 ### CLI commands
 
 ```bash
 # Generate a new keypair
-arci managed keygen [--out FILE] [--pub FILE]
+Krav managed keygen [--out FILE] [--pub FILE]
 
 # Generate a bypass token
-arci managed token --key FILE [--expires DURATION] [--subject EMAIL] [--machine HOSTNAME] [--scope SCOPE...]
+Krav managed token --key FILE [--expires DURATION] [--subject EMAIL] [--machine HOSTNAME] [--scope SCOPE...]
 
 # Verify a token (for debugging)
-arci managed verify --pub FILE --token TOKEN
+Krav managed verify --pub FILE --token TOKEN
 
 # Show managed config status
-arci managed status
+Krav managed status
 ```
 
 The `status` command shows:
@@ -174,9 +174,9 @@ The `status` command shows:
 
 **Token expiration**: tokens should be short-lived. Recommend 24 hours for interactive development, 1 hour for CI/CD (if ever needed). The `token` command should warn if expiration exceeds 7 days.
 
-**Audit logging**: when bypass is active, every ARCI invocation should log the `sub` from the token. This creates an audit trail of who bypassed policies and when.
+**Audit logging**: when bypass is active, every Krav invocation should log the `sub` from the token. This creates an audit trail of who bypassed policies and when.
 
-**No bypass.pub in version control**: do not commit the public key to the ARCI policies repository. It is a machine-local file that developers install manually.
+**No bypass.pub in version control**: do not commit the public key to the Krav policies repository. It is a machine-local file that developers install manually.
 
 **Separate keys per environment**: large organizations might want separate keypairs for different teams or environments. The public key filename could be configurable or support multiple keys.
 
@@ -197,7 +197,7 @@ For organizations using Windows Group Policy or macOS MDM profiles, the system c
 - `ServerEnabled` (bool)
 - `LogLevel` (string)
 
-These would slot preceding managed required in precedence, providing an ultimate override capability for emergency situations (turning off ARCI fleet-wide if a bug causes outages).
+These would slot preceding managed required in precedence, providing an ultimate override capability for emergency situations (turning off Krav fleet-wide if a bug causes outages).
 
 File-based managed config remains the primary mechanism for complex policy definitions.
 

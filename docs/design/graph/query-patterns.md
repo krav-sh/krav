@@ -390,7 +390,7 @@ WHERE (n.id IS NULL AND r.id IS NULL)
 
 ### Semantic diff (CQ-A1)
 
-Compare graph state between two baselines. ARCI reconstructs historical graph state by checking out the baseline's commit and reading the NDJSON files from that commit. DuckDB's `read_json` function loads historical NDJSON directly for comparison.
+Compare graph state between two baselines. Krav reconstructs historical graph state by checking out the baseline's commit and reading the NDJSON files from that commit. DuckDB's `read_json` function loads historical NDJSON directly for comparison.
 
 ```sql
 -- Load graph state from two commits into temporary tables, then diff
@@ -398,7 +398,7 @@ WITH current AS (
   SELECT * FROM requirements
 ),
 baseline AS (
-  SELECT * FROM read_json('.arci/graph/requirements.ndjson')  -- at baseline commit
+  SELECT * FROM read_json('.krav/graph/requirements.ndjson')  -- at baseline commit
 )
 SELECT 'added' AS change, c.id, c.title FROM current c
   WHERE c.id NOT IN (SELECT id FROM baseline)

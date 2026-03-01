@@ -2,7 +2,7 @@
 
 ## Overview
 
-Each RDF class in the knowledge graph has its own lifecycle state machine, where lifecycle states are values of the `arci:status` datatype property. This document defines how lifecycle state changes on one entity interact with and propagate to related entities across the graph.
+Each RDF class in the knowledge graph has its own lifecycle state machine, where lifecycle states are values of the `krav:status` datatype property. This document defines how lifecycle state changes on one entity interact with and propagate to related entities across the graph.
 
 ## Entity lifecycles
 
@@ -138,7 +138,7 @@ Changes to upstream entities impact downstream entities through suspect link pro
 
 When a CON node's key properties change:
 
-1. ARCI marks `derivesFrom` edges on NED nodes that derive from this CON as suspect
+1. Krav marks `derivesFrom` edges on NED nodes that derive from this CON as suspect
 2. Reviewers examine each suspect NED to determine if the change affects the need
 3. If the need changes, the reviewer updates it and suspect propagates further downstream
 
@@ -146,16 +146,16 @@ When a CON node's key properties change:
 
 When a NED node's `statement` or `status` changes:
 
-1. ARCI marks `derivesFrom` edges on REQ nodes that derive from this NED as suspect
+1. Krav marks `derivesFrom` edges on REQ nodes that derive from this NED as suspect
 2. `verifiedBy` edges on those REQ nodes may also become suspect (if the requirement changes)
 
 ### Requirement modification
 
 When a REQ node's `statement` changes:
 
-1. ARCI marks `verifiedBy` edges as suspect (verification may no longer be valid)
-2. ARCI marks `derivesFrom` edges on child REQ nodes as suspect (derived requirements may need updating)
-3. ARCI marks `allocatesTo` edges as suspect (allocations may need re-evaluation)
+1. Krav marks `verifiedBy` edges as suspect (verification may no longer be valid)
+2. Krav marks `derivesFrom` edges on child REQ nodes as suspect (derived requirements may need updating)
+3. Krav marks `allocatesTo` edges as suspect (allocations may need re-evaluation)
 
 ## Phase-lifecycle interaction
 
@@ -192,7 +192,7 @@ When a module regresses to an earlier phase:
 ### Suspect link review workflow
 
 1. A modification triggers suspect marking on downstream edges
-2. ARCI surfaces suspect links for review
+2. Krav surfaces suspect links for review
 3. A reviewer examines each suspect link and takes one of:
    - **Clear**: The link is still valid despite the upstream change
    - **Update**: The downstream node needs a minor adjustment (no defect)

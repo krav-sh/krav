@@ -4,7 +4,7 @@ The task command group manages tasks, atomic units of work with verifiable deliv
 
 ## Synopsis
 
-    arci task <subcommand> [options]
+    krav task <subcommand> [options]
 
 ## Description
 
@@ -18,7 +18,7 @@ Tasks break complex work into manageable units that Claude Code executes in focu
 
 Creates a task node.
 
-    arci task create --module <module-id> --title <title> \
+    krav task create --module <module-id> --title <title> \
       --phase <phase> --task-type <type>
 
 **Flags:**
@@ -37,13 +37,13 @@ Creates a task node.
 
 Displays detailed information about a task, including metadata, dependencies, deliverables, and execution state.
 
-    arci task show <task-id>
+    krav task show <task-id>
 
 #### `list`
 
 Lists tasks, optionally filtered by module, phase, or status.
 
-    arci task list [options]
+    krav task list [options]
 
 **Flags:**
 
@@ -56,7 +56,7 @@ Lists tasks, optionally filtered by module, phase, or status.
 
 Modifies task fields.
 
-    arci task update <task-id> [flags]
+    krav task update <task-id> [flags]
 
 **Flags:**
 
@@ -70,7 +70,7 @@ Modifies task fields.
 
 Removes a task node from the graph.
 
-    arci task delete <task-id>
+    krav task delete <task-id>
 
 ### Dependencies
 
@@ -78,7 +78,7 @@ Removes a task node from the graph.
 
 Adds a dependency relationship between tasks.
 
-    arci task depend <task-id> --on <dependency-id>
+    krav task depend <task-id> --on <dependency-id>
 
 **Flags:**
 
@@ -88,7 +88,7 @@ Adds a dependency relationship between tasks.
 
 Removes a dependency relationship between tasks.
 
-    arci task undepend <task-id> --on <dependency-id>
+    krav task undepend <task-id> --on <dependency-id>
 
 **Flags:**
 
@@ -100,31 +100,31 @@ Removes a dependency relationship between tasks.
 
 Lists all tasks that a given task depends on (transitively).
 
-    arci task ancestors <task-id>
+    krav task ancestors <task-id>
 
 #### `descendants`
 
 Lists all tasks that depend on a given task (transitively).
 
-    arci task descendants <task-id>
+    krav task descendants <task-id>
 
 #### `blocking`
 
 Lists incomplete ancestor tasks that block a given task.
 
-    arci task blocking <task-id>
+    krav task blocking <task-id>
 
 #### `ready`
 
 Lists tasks with no incomplete dependencies, available to start.
 
-    arci task ready
+    krav task ready
 
 #### `critical-path`
 
 Computes the longest dependency path to a target task.
 
-    arci task critical-path <task-id>
+    krav task critical-path <task-id>
 
 ### Execution
 
@@ -132,19 +132,19 @@ Computes the longest dependency path to a target task.
 
 Marks a task as in progress.
 
-    arci task start <task-id>
+    krav task start <task-id>
 
 #### `complete`
 
 Marks a task as complete.
 
-    arci task complete <task-id>
+    krav task complete <task-id>
 
 #### `block`
 
 Marks a task as blocked with a reason.
 
-    arci task block <task-id> --reason <reason>
+    krav task block <task-id> --reason <reason>
 
 **Flags:**
 
@@ -154,7 +154,7 @@ Marks a task as blocked with a reason.
 
 Cancels a task with a reason.
 
-    arci task cancel <task-id> --reason <reason>
+    krav task cancel <task-id> --reason <reason>
 
 **Flags:**
 
@@ -166,7 +166,7 @@ Cancels a task with a reason.
 
 Records a deliverable produced by a task.
 
-    arci task deliverable <task-id> --kind <kind> [flags]
+    krav task deliverable <task-id> --kind <kind> [flags]
 
 **Flags:**
 
@@ -179,15 +179,15 @@ Records a deliverable produced by a task.
 
 Lists all deliverables recorded for a task.
 
-    arci task deliverables <task-id>
+    krav task deliverables <task-id>
 
 ### Context
 
 #### `context`
 
-Loads task context for a Claude Code session. See `arci context` for the top-level context command.
+Loads task context for a Claude Code session. See `krav context` for the top-level context command.
 
-    arci context <task-id>
+    krav context <task-id>
 
 ## See also
 

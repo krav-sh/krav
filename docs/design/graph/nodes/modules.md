@@ -4,7 +4,7 @@
 
 Modules (MOD-*) are architectural containers representing the things the team builds. A module could be a system, subsystem, component, module, or any identifiable element in the architecture. Modules form a hierarchy via parent-child relationships and serve as the organizing principle for needs, requirements, and work.
 
-Unlike document-centric models where "specs" own requirements, ARCI organizes around the architectural elements themselves. A module owns its needs and requirements; the module is what the team builds, constrains, and verifies.
+Unlike document-centric models where "specs" own requirements, Krav organizes around the architectural elements themselves. A module owns its needs and requirements; the module is what the team builds, constrains, and verifies.
 
 ## Purpose
 
@@ -14,7 +14,7 @@ Modules serve multiple roles:
 
 **Ownership**: needs and requirements belong to modules. `The parser shall tokenize input in under 10 ms` is a requirement owned by MOD-parser, not floating in a document.
 
-**Phase tracking**: each module tracks its current lifecycle phase (architecture, design, coding, etc.), enabling phase-gated execution where ARCI constrains work to the appropriate phase.
+**Phase tracking**: each module tracks its current lifecycle phase (architecture, design, coding, etc.), enabling phase-gated execution where Krav constrains work to the appropriate phase.
 
 **Work scoping**: tasks relate to modules. `What's the plan for the parser?` becomes a query over tasks where module is MOD-parser or its descendants.
 
@@ -42,7 +42,7 @@ The root module represents the project as a whole and owns project-wide needs an
 - Every module except root has exactly one parent (single childOf relationship)
 - Root module has no parent
 - Cycles are not allowed
-- ARCI supports reparenting (with review of derived items)
+- Krav supports reparenting (with review of derived items)
 
 ## Lifecycle phase
 
@@ -109,7 +109,7 @@ Each module's phase is independent of its parent's and siblings' phases. A backe
 ### Phase advancement
 
 ```bash
-arci module advance MOD-A4F8R2X1 --to design
+Krav module advance MOD-A4F8R2X1 --to design
 ```
 
 Advancement criteria:
@@ -120,17 +120,17 @@ Advancement criteria:
 ### Phase regression
 
 ```bash
-arci module regress MOD-A4F8R2X1 --to architecture --reason "boundary unclear"
+Krav module regress MOD-A4F8R2X1 --to architecture --reason "boundary unclear"
 ```
 
 When a parent regresses:
 
 - Regression does not affect child modules; each module's phase constraints are self-contained
-- ARCI automatically creates a finding (DEF-*) with the reason
+- Krav automatically creates a finding (DEF-*) with the reason
 
 ## Storage model
 
-ARCI stores module vertex data in the `modules` table (`modules.ndjson` on disk). Edge tables hold all relationships separately.
+Krav stores module vertex data in the `modules` table (`modules.ndjson` on disk). Edge tables hold all relationships separately.
 
 ```json
 {"id": "MOD-A4F8R2X1", "type": "Module", "title": "Parser", "description": "Parses input into AST", "phase": "implementation", "status": "active"}
@@ -205,16 +205,16 @@ In `integrates.ndjson`:
 
 ## Prose files
 
-Modules can have a prose file for extended descriptions that go beyond `description` and `summary` (architectural overviews, component rationale, boundary justifications). The file lives at `.arci/modules/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
+Modules can have a prose file for extended descriptions that go beyond `description` and `summary` (architectural overviews, component rationale, boundary justifications). The file lives at `.krav/modules/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
 
 Module prose files are distinct from task deliverables (see below). The module's own prose describes what the module is and why it exists. Task deliverables are outputs of work done within the module's scope.
 
 ## Deliverable organization
 
-ARCI organizes task deliverables by module in subdirectories under `.arci/modules/`:
+Krav organizes task deliverables by module in subdirectories under `.krav/modules/`:
 
 ```text
-.arci/
+.krav/
   modules/
     20260103164500-A4F8R2X1-parser.md        # Module's own prose file
     MOD-A4F8R2X1/
@@ -232,7 +232,7 @@ ARCI organizes task deliverables by module in subdirectories under `.arci/module
 Every project has a root module representing the project as a whole:
 
 ```json
-{"id": "MOD-OAPSROOT", "type": "Module", "title": "arci", "description": "Agentic Requirements Composition & Integration", "phase": "implementation", "status": "active"}
+{"id": "MOD-OAPSROOT", "type": "Module", "title": "krav", "description": "Krav", "phase": "implementation", "status": "active"}
 ```
 
 Root-level needs capture project-wide stakeholder expectations. Root-level requirements flow down to child modules.
@@ -253,30 +253,30 @@ Integration modules aren't constrained by sibling phases but their integration t
 
 ```bash
 # CRUD
-arci module create --title "Parser" --parent MOD-OAPSROOT
-arci module show MOD-A4F8R2X1
-arci module list
-arci module list --parent MOD-OAPSROOT --phase implementation
-arci module update MOD-A4F8R2X1 --title "Parser v2"
-arci module delete MOD-A4F8R2X1  # Must have no children
+Krav module create --title "Parser" --parent MOD-OAPSROOT
+Krav module show MOD-A4F8R2X1
+Krav module list
+Krav module list --parent MOD-OAPSROOT --phase implementation
+Krav module update MOD-A4F8R2X1 --title "Parser v2"
+Krav module delete MOD-A4F8R2X1  # Must have no children
 
 # Hierarchy
-arci module children MOD-OAPSROOT
-arci module tree MOD-OAPSROOT
-arci module reparent MOD-A4F8R2X1 --to MOD-B9G3M7K2
+Krav module children MOD-OAPSROOT
+Krav module tree MOD-OAPSROOT
+Krav module reparent MOD-A4F8R2X1 --to MOD-B9G3M7K2
 
 # Phase management
-arci module phase MOD-A4F8R2X1
-arci module advance MOD-A4F8R2X1 --to design
-arci module regress MOD-A4F8R2X1 --to architecture --reason "..."
+Krav module phase MOD-A4F8R2X1
+Krav module advance MOD-A4F8R2X1 --to design
+Krav module regress MOD-A4F8R2X1 --to architecture --reason "..."
 
 # Work scoping
-arci module decompose MOD-A4F8R2X1 --template full-feature
-arci module tasks MOD-A4F8R2X1
-arci module tasks MOD-A4F8R2X1 --include-descendants
+Krav module decompose MOD-A4F8R2X1 --template full-feature
+Krav module tasks MOD-A4F8R2X1
+Krav module tasks MOD-A4F8R2X1 --include-descendants
 
 # Context
-arci context MOD-A4F8R2X1
+Krav context MOD-A4F8R2X1
 ```
 
 See [Module](../../cli/commands/module.md) for full CLI documentation.
@@ -286,13 +286,13 @@ See [Module](../../cli/commands/module.md) for full CLI documentation.
 ### Root module
 
 ```json
-{"id": "MOD-OAPSROOT", "type": "Module", "title": "arci", "description": "Agentic Requirements Composition & Integration", "phase": "implementation", "status": "active"}
+{"id": "MOD-OAPSROOT", "type": "Module", "title": "krav", "description": "Krav", "phase": "implementation", "status": "active"}
 ```
 
 ### Subsystem module
 
 ```json
-{"id": "MOD-A4F8R2X1", "type": "Module", "title": "Parser", "description": "Parses arci commands and configuration", "phase": "design", "status": "active", "tags": ["core"]}
+{"id": "MOD-A4F8R2X1", "type": "Module", "title": "Parser", "description": "Parses krav commands and configuration", "phase": "design", "status": "active", "tags": ["core"]}
 ```
 
 With edge: `child_of` → MOD-OAPSROOT.
@@ -314,7 +314,7 @@ Modules are architectural containers that:
 - Track lifecycle phase independently with module-scoped advancement criteria
 - Scope tasks and deliverables
 - Serve as the primary organizing principle for the project
-- Stored as rows in the `modules` vertex table (`.arci/graph/modules.ndjson` on disk)
+- Stored as rows in the `modules` vertex table (`.krav/graph/modules.ndjson` on disk)
 - Implemented following three-layer architecture (core/io/service)
 
 The module hierarchy replaces document-centric organization: the thing under construction is the organizing principle, not documents describing it.

@@ -30,9 +30,9 @@ A new MOD-* node in the hierarchy, possibly with initial CON-*, NEED-*, and TASK
 
 ### Skills
 
-The `arci:module-add` skill runs this workflow. Preprocessing loads the current module hierarchy so the agent understands where the new module fits. It also loads any allocated requirements from the parent module that might flow down to the new child, since module creation often coincides with requirement redistribution.
+The `krav:module-add` skill runs this workflow. Preprocessing loads the current module hierarchy so the agent understands where the new module fits. It also loads any allocated requirements from the parent module that might flow down to the new child, since module creation often coincides with requirement redistribution.
 
-The skill's instructed commands create the MOD-* node, establish `childOf` edges, and optionally flow down requirements from the parent. If the new module picks up responsibilities from a sibling (a split scenario), the skill's instructions guide the agent through reparenting requirements, though the heavier restructuring scenarios are better handled by `arci:restructure`.
+The skill's instructed commands create the MOD-* node, establish `childOf` edges, and optionally flow down requirements from the parent. If the new module picks up responsibilities from a sibling (a split scenario), the skill's instructions guide the agent through reparenting requirements, though the heavier restructuring scenarios are better handled by `krav:restructure`.
 
 ### Policies
 
@@ -42,7 +42,7 @@ The `graph-integrity` and `cli-auto-approve` policies apply as usual. If the par
 
 ### Task types
 
-Module creation typically produces `decompose-module` tasks for the new module's architecture work. If the developer wants to immediately plan the new module's development, the agent transitions to `arci:decompose` to generate a task DAG. The new module starts at the architecture phase, so initial tasks are architecture-phase types like `decompose-module`, `define-interface`, and `decide-architecture`.
+Module creation typically produces `decompose-module` tasks for the new module's architecture work. If the developer wants to immediately plan the new module's development, the agent transitions to `krav:decompose` to generate a task DAG. The new module starts at the architecture phase, so initial tasks are architecture-phase types like `decompose-module`, `define-interface`, and `decide-architecture`.
 
 ## Open questions
 

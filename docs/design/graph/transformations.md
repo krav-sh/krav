@@ -4,7 +4,7 @@
 
 Transformations are formal operations that produce new RDF resources from existing ones and establish RDF object property relationships between them, building the derivation chain that traces from stakeholder intent to verified coding. Each transformation has preconditions, graph operations, postconditions, and cardinality rules.
 
-The transformation chain is the core workflow of the ARCI knowledge graph:
+The transformation chain is the core workflow of the Krav knowledge graph:
 
 ```text
 Concept (exploration)

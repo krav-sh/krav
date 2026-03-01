@@ -1,6 +1,6 @@
 # Claude Code integration
 
-Claude Code is Anthropic's AI coding assistant that runs in the terminal. Its hooks system provides the foundation for ARCI's policy evaluation engine.
+Claude Code is Anthropic's AI coding assistant that runs in the terminal. Its hooks system provides the foundation for Krav's policy evaluation engine.
 
 ## Hooks overview
 
@@ -28,7 +28,7 @@ SessionEnd fires when a session ends, enabling cleanup tasks and logging. The `r
 
 Stop fires when Claude finishes responding. Hooks can prevent Claude from stopping and instruct it to continue working. Includes a `stop_hook_active` flag.
 
-SubagentStart fires when Claude Code launches a subagent. It includes `agent_id` (a short hex identifier) and `agent_type` (such as `arci:code-explorer` or `Explore`). Hooks can track and audit subagent activity through this event.
+SubagentStart fires when Claude Code launches a subagent. It includes `agent_id` (a short hex identifier) and `agent_type` (such as `krav:code-explorer` or `Explore`). Hooks can track and audit subagent activity through this event.
 
 SubagentStop fires when a subagent completes its task. It works like Stop but scoped to subagents. Includes `agent_id`, `agent_transcript_path` for the subagent's transcript, and `stop_hook_active` flag.
 
@@ -46,7 +46,7 @@ Local project configuration at `.claude/settings.local.json` provides personal s
 
 Claude Code does not support system-level configuration for enterprise deployments.
 
-For ARCI integration, configuration lives at `~/.claude/arci/config.yaml` for user-level rules, `.claude/arci/config.yaml` for project rules, and `.claude/arci/config.local.yaml` for personal project settings.
+For Krav integration, configuration lives at `~/.claude/krav/config.yaml` for user-level rules, `.claude/krav/config.yaml` for project rules, and `.claude/krav/config.local.yaml` for personal project settings.
 
 ## Configuration
 
@@ -89,7 +89,7 @@ Every hook event receives these base fields:
 | `permission_mode` | string | One of `default`, `plan`, `acceptEdits`, `bypassPermissions` |
 | `hook_event_name` | string | The event type (such as `PreToolUse`, `PostToolUse`)         |
 
-The `permission_mode` field is particularly valuable for ARCI rules. It indicates the current permission context and lets rules behave differently in plan mode (where Claude is just proposing actions) versus normal execution mode.
+The `permission_mode` field is particularly valuable for Krav rules. It indicates the current permission context and lets rules behave differently in plan mode (where Claude is just proposing actions) versus normal execution mode.
 
 ### `PreToolUse`
 
@@ -369,7 +369,7 @@ SubagentStart fires when Claude Code launches a subagent and includes:
 | Field        | Type   | Description                                              |
 |--------------|--------|----------------------------------------------------------|
 | `agent_id`   | string | Short hex identifier for this subagent instance          |
-| `agent_type` | string | The subagent kind (such as `Explore`, `arci:code-explorer`) |
+| `agent_type` | string | The subagent kind (such as `Explore`, `krav:code-explorer`) |
 
 Example SubagentStart input:
 
@@ -380,7 +380,7 @@ Example SubagentStart input:
   "cwd": "/Users/user/project",
   "hook_event_name": "SubagentStart",
   "agent_id": "a90c92f",
-  "agent_type": "arci:code-explorer"
+  "agent_type": "krav:code-explorer"
 }
 ```
 
@@ -495,13 +495,13 @@ Claude Code injects environment variables that hook scripts can access:
 
 `CLAUDE_ENV_FILE` is available during SessionStart hooks. The hook can write environment variable definitions to this path, and Claude Code loads them into the session environment.
 
-For ARCI integration, the expression language exposes these variables. Rules can access them via `{{ env("CLAUDE_PROJECT_DIR") }}` or through normalized functions like `{{ project_dir }}`.
+For Krav integration, the expression language exposes these variables. Rules can access them via `{{ env("CLAUDE_PROJECT_DIR") }}` or through normalized functions like `{{ project_dir }}`.
 
 ## Session identifiers
 
 Claude Code provides `session_id` as a common field in all hook events via the JSON stdin payload. The session ID is a UUID that persists across the entire conversation, enabling reliable session-scoped state tracking.
 
-Every hook event includes `session_id` in the JSON input, covering SessionStart, SessionEnd, PreToolUse, PostToolUse, UserPromptSubmit, Stop, Notification, PermissionRequest, PreCompact, and SubagentStop. This consistent availability makes Claude Code fully compatible with ARCI's state store feature.
+Every hook event includes `session_id` in the JSON input, covering SessionStart, SessionEnd, PreToolUse, PostToolUse, UserPromptSubmit, Stop, Notification, PermissionRequest, PreCompact, and SubagentStop. This consistent availability makes Claude Code fully compatible with Krav's state store feature.
 
 Example JSON input showing session_id:
 
@@ -517,7 +517,7 @@ Example JSON input showing session_id:
 }
 ```
 
-The session ID enables patterns like "warn on first occurrence, block on third" where ARCI tracks state across many hook invocations within the same conversation. Rules can use `session_get`, `session_set`, and session-scoped counters with full confidence that the session ID is always available.
+The session ID enables patterns like "warn on first occurrence, block on third" where Krav tracks state across many hook invocations within the same conversation. Rules can use `session_get`, `session_set`, and session-scoped counters with full confidence that the session ID is always available.
 
 The `transcript_path` field provides another correlation mechanism. The path includes the session UUID and supports audit logging or conversation history access.
 
@@ -662,31 +662,31 @@ Claude Code v2.0.10 added this capability.
 
 Claude Code does not support direct prompt modification. The UserPromptSubmit hook can inject extra context via the `additionalContext` field, which Claude Code adds before the conversation before Claude processes it. The hook cannot change or replace the user's original prompt text. The hook can also block prompts entirely with `continue: false`.
 
-## ARCI integration
+## Krav integration
 
-ARCI integrates directly with Claude Code's hooks system. The JSON-over-stdin contract, exit code semantics, and matcher syntax provide a stable foundation for policy evaluation.
+Krav integrates directly with Claude Code's hooks system. The JSON-over-stdin contract, exit code semantics, and matcher syntax provide a stable foundation for policy evaluation.
 
-ARCI contributes configuration sources at `~/.claude/arci/config.yaml` for user-level rules, `.claude/arci/config.yaml` for project rules, and `.claude/arci/config.local.yaml` for personal project settings.
+Krav contributes configuration sources at `~/.claude/krav/config.yaml` for user-level rules, `.claude/krav/config.yaml` for project rules, and `.claude/krav/config.local.yaml` for personal project settings.
 
-ARCI parses Claude Code's camelCase hook input (hookEventType, toolName, etc.) and normalizes to snake_case internal representations. It formats output according to Claude Code's expected schemas and maps evaluation results to appropriate exit codes (0 for success, 2 for block, 128 for catastrophic failure).
+Krav parses Claude Code's camelCase hook input (hookEventType, toolName, etc.) and normalizes to snake_case internal representations. It formats output according to Claude Code's expected schemas and maps evaluation results to appropriate exit codes (0 for success, 2 for block, 128 for catastrophic failure).
 
 ## Considerations
 
 Claude Code's hooks are well-documented and stable, having been battle-tested in production. The system supports both simple exit-code-based decisions and complex JSON output for fine-grained control.
 
-The prompt-based hooks feature (type: "prompt") uses an LLM for context-aware decisions, which is orthogonal to ARCI's rules-based approach but could be complementary.
+The prompt-based hooks feature (type: "prompt") uses an LLM for context-aware decisions, which is orthogonal to Krav's rules-based approach but could be complementary.
 
-Claude Code merges plugin hooks with user and project hooks, which aligns well with ARCI's layered configuration model.
+Claude Code merges plugin hooks with user and project hooks, which aligns well with Krav's layered configuration model.
 
-The CLAUDE_PROJECT_DIR environment variable enables portable scripts that work regardless of working directory, which ARCI can use.
+The CLAUDE_PROJECT_DIR environment variable enables portable scripts that work regardless of working directory, which Krav can use.
 
-## Hook installation for ARCI
+## Hook installation for Krav
 
-ARCI integration with Claude Code requires adding hook entries to settings.json files. The recommended approach is to ship a Claude Code plugin that users install via `/plugin install`.
+Krav integration with Claude Code requires adding hook entries to settings.json files. The recommended approach is to ship a Claude Code plugin that users install via `/plugin install`.
 
 ### Manual installation
 
-To manually configure ARCI, add entries to `~/.claude/settings.json` (user-level) or `.claude/settings.json` (project-level):
+To manually configure Krav, add entries to `~/.claude/settings.json` (user-level) or `.claude/settings.json` (project-level):
 
 ```json
 {
@@ -697,7 +697,7 @@ To manually configure ARCI, add entries to `~/.claude/settings.json` (user-level
         "hooks": [
           {
             "type": "command",
-            "command": "arci hook apply",
+            "command": "krav hook apply",
             "timeout": 5000
           }
         ]
@@ -709,7 +709,7 @@ To manually configure ARCI, add entries to `~/.claude/settings.json` (user-level
         "hooks": [
           {
             "type": "command",
-            "command": "arci hook apply",
+            "command": "krav hook apply",
             "timeout": 5000
           }
         ]
@@ -721,11 +721,11 @@ To manually configure ARCI, add entries to `~/.claude/settings.json` (user-level
 
 ### Plugin installation
 
-Once published, users would install ARCI via the plugin system:
+Once published, users would install Krav via the plugin system:
 
 ```text
-/plugin marketplace add tbhb/arci
-/plugin install arci
+/plugin marketplace add krav-sh/krav
+/plugin install krav
 ```
 
 The plugin would include a `hooks/hooks.json` file with pre-configured hook entries using `${CLAUDE_PLUGIN_ROOT}` for portable paths:
@@ -738,7 +738,7 @@ The plugin would include a `hooks/hooks.json` file with pre-configured hook entr
       "hooks": [
         {
           "type": "command",
-          "command": "arci hook apply --plugin-root ${CLAUDE_PLUGIN_ROOT}",
+          "command": "krav hook apply --plugin-root ${CLAUDE_PLUGIN_ROOT}",
           "timeout": 5000
         }
       ]
@@ -749,7 +749,7 @@ The plugin would include a `hooks/hooks.json` file with pre-configured hook entr
 
 ### Enterprise deployment
 
-Enterprise administrators can use `allowManagedHooksOnly` to restrict hooks to managed sources, ensuring only approved plugins and hooks run. ARCI's fail-open semantics align well with this model since configuration errors or server unavailability won't block developer workflows.
+Enterprise administrators can use `allowManagedHooksOnly` to restrict hooks to managed sources, ensuring only approved plugins and hooks run. Krav's fail-open semantics align well with this model since configuration errors or server unavailability won't block developer workflows.
 
 ## Plugin mechanism
 
@@ -763,7 +763,7 @@ Hook bundling places hook configuration in `hooks/hooks.json` within the plugin.
 
 Marketplaces like the official `anthropics/claude-code` collection and community marketplaces provide discoverability and one-command installation.
 
-This plugin system makes ARCI distribution straightforward. Users install once and the hooks are automatically configured, with updates handled through the plugin update mechanism.
+This plugin system makes Krav distribution straightforward. Users install once and the hooks are automatically configured, with updates handled through the plugin update mechanism.
 
 ## References
 

@@ -4,7 +4,7 @@
 
 Modules (MOD-*) are architectural containers representing the things the team builds. A module could be a system, subsystem, component, module, or any identifiable element in the architecture. Modules form a hierarchy via parent-child relationships and serve as the organizing principle for needs, requirements, and work.
 
-Unlike document-centric models where "specs" own requirements, ARCI organizes around the architectural elements themselves. A module owns its needs and requirements; the module is what the team builds, constrains, and verifies.
+Unlike document-centric models where "specs" own requirements, Krav organizes around the architectural elements themselves. A module owns its needs and requirements; the module is what the team builds, constrains, and verifies.
 
 ## Purpose
 
@@ -77,7 +77,7 @@ MOD-OAPSROOT.phase = implementation
 ### Phase advancement
 
 ```bash
-arci moduleadvance MOD-A4F8R2X1 --to design
+Krav moduleadvance MOD-A4F8R2X1 --to design
 ```
 
 Advancement criteria:
@@ -89,18 +89,18 @@ Advancement criteria:
 ### Phase regression
 
 ```bash
-arci moduleregress MOD-A4F8R2X1 --to architecture --reason "boundary unclear"
+Krav moduleregress MOD-A4F8R2X1 --to architecture --reason "boundary unclear"
 ```
 
 When a parent regresses:
 
 - Children remain at their current phase
 - The constraint blocks children from advancing past the new parent phase
-- ARCI automatically creates a finding (FND-*) with the reason
+- Krav automatically creates a finding (FND-*) with the reason
 
 ## Storage model
 
-ARCI stores module metadata in `graph.jsonlt` as JSON-LD compact form. Prose files have no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
+Krav stores module metadata in `graph.jsonlt` as JSON-LD compact form. Prose files have no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
 
 ```json
 {"@context": "context.jsonld", "@id": "MOD-A4F8R2X1", "@type": "Module", "title": "Parser", "description": "Parses input into AST", "childOf": {"@id": "MOD-OAPSROOT"}, "phase": "implementation", "status": "active"}
@@ -158,10 +158,10 @@ Example with relationships:
 
 ## Deliverable layout
 
-ARCI organizes task deliverables by module:
+Krav organizes task deliverables by module:
 
 ```text
-.arci/
+.krav/
   modules/
     MOD-A4F8R2X1/
       architecture.md       # From architecture tasks
@@ -178,7 +178,7 @@ ARCI organizes task deliverables by module:
 Every project has a root module representing the project as a whole:
 
 ```json
-{"@context": "context.jsonld", "@id": "MOD-OAPSROOT", "@type": "Module", "title": "arci", "description": "Agentic Requirements Composition & Integration", "phase": "implementation", "status": "active"}
+{"@context": "context.jsonld", "@id": "MOD-OAPSROOT", "@type": "Module", "title": "krav", "description": "Krav", "phase": "implementation", "status": "active"}
 ```
 
 Root-level needs capture project-wide stakeholder expectations. Root-level requirements flow down to child modules.
@@ -216,7 +216,7 @@ class ModuleNode:
 
 All fields use proper types. The IO layer creates ModuleNode directly from JSON-LD records, preserving all type-specific fields.
 
-### Core layer (`arci.core.module`)
+### Core layer (`krav.core.module`)
 
 Pure functions and typed data structures:
 
@@ -258,7 +258,7 @@ def owned_requirements(graph: Graph, module_id: str) -> frozenset[str]: ...
 def owned_tasks(graph: Graph, module_id: str) -> frozenset[str]: ...
 ```
 
-### Service layer (`arci.service.module`)
+### Service layer (`krav.service.module`)
 
 Orchestrates core and IO:
 
@@ -283,30 +283,30 @@ def regress(store: GraphStore, module_id: str, target: ModulePhase, reason: str)
 
 ```bash
 # CRUD
-arci modulecreate --title "Parser" --parent MOD-OAPSROOT
-arci moduleshow MOD-A4F8R2X1
-arci modulelist
-arci modulelist --parent MOD-OAPSROOT --phase implementation
-arci moduleupdate MOD-A4F8R2X1 --title "Parser v2"
-arci moduledelete MOD-A4F8R2X1  # Must have no children
+Krav modulecreate --title "Parser" --parent MOD-OAPSROOT
+Krav moduleshow MOD-A4F8R2X1
+Krav modulelist
+Krav modulelist --parent MOD-OAPSROOT --phase implementation
+Krav moduleupdate MOD-A4F8R2X1 --title "Parser v2"
+Krav moduledelete MOD-A4F8R2X1  # Must have no children
 
 # Hierarchy
-arci modulechildren MOD-OAPSROOT
-arci moduletree MOD-OAPSROOT
-arci modulereparent MOD-A4F8R2X1 --to MOD-B9G3M7K2
+Krav modulechildren MOD-OAPSROOT
+Krav moduletree MOD-OAPSROOT
+Krav modulereparent MOD-A4F8R2X1 --to MOD-B9G3M7K2
 
 # Phase management
-arci modulephase MOD-A4F8R2X1
-arci moduleadvance MOD-A4F8R2X1 --to design
-arci moduleregress MOD-A4F8R2X1 --to architecture --reason "..."
+Krav modulephase MOD-A4F8R2X1
+Krav moduleadvance MOD-A4F8R2X1 --to design
+Krav moduleregress MOD-A4F8R2X1 --to architecture --reason "..."
 
 # Work scoping
-arci moduledecompose MOD-A4F8R2X1 --template full-feature
-arci moduletasks MOD-A4F8R2X1
-arci moduletasks MOD-A4F8R2X1 --include-descendants
+Krav moduledecompose MOD-A4F8R2X1 --template full-feature
+Krav moduletasks MOD-A4F8R2X1
+Krav moduletasks MOD-A4F8R2X1 --include-descendants
 
 # Context
-arci contextmodule MOD-A4F8R2X1
+Krav contextmodule MOD-A4F8R2X1
 ```
 
 ## Examples
@@ -314,13 +314,13 @@ arci contextmodule MOD-A4F8R2X1
 ### Root module
 
 ```json
-{"@context": "context.jsonld", "@id": "MOD-OAPSROOT", "@type": "Module", "title": "arci", "description": "Agentic Requirements Composition & Integration", "phase": "implementation", "status": "active"}
+{"@context": "context.jsonld", "@id": "MOD-OAPSROOT", "@type": "Module", "title": "krav", "description": "Krav", "phase": "implementation", "status": "active"}
 ```
 
 ### Subsystem module
 
 ```json
-{"@context": "context.jsonld", "@id": "MOD-A4F8R2X1", "@type": "Module", "title": "Parser", "description": "Parses arci commands and configuration", "childOf": {"@id": "MOD-OAPSROOT"}, "phase": "design", "status": "active", "tags": ["core"]}
+{"@context": "context.jsonld", "@id": "MOD-A4F8R2X1", "@type": "Module", "title": "Parser", "description": "Parses krav commands and configuration", "childOf": {"@id": "MOD-OAPSROOT"}, "phase": "design", "status": "active", "tags": ["core"]}
 ```
 
 ### Component module
@@ -333,18 +333,18 @@ arci contextmodule MOD-A4F8R2X1
 
 | Layer | Status | Notes |
 |-------|--------|-------|
-| Core | Implemented | Typed node, operations, queries in `arci.core.module` |
-| IO | Implemented | JSON-LD serialization via `arci.io.graph` |
-| Service | Implemented | CRUD, hierarchy, and phase transitions in `arci.service.module` |
-| CLI | Implemented | Commands in `arci.cli._commands._module` with output formatting in `arci.cli._output` |
+| Core | Implemented | Typed node, operations, queries in `krav.core.module` |
+| IO | Implemented | JSON-LD serialization via `krav.io.graph` |
+| Service | Implemented | CRUD, hierarchy, and phase transitions in `krav.service.module` |
+| CLI | Implemented | Commands in `krav.cli._commands._module` with output formatting in `krav.cli._output` |
 
 ### CLI details
 
 The CLI includes:
 
-- **Output formatting** (`arci.cli._output`): Protocol-based formatters (TableFormatter, JSONFormatter, AgentFormatter) with NodeDisplay adapter pattern
-- **Graph context** (`arci.cli._commands._graph`): GraphContext provider for store access
-- **Module commands** (`arci.cli._commands._module`): Full CRUD, hierarchy, and phase management
+- **Output formatting** (`krav.cli._output`): Protocol-based formatters (TableFormatter, JSONFormatter, AgentFormatter) with NodeDisplay adapter pattern
+- **Graph context** (`krav.cli._commands._graph`): GraphContext provider for store access
+- **Module commands** (`krav.cli._commands._module`): Full CRUD, hierarchy, and phase management
 
 The CLI registers stub commands (decompose, tasks, context) but does not yet provide them.
 

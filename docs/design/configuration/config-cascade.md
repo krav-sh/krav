@@ -1,6 +1,6 @@
 # Configuration cascade
 
-ARCI uses a layered configuration system that merges settings and policies from multiple sources. This document describes the cascade order, directory locations, and merging semantics.
+Krav uses a layered configuration system that merges settings and policies from multiple sources. This document describes the cascade order, directory locations, and merging semantics.
 
 ## Cascade order
 
@@ -9,29 +9,29 @@ The loader reads configuration sources from lowest to highest precedence. Higher
 ```text
 Defaults (built-in)
     ↓
-<system config dir>/managed/recommended/{arci.yaml, arci-policies.yaml, policies.d/*.yaml}
+<system config dir>/managed/recommended/{krav.yaml, krav-policies.yaml, policies.d/*.yaml}
     ↓
-<system config dir>/{arci.yaml, arci-policies.yaml, policies.d/*.yaml}
+<system config dir>/{krav.yaml, krav-policies.yaml, policies.d/*.yaml}
     ↓
-<user config dir>/{arci.yaml, arci-policies.yaml, policies.d/*.yaml}
+<user config dir>/{krav.yaml, krav-policies.yaml, policies.d/*.yaml}
     ↓
-<project dir>/{arci.yaml | .arci.yaml | .config/arci/arci.yaml | .arci/arci.yaml}
-<project config dir>/{arci-policies.yaml, policies.d/*.yaml}
+<project dir>/{krav.yaml | .krav.yaml | .config/krav/krav.yaml | .krav/krav.yaml}
+<project config dir>/{krav-policies.yaml, policies.d/*.yaml}
     ↓
-<project dir>/{arci.local.yaml | .arci.local.yaml | .config/arci/arci.local.yaml | .arci/arci.local.yaml}
-<project config dir>/{arci-policies.local.yaml, policies.local.d/*.yaml}
+<project dir>/{krav.local.yaml | .krav.local.yaml | .config/krav/krav.local.yaml | .krav/krav.local.yaml}
+<project config dir>/{krav-policies.local.yaml, policies.local.d/*.yaml}
     ↓
-ARCI_* environment variables
+KRAV_* environment variables
     ↓
 CLI flags
     ↓
-ARCI_CONFIG_FILE (replaces all arci*.yaml if set)
+KRAV_CONFIG_FILE (replaces all krav*.yaml if set)
     ↓
-ARCI_POLICIES_FILE (replaces all arci-policies*.yaml if set)
+KRAV_POLICIES_FILE (replaces all krav-policies*.yaml if set)
     ↓
-ARCI_POLICIES_DIR (replaces all policies*.d/ if set)
+KRAV_POLICIES_DIR (replaces all policies*.d/ if set)
     ↓
-<system config dir>/managed/required/{arci.yaml, arci-policies.yaml, policies.d/*.yaml}
+<system config dir>/managed/required/{krav.yaml, krav-policies.yaml, policies.d/*.yaml}
 ```
 
 No user, project, or environment configuration can override the managed/required tier at the top. The managed/recommended tier near the bottom provides enterprise defaults that users and projects can customize.
@@ -46,9 +46,9 @@ IT administrators manage system-wide configuration. Regular users typically cann
 
 | Platform | Path                                          |
 | -------- | --------------------------------------------- |
-| Linux    | `/etc/xdg/arci` (or `$XDG_CONFIG_DIRS`) |
-| macOS    | `/Library/Application Support/arci`     |
-| Windows  | `C:\ProgramData\arci`                   |
+| Linux    | `/etc/xdg/krav` (or `$XDG_CONFIG_DIRS`) |
+| macOS    | `/Library/Application Support/krav`     |
+| Windows  | `C:\ProgramData\krav`                   |
 
 The system directory contains two managed subdirectories for enterprise policy enforcement:
 
@@ -56,17 +56,17 @@ The system directory contains two managed subdirectories for enterprise policy e
 <system config dir>/
 ├── managed/
 │   ├── recommended/     # Enterprise defaults (overridable)
-│   │   ├── arci.yaml
-│   │   ├── arci-policies.yaml
+│   │   ├── krav.yaml
+│   │   ├── krav-policies.yaml
 │   │   └── policies.d/
 │   │       └── security-baseline.yaml
 │   └── required/        # Enterprise enforcement (not overridable)
-│       ├── arci.yaml
-│       ├── arci-policies.yaml
+│       ├── krav.yaml
+│       ├── krav-policies.yaml
 │       └── policies.d/
 │           └── compliance.yaml
-├── arci.yaml      # System defaults
-├── arci-policies.yaml
+├── krav.yaml      # System defaults
+├── krav-policies.yaml
 └── policies.d/
 ```
 
@@ -76,14 +76,14 @@ Personal configuration that applies across all projects.
 
 | Platform | Path                                                      |
 | -------- | --------------------------------------------------------- |
-| Linux    | `~/.config/arci` (or `$XDG_CONFIG_HOME/arci`) |
-| macOS    | `~/Library/Application Support/arci`                |
-| Windows  | `%APPDATA%\arci`                                    |
+| Linux    | `~/.config/krav` (or `$XDG_CONFIG_HOME/krav`) |
+| macOS    | `~/Library/Application Support/krav`                |
+| Windows  | `%APPDATA%\krav`                                    |
 
 ```text
 <user config dir>/
-├── arci.yaml
-├── arci-policies.yaml
+├── krav.yaml
+├── krav-policies.yaml
 └── policies.d/
     ├── personal-safety.yaml
     └── coding-style.yaml
@@ -96,12 +96,12 @@ The loader determines the project directory (project root) through a precedence 
 In order of precedence (highest wins):
 
 1. `--project-dir` CLI flag
-2. `ARCI_PROJECT_DIR` environment variable
+2. `KRAV_PROJECT_DIR` environment variable
 3. Git worktree root (if in a worktree)
 4. VCS root (Git, Mercurial, etc.)
 5. Nearest ancestor directory containing a project marker
 
-The ancestor traversal searches for project markers including VCS directories (`.git`, `.hg`, `.svn`, `.bzr`), ARCI config directories (`.arci`, `.config/arci`), and ARCI config files (`arci.yaml`, `.arci.yaml`, `arci.local.yaml`, `.arci.local.yaml`).
+The ancestor traversal searches for project markers including VCS directories (`.git`, `.hg`, `.svn`, `.bzr`), Krav config directories (`.krav`, `.config/krav`), and Krav config files (`krav.yaml`, `.krav.yaml`, `krav.local.yaml`, `.krav.local.yaml`).
 
 If none of these resolve, there is no project configuration.
 
@@ -109,18 +109,18 @@ If none of these resolve, there is no project configuration.
 
 Within the project directory, the configuration directory can exist in one of two places. The loader uses only one, with the following precedence:
 
-1. `.arci/` (highest)
-2. `.config/arci/` (lowest)
+1. `.krav/` (highest)
+2. `.config/krav/` (lowest)
 
-The `.arci/` location is the default and recommended choice. The `.config/arci/` alternative supports projects that prefer to consolidate tooling configuration under a `.config/` directory to reduce clutter in the project root.
+The `.krav/` location is the default and recommended choice. The `.config/krav/` alternative supports projects that prefer to consolidate tooling configuration under a `.config/` directory to reduce clutter in the project root.
 
-If both directories exist, ARCI uses `.arci/` and logs a warning:
+If both directories exist, Krav uses `.krav/` and logs a warning:
 
 ```text
-warning: multiple config directories found, using .arci/ (ignoring .config/arci/)
+warning: multiple config directories found, using .krav/ (ignoring .config/krav/)
 ```
 
-The `arci init` command creates `.arci/` by default. Use `arci init --config-dir .config/arci` to create the alternative structure.
+The `krav init` command creates `.krav/` by default. Use `krav init --config-dir .config/krav` to create the alternative structure.
 
 ### Project configuration files
 
@@ -128,8 +128,8 @@ Policy files always live in the project configuration directory:
 
 ```text
 <project config dir>/
-├── arci-policies.yaml       # Policy enable/disable state (committed)
-├── arci-policies.local.yaml # Personal policy state (gitignored)
+├── krav-policies.yaml       # Policy enable/disable state (committed)
+├── krav-policies.local.yaml # Personal policy state (gitignored)
 ├── policies.d/                    # Policy definitions (committed)
 │   ├── api-standards.yaml
 │   └── test-requirements.yaml
@@ -137,27 +137,27 @@ Policy files always live in the project configuration directory:
     └── experiments.yaml
 ```
 
-The main configuration file (`arci.yaml`) can exist in one of four locations. The loader uses only one, with the following precedence (highest to lowest):
+The main configuration file (`krav.yaml`) can exist in one of four locations. The loader uses only one, with the following precedence (highest to lowest):
 
-1. `.arci/arci.yaml`
-2. `.config/arci/arci.yaml`
-3. `.arci.yaml`
-4. `arci.yaml`
+1. `.krav/krav.yaml`
+2. `.config/krav/krav.yaml`
+3. `.krav.yaml`
+4. `krav.yaml`
 
 The same precedence applies to local configuration overrides:
 
-1. `.arci/arci.local.yaml`
-2. `.config/arci/arci.local.yaml`
-3. `.arci.local.yaml`
-4. `arci.local.yaml`
+1. `.krav/krav.local.yaml`
+2. `.config/krav/krav.local.yaml`
+3. `.krav.local.yaml`
+4. `krav.local.yaml`
 
-If multiple config files exist, ARCI uses the highest-precedence file and logs a warning identifying the ignored files:
+If multiple config files exist, Krav uses the highest-precedence file and logs a warning identifying the ignored files:
 
 ```text
-warning: multiple config files found, using .arci/arci.yaml (ignoring .arci.yaml, arci.yaml)
+warning: multiple config files found, using .krav/krav.yaml (ignoring .krav.yaml, krav.yaml)
 ```
 
-The directory structure (`.arci/arci.yaml` or `.config/arci/arci.yaml`) works best for projects that also use policies, as it keeps all ARCI configuration in one place. The dotfile (`.arci.yaml`) or plain file (`arci.yaml`) alternatives in the project root are convenient for simple projects that only need configuration without policies.
+The directory structure (`.krav/krav.yaml` or `.config/krav/krav.yaml`) works best for projects that also use policies, as it keeps all Krav configuration in one place. The dotfile (`.krav.yaml`) or plain file (`krav.yaml`) alternatives in the project root are convenient for simple projects that only need configuration without policies.
 
 ### Example project structures
 
@@ -165,11 +165,11 @@ Standard structure with dedicated directory:
 
 ```text
 my-project/
-├── .arci/
-│   ├── arci.yaml
-│   ├── arci.local.yaml           # gitignored
-│   ├── arci-policies.yaml
-│   ├── arci-policies.local.yaml  # gitignored
+├── .krav/
+│   ├── krav.yaml
+│   ├── krav.local.yaml           # gitignored
+│   ├── krav-policies.yaml
+│   ├── krav-policies.local.yaml  # gitignored
 │   ├── policies.d/
 │   │   └── team-standards.yaml
 │   └── policies.local.d/               # gitignored
@@ -182,9 +182,9 @@ Alternative structure using `.config/`:
 ```text
 my-project/
 ├── .config/
-│   └── arci/
-│       ├── arci.yaml
-│       ├── arci-policies.yaml
+│   └── krav/
+│       ├── krav.yaml
+│       ├── krav-policies.yaml
 │       └── policies.d/
 │           └── team-standards.yaml
 └── src/
@@ -194,7 +194,7 @@ Minimal structure with just a config file:
 
 ```text
 my-project/
-├── .arci.yaml
+├── .krav.yaml
 └── src/
 ```
 
@@ -203,35 +203,35 @@ my-project/
 Add these patterns to `.gitignore` to exclude local overrides:
 
 ```gitignore
-# arci local overrides (standard location)
-.arci/arci.local.yaml
-.arci/arci-policies.local.yaml
-.arci/policies.local.d/
+# krav local overrides (standard location)
+.krav/krav.local.yaml
+.krav/krav-policies.local.yaml
+.krav/policies.local.d/
 
-# arci local overrides (.config location)
-.config/arci/arci.local.yaml
-.config/arci/arci-policies.local.yaml
-.config/arci/policies.local.d/
+# krav local overrides (.config location)
+.config/krav/krav.local.yaml
+.config/krav/krav-policies.local.yaml
+.config/krav/policies.local.d/
 
-# arci local overrides (project root)
-.arci.local.yaml
-arci.local.yaml
+# krav local overrides (project root)
+.krav.local.yaml
+krav.local.yaml
 ```
 
 ## File types and purposes
 
 Each cascade layer can contain three types of configuration files.
 
-### `arci.yaml`
+### `krav.yaml`
 
 Main configuration file containing settings like logging and server behavior. See [configuration.md](configuration.md) for the schema.
 
-### `arci-policies.yaml`
+### `krav-policies.yaml`
 
-Controls which policies the system enables or turns off without modifying policy definitions. The `arci hook policy enable/disable` commands manage policy state through this file rather than touching policy definition files.
+Controls which policies the system enables or turns off without modifying policy definitions. The `krav hook policy enable/disable` commands manage policy state through this file rather than touching policy definition files.
 
 ```yaml
-$schema: https://arci.dev/schemas/arci-policies/v1.yaml
+$schema: https://krav.sh/schemas/krav-policies/v1.yaml
 
 defaultBehavior: all-enabled
 
@@ -265,7 +265,7 @@ policies.d/
 
 ### Configuration merging
 
-Settings in `arci.yaml` files merge recursively. Higher-precedence sources replace scalar values. Higher-precedence sources replace arrays entirely (not concatenated). Maps merge key-by-key.
+Settings in `krav.yaml` files merge recursively. Higher-precedence sources replace scalar values. Higher-precedence sources replace arrays entirely (not concatenated). Maps merge key-by-key.
 
 The `extends` field allows explicit inheritance from other configuration files before merging:
 
@@ -279,7 +279,7 @@ The loader merges extended files in order, then applies the current file's setti
 
 ### Policy state merging
 
-The `arci-policies.yaml` files merge across layers using per-policy precedence. The highest-precedence layer that mentions a policy determines its effective state. A policy appearing in multiple lists within the same manifest (both `enabled` and `disabled`) is a validation error that rejects the manifest.
+The `krav-policies.yaml` files merge across layers using per-policy precedence. The highest-precedence layer that mentions a policy determines its effective state. A policy appearing in multiple lists within the same manifest (both `enabled` and `disabled`) is a validation error that rejects the manifest.
 
 ```text
 # System: defaultBehavior: all-enabled, disabled: [dangerous-policy]
@@ -296,7 +296,7 @@ The three enforcement states (enabled, turned off, audit) are mutually exclusive
 # Result: new-security-policy runs in audit mode
 ```
 
-Policies in `arci-policies.local.yaml` override policies in `arci-policies.yaml` at the same cascade level.
+Policies in `krav-policies.local.yaml` override policies in `krav-policies.yaml` at the same cascade level.
 
 ### Policy definition merging
 
@@ -313,11 +313,11 @@ The layer names for qualification are: `managed-required`, `managed-recommended`
 
 ### Configuration overrides
 
-Environment variables prefixed with `ARCI_` override corresponding settings in `arci.yaml`. Nested keys use double `_` separators to show hierarchy:
+Environment variables prefixed with `KRAV_` override corresponding settings in `krav.yaml`. Nested keys use double `_` separators to show hierarchy:
 
 ```bash
-ARCI_LOG_LEVEL=debug
-ARCI_SERVER__ENABLED=false
+KRAV_LOG_LEVEL=debug
+KRAV_SERVER__ENABLED=false
 ```
 
 ### Cascade override variables
@@ -326,9 +326,9 @@ Three special environment variables replace entire segments of the cascade:
 
 | Variable                   | Effect                                                                                                                             |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `ARCI_CONFIG_FILE`   | If set, the loader reads only this file for `arci*.yaml` configuration and ignores all other config files in the cascade.          |
-| `ARCI_POLICIES_FILE` | If set, the loader reads only this file for `arci-policies*.yaml` state and ignores all other policy state files.                  |
-| `ARCI_POLICIES_DIR`  | If set, the loader reads only this directory for `policies*.d/` definitions and ignores all other policy directories.               |
+| `KRAV_CONFIG_FILE`   | If set, the loader reads only this file for `krav*.yaml` configuration and ignores all other config files in the cascade.          |
+| `KRAV_POLICIES_FILE` | If set, the loader reads only this file for `krav-policies*.yaml` state and ignores all other policy state files.                  |
+| `KRAV_POLICIES_DIR`  | If set, the loader reads only this directory for `policies*.d/` definitions and ignores all other policy directories.               |
 
 These overrides are useful for testing, CI/CD, and debugging. They bypass the normal cascade entirely for their respective file types, but managed/required configuration still applies on top.
 
@@ -352,11 +352,11 @@ IT administrators deploy managed configuration via MDM tools, configuration mana
 
 ## Error handling
 
-Parse errors in configuration files produce warnings, not failures. ARCI follows fail-open semantics: if the loader cannot parse a configuration file, it skips the file and continues with the remaining sources.
+Parse errors in configuration files produce warnings, not failures. Krav follows fail-open semantics: if the loader cannot parse a configuration file, it skips the file and continues with the remaining sources.
 
-A syntax error in a project's `arci.yaml` does not prevent the tool from running. It runs with the configuration that loaded successfully, and the system logs errors and surfaces them through the CLI's `config validate` command and the server's dashboard.
+A syntax error in a project's `krav.yaml` does not prevent the tool from running. It runs with the configuration that loaded successfully, and the system logs errors and surfaces them through the CLI's `config validate` command and the server's dashboard.
 
-Managed/required configuration errors follow different rules. If the loader cannot read required managed configuration, ARCI fails closed rather than proceeding without enterprise security policies.
+Managed/required configuration errors follow different rules. If the loader cannot read required managed configuration, Krav fails closed rather than proceeding without enterprise security policies.
 
 ## Diagnostics
 
@@ -364,22 +364,22 @@ The CLI provides commands for inspecting the effective configuration:
 
 ```bash
 # Show resolved configuration with source annotations
-arci config show
+Krav config show
 
 # Validate all configuration files
-arci config validate
+Krav config validate
 
 # Show where a specific setting comes from
-arci config explain log_level
+Krav config explain log_level
 
 # List all policies with their source layers
-arci hook policy list
+Krav hook policy list
 
 # Show a specific policy definition
-arci hook policy get security-baseline
+Krav hook policy get security-baseline
 
 # Show policy from a specific layer
-arci hook policy get system/security-baseline
+Krav hook policy get system/security-baseline
 ```
 
 The server dashboard also displays configuration status, including any parse errors or validation warnings.

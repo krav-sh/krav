@@ -75,7 +75,7 @@ Good requirements are:
 
 ## Storage model
 
-ARCI stores requirement metadata in `graph.jsonlt` as JSON-LD compact form. Prose files have no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
+Krav stores requirement metadata in `graph.jsonlt` as JSON-LD compact form. Prose files have no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
 
 ```json
 {"@context": "context.jsonld", "@id": "REQ-C2H6N4P8", "@type": "Requirement", "title": "Parser error latency", "module": {"@id": "MOD-A4F8R2X1"}, "statement": "The parser shall report the first syntax error within 50ms", "status": "approved", "priority": "must", "verificationMethod": "test", "verificationCriteria": "Benchmark suite achieves p99 < 50ms", "derivesFrom": [{"@id": "NED-B7G3M9K2"}]}
@@ -151,8 +151,8 @@ Example with relationships:
 Parent module requirements allocate to child modules:
 
 ```bash
-arci reqallocate REQ-H4J7N2P5 --to MOD-A4F8R2X1 --budget "50ms"
-arci reqallocate REQ-H4J7N2P5 --to MOD-B9G3M7K2 --budget "30ms"
+Krav reqallocate REQ-H4J7N2P5 --to MOD-A4F8R2X1 --budget "50ms"
+Krav reqallocate REQ-H4J7N2P5 --to MOD-B9G3M7K2 --budget "30ms"
 ```
 
 This creates:
@@ -172,13 +172,13 @@ Example with allocation:
 When stakeholders validate a need, derivation produces requirements:
 
 ```bash
-arci needderive NED-B7G3M9K2
+Krav needderive NED-B7G3M9K2
 ```
 
 Or from a parent requirement (flow-down):
 
 ```bash
-arci reqderive REQ-H4J7N2P5 --to MOD-A4F8R2X1
+Krav reqderive REQ-H4J7N2P5 --to MOD-A4F8R2X1
 ```
 
 ## Implementation architecture
@@ -208,7 +208,7 @@ class RequirementNode:
 
 All fields use proper types. The IO layer creates RequirementNode directly from JSON-LD records, preserving all type-specific fields like `statement`, `verification_method`, and `verification_criteria`.
 
-### Core layer (`arci.core.requirement`)
+### Core layer (`krav.core.requirement`)
 
 Pure functions and typed data structures:
 
@@ -253,7 +253,7 @@ def verified_by(graph: Graph, req_id: str) -> frozenset[str]: ...
 def allocated_to(graph: Graph, req_id: str) -> frozenset[str]: ...
 ```
 
-### Service layer (`arci.service.requirement`)
+### Service layer (`krav.service.requirement`)
 
 Orchestrates core and IO:
 
@@ -285,29 +285,29 @@ def link_verification(store: GraphStore, req_id: str, verification_id: str) -> R
 
 ```bash
 # CRUD
-arci reqcreate --module MOD-A4F8R2X1 \
+Krav reqcreate --module MOD-A4F8R2X1 \
   --statement "The parser shall report errors within 50ms" \
   --verification-method test
-arci reqshow REQ-C2H6N4P8
-arci reqlist
-arci reqlist --module MOD-A4F8R2X1 --status approved
-arci requpdate REQ-C2H6N4P8 --status implemented
-arci reqdelete REQ-C2H6N4P8
+Krav reqshow REQ-C2H6N4P8
+Krav reqlist
+Krav reqlist --module MOD-A4F8R2X1 --status approved
+Krav requpdate REQ-C2H6N4P8 --status implemented
+Krav reqdelete REQ-C2H6N4P8
 
 # Relationships
-arci reqlink REQ-C2H6N4P8 --derives-from NED-B7G3M9K2
-arci reqlink REQ-C2H6N4P8 --verified-by VRF-D9J5Q1R3
+Krav reqlink REQ-C2H6N4P8 --derives-from NED-B7G3M9K2
+Krav reqlink REQ-C2H6N4P8 --verified-by VRF-D9J5Q1R3
 
 # Flow-down
-arci reqderive REQ-C2H6N4P8 --to MOD-L3X3R001
-arci reqallocate REQ-H4J7N2P5 --to MOD-A4F8R2X1 --budget "50ms"
+Krav reqderive REQ-C2H6N4P8 --to MOD-L3X3R001
+Krav reqallocate REQ-H4J7N2P5 --to MOD-A4F8R2X1 --budget "50ms"
 
 # Traceability
-arci reqtrace REQ-C2H6N4P8  # Show full chain: concept → need → req → verifications
+Krav reqtrace REQ-C2H6N4P8  # Show full chain: concept → need → req → verifications
 
 # Coverage
-arci reqcoverage                    # Overall verification coverage
-arci requnverified                  # Requirements without verifications
+Krav reqcoverage                    # Overall verification coverage
+Krav requnverified                  # Requirements without verifications
 ```
 
 ## Examples
@@ -340,8 +340,8 @@ arci requnverified                  # Requirements without verifications
 
 | Layer | Status | Notes |
 |-------|--------|-------|
-| Core | Implemented | Typed node, operations, queries in `arci.core.requirement` |
-| IO | Implemented | JSON-LD serialization via `arci.io.graph` |
+| Core | Implemented | Typed node, operations, queries in `krav.core.requirement` |
+| IO | Implemented | JSON-LD serialization via `krav.io.graph` |
 | Service | Implemented | Full CRUD, transitions, derivation, allocation, verification linking |
 | CLI | Implemented | All commands: create, show, list, update, delete, transition, link, derive, allocate, trace, coverage, unverified |
 

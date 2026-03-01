@@ -4,17 +4,17 @@ The config command group provides configuration inspection, validation, and modi
 
 ## Synopsis
 
-    arci config <subcommand> [options]
+    krav config <subcommand> [options]
 
 ## Description
 
-These commands operate on ARCI's layered configuration system. The system merges configuration from all sources in precedence order. These commands let you inspect the effective result, check structure, and change individual layers.
+These commands operate on Krav's layered configuration system. The system merges configuration from all sources in precedence order. These commands let you inspect the effective result, check structure, and change individual layers.
 
 ## Subcommands
 
 ### `validate`
 
-Checks all configuration files for structural errors. Reports YAML syntax errors, unknown fields, and schema violations. This verifies the configuration file structure; use `arci hook policy validate` to check policy and rule expressions.
+Checks all configuration files for structural errors. Reports YAML syntax errors, unknown fields, and schema violations. This verifies the configuration file structure; use `krav hook policy validate` to check policy and rule expressions.
 
 **Exit codes:**
 
@@ -31,7 +31,7 @@ Dumps the merged configuration as YAML. This shows the effective configuration a
 
 ### `where`
 
-Prints the paths where ARCI looks for configuration.
+Prints the paths where Krav looks for configuration.
 
 **Flags:**
 
@@ -41,7 +41,7 @@ Prints the paths where ARCI looks for configuration.
 
 Retrieves a configuration value by key.
 
-    arci config get <key>
+    krav config get <key>
 
 Keys use dot notation like `server.port` and `logging.level`.
 
@@ -53,7 +53,7 @@ Keys use dot notation like `server.port` and `logging.level`.
 
 Sets a configuration value.
 
-    arci config set <key> <value>
+    krav config set <key> <value>
 
 Writes to the YAML file on disk and triggers a configuration reload if the server is running.
 
@@ -65,7 +65,7 @@ Writes to the YAML file on disk and triggers a configuration reload if the serve
 
 Removes a configuration value from a file.
 
-    arci config unset <key>
+    krav config unset <key>
 
 **Flags:**
 

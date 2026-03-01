@@ -76,7 +76,7 @@ Needs group by stakeholder:
 
 ## Storage model
 
-ARCI stores need metadata in `graph.jsonlt` as JSON-LD compact form. Prose files have no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
+Krav stores need metadata in `graph.jsonlt` as JSON-LD compact form. Prose files have no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
 
 ```json
 {"@context": "context.jsonld", "@id": "NED-B7G3M9K2", "@type": "Need", "title": "Quick parsing feedback", "module": {"@id": "MOD-A4F8R2X1"}, "stakeholder": "user", "statement": "Users need quick feedback when parsing fails", "rationale": "Slow error reporting disrupts developer flow", "status": "validated", "priority": "must", "derivesFrom": [{"@id": "CON-K7M3NP2Q"}]}
@@ -137,7 +137,7 @@ Example with relationships:
 When stakeholders validate a need, derivation produces requirements:
 
 ```bash
-arci needderive NED-B7G3M9K2
+Krav needderive NED-B7G3M9K2
 ```
 
 This process:
@@ -154,7 +154,7 @@ A single need typically produces 1-5 requirements. The team may decompose comple
 Validation confirms that the need accurately captures stakeholder expectations:
 
 ```bash
-arci needvalidate NED-B7G3M9K2 --evidence "User interviews Jan 2026"
+Krav needvalidate NED-B7G3M9K2 --evidence "User interviews Jan 2026"
 ```
 
 Validation methods:
@@ -194,7 +194,7 @@ class NeedNode:
 
 All fields use proper types. The IO layer creates NeedNode directly from JSON-LD records, preserving all type-specific fields like `statement`, `rationale`, and `validation_evidence`.
 
-### Core layer (`arci.core.need`)
+### Core layer (`krav.core.need`)
 
 Pure functions and typed data structures:
 
@@ -245,7 +245,7 @@ def derives_from_concepts(graph: Graph, need_id: str) -> frozenset[str]: ...
 def derived_requirements(graph: Graph, need_id: str) -> frozenset[str]: ...
 ```
 
-### Service layer (`arci.service.need`)
+### Service layer (`krav.service.need`)
 
 Orchestrates core and IO:
 
@@ -277,24 +277,24 @@ def derive(store: GraphStore, need_id: str, requirements: list[RequirementSpec])
 
 ```bash
 # CRUD
-arci needcreate --module MOD-A4F8R2X1 --stakeholder user \
+Krav needcreate --module MOD-A4F8R2X1 --stakeholder user \
   --statement "Users need quick feedback when parsing fails"
-arci needshow NED-B7G3M9K2
-arci needlist
-arci needlist --module MOD-A4F8R2X1 --stakeholder user
-arci needupdate NED-B7G3M9K2 --priority must
-arci needdelete NED-B7G3M9K2
+Krav needshow NED-B7G3M9K2
+Krav needlist
+Krav needlist --module MOD-A4F8R2X1 --stakeholder user
+Krav needupdate NED-B7G3M9K2 --priority must
+Krav needdelete NED-B7G3M9K2
 
 # Lifecycle
-arci needtransition NED-B7G3M9K2 --to proposed
-arci needvalidate NED-B7G3M9K2 --evidence "..."
-arci needderive NED-B7G3M9K2
+Krav needtransition NED-B7G3M9K2 --to proposed
+Krav needvalidate NED-B7G3M9K2 --evidence "..."
+Krav needderive NED-B7G3M9K2
 
 # Relationships
-arci needlink NED-B7G3M9K2 --derives-from CON-K7M3NP2Q
+Krav needlink NED-B7G3M9K2 --derives-from CON-K7M3NP2Q
 
 # Traceability
-arci needtrace NED-B7G3M9K2  # Show concept → need → requirements chain
+Krav needtrace NED-B7G3M9K2  # Show concept → need → requirements chain
 ```
 
 ## Examples
@@ -345,9 +345,9 @@ This chain answers "why does this requirement exist?" by tracing back through ne
 
 | Layer | Status | Notes |
 |-------|--------|-------|
-| Core | Implemented | Typed node, operations, queries in `arci.core.need` |
-| IO | Implemented | JSON-LD serialization via `arci.io.graph` |
-| Service | Implemented | CRUD, transitions, validate, derivation management in `arci.service.need` |
+| Core | Implemented | Typed node, operations, queries in `krav.core.need` |
+| IO | Implemented | JSON-LD serialization via `krav.io.graph` |
+| Service | Implemented | CRUD, transitions, validate, derivation management in `krav.service.need` |
 | CLI | Implemented | 9 commands: create, show, list, update, delete, transition, validate, link, trace |
 
 ## Summary

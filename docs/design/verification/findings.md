@@ -161,7 +161,7 @@ The review task produces findings that link back via their module field.
 When a finding needs work, generate a task:
 
 ```bash
-arci findinggenerate-task FND-F1L4T7W5
+Krav findinggenerate-task FND-F1L4T7W5
 ```
 
 This creates:
@@ -173,7 +173,7 @@ This creates:
 When the task completes:
 
 ```bash
-arci findingclose FND-F1L4T7W5 --notes "Added line/column to errors"
+Krav findingclose FND-F1L4T7W5 --notes "Added line/column to errors"
 ```
 
 This:
@@ -185,7 +185,7 @@ This:
 
 Some operations create findings automatically:
 
-**Phase regression**: when a module regresses to an earlier phase, ARCI creates a finding:
+**Phase regression**: when a module regresses to an earlier phase, Krav creates a finding:
 
 ```json
 {"@context": "context.jsonld", "@id": "FND-R3GR3SS1", "@type": "Finding", "findingType": "issue", "severity": "major", "statement": "Boundary between lexer and tokenizer unclear", "rationale": "Module regression: MOD-A4F8R2X1 regressed to architecture"}
@@ -225,7 +225,7 @@ class FindingNode:
 
 All fields use proper types. The IO layer creates FindingNode directly from JSON-LD records, preserving all type-specific fields like `finding_type`, `severity`, `statement`, and `resolution_notes`.
 
-### Core layer (`arci.core.finding`)
+### Core layer (`krav.core.finding`)
 
 Pure functions and typed data structures:
 
@@ -278,7 +278,7 @@ def regarding(graph: Graph, finding_id: str) -> str | None: ...
 def generated_task(graph: Graph, finding_id: str) -> str | None: ...
 ```
 
-### Service layer (`arci.service.finding`)
+### Service layer (`krav.service.finding`)
 
 Orchestrates core and IO:
 
@@ -314,27 +314,27 @@ def wont_fix(store: GraphStore, finding_id: str, reason: str) -> FindingNode: ..
 
 ```bash
 # CRUD
-arci findingcreate --module MOD-A4F8R2X1 --type issue \
+Krav findingcreate --module MOD-A4F8R2X1 --type issue \
   --statement "Error messages don't include line numbers"
-arci findingshow FND-F1L4T7W5
-arci findinglist
-arci findinglist --module MOD-A4F8R2X1 --type issue --status open
-arci findingupdate FND-F1L4T7W5 --severity critical
-arci findingdelete FND-F1L4T7W5
+Krav findingshow FND-F1L4T7W5
+Krav findinglist
+Krav findinglist --module MOD-A4F8R2X1 --type issue --status open
+Krav findingupdate FND-F1L4T7W5 --severity critical
+Krav findingdelete FND-F1L4T7W5
 
 # Lifecycle
-arci findingacknowledge FND-F1L4T7W5
-arci findinggenerate-task FND-F1L4T7W5
-arci findingaddress FND-F1L4T7W5 --task TSK-F1X00001
-arci findingclose FND-F1L4T7W5 --notes "Fixed in commit abc123"
-arci findingwontfix FND-F1L4T7W5 --reason "Out of scope for v1"
+Krav findingacknowledge FND-F1L4T7W5
+Krav findinggenerate-task FND-F1L4T7W5
+Krav findingaddress FND-F1L4T7W5 --task TSK-F1X00001
+Krav findingclose FND-F1L4T7W5 --notes "Fixed in commit abc123"
+Krav findingwontfix FND-F1L4T7W5 --reason "Out of scope for v1"
 
 # Queries
-arci findingopen                     # All open findings
-arci findingopen --module MOD-A4F8R2X1  # Open for module
-arci findingblocking                 # Open issues blocking advancement
-arci findingby-type issue            # All issues
-arci findingby-severity critical     # Critical issues
+Krav findingopen                     # All open findings
+Krav findingopen --module MOD-A4F8R2X1  # Open for module
+Krav findingblocking                 # Open issues blocking advancement
+Krav findingby-type issue            # All issues
+Krav findingby-severity critical     # Critical issues
 ```
 
 ## Examples
@@ -368,7 +368,7 @@ arci findingby-severity critical     # Critical issues
 Findings can block module phase advancement:
 
 ```bash
-arci moduleadvance MOD-A4F8R2X1 --to implementation
+Krav moduleadvance MOD-A4F8R2X1 --to implementation
 # Error: Cannot advance. 2 blocking findings:
 #   FND-F1L4T7W5: Error messages don't include line numbers (major issue)
 #   FND-QU35T10N: Should we support Windows line endings? (open question)
@@ -390,10 +390,10 @@ The prose file contains extended context, evidence, and discussion.
 
 | Layer | Status | Notes |
 |-------|--------|-------|
-| Core | Implemented | Typed node, operations, queries in `arci.core.finding` |
-| IO | Implemented | JSON-LD serialization via `arci.io.graph` |
-| Service | Implemented | All CRUD, transitions, and workflows in `arci.service.finding` |
-| CLI | Implemented | Full command set in `arci.cli._commands._finding` |
+| Core | Implemented | Typed node, operations, queries in `krav.core.finding` |
+| IO | Implemented | JSON-LD serialization via `krav.io.graph` |
+| Service | Implemented | All CRUD, transitions, and workflows in `krav.service.finding` |
+| CLI | Implemented | Full command set in `krav.cli._commands._finding` |
 
 ## Summary
 

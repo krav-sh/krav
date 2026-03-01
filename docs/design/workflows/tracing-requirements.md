@@ -20,7 +20,7 @@ Forward trace (from need to code): follow `derivesFrom` edges forward from NEED-
 
 Impact analysis (what does changing this node affect): follow all outgoing edges from the node, recursively. This is the suspect link propagation path, but presented as a preview rather than triggered by an actual change.
 
-Key CLI commands: `arci reqtrace REQ-X` (full chain), `arci taskancestors TASK-X`, `arci taskdescendants TASK-X`.
+Key CLI commands: `krav reqtrace REQ-X` (full chain), `krav taskancestors TASK-X`, `krav taskdescendants TASK-X`.
 
 ## Trigger patterns
 
@@ -38,13 +38,13 @@ Unchanged.
 
 ### Skills
 
-The `arci:trace` skill builds this workflow. Preprocessing loads the target node and its immediate neighbors to give the agent a starting point, but the real work happens through instructed commands that walk the derivation chain in either direction. The skill's CLI commands (`arci reqtrace`, `arci taskancestors`, `arci taskdescendants`) provide the raw traversal data, and the skill body tells the agent how to synthesize chain data into a narrative explanation of why a node exists and what depends on it.
+The `krav:trace` skill builds this workflow. Preprocessing loads the target node and its immediate neighbors to give the agent a starting point, but the real work happens through instructed commands that walk the derivation chain in either direction. The skill's CLI commands (`krav reqtrace`, `krav taskancestors`, `krav taskdescendants`) provide the raw traversal data, and the skill body tells the agent how to synthesize chain data into a narrative explanation of why a node exists and what depends on it.
 
 The skill is lightweight in terms of instructions. The challenge isn't guiding a complex transformation but presenting graph traversal results in readable form, especially for chains that cross module boundaries or branch at allocation points.
 
 ### Agents
 
-The `arci-analyst` subagent handles deep or complex traces that would consume too much of the main agent's context window. A full impact analysis from a need through all derived requirements, their test cases, and dependent tasks can involve dozens of nodes. For simple traces ("why does this requirement exist?"), the main agent handles it directly. For full impact analysis ("what would change if this need changed?"), delegating to the analyst keeps the main context clean.
+The `krav-analyst` subagent handles deep or complex traces that would consume too much of the main agent's context window. A full impact analysis from a need through all derived requirements, their test cases, and dependent tasks can involve dozens of nodes. For simple traces ("why does this requirement exist?"), the main agent handles it directly. For full impact analysis ("what would change if this need changed?"), delegating to the analyst keeps the main context clean.
 
 ### Policies
 

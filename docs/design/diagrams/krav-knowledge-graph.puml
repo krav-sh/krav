@@ -1,4 +1,4 @@
-@startuml arci-knowledge-graph
+@startuml krav-knowledge-graph
 
 skinparam {
     ClassFontSize 13
@@ -42,7 +42,7 @@ skinparam class {
     HeaderBackgroundColor<<quality>> #CFD8DC
 }
 
-title arci knowledge graph domain model
+title krav knowledge graph domain model
 
 class "CON-*\nConcept" as CON <<exploration>> {
     status: draft | exploring | crystallized
@@ -165,7 +165,7 @@ legend bottom left
   | Gray solid | Defect //subject// — any node type |
 
   All nodes stored in **graph.jsonlt** (JSON-LD compact form).
-  Prose in **.arci/** markdown (no frontmatter).
+  Prose in **.krav/** markdown (no frontmatter).
 end legend
 
 @enduml

@@ -1,14 +1,14 @@
 # Glossary
 
-This document defines key terms used throughout ARCI's documentation.
+This document defines key terms used throughout Krav's documentation.
 
 ## Core concepts
 
-**Hook.** A point in Claude Code's execution flow where external code can intercept and influence behavior. ARCI receives hook invocations and evaluates policies against them. See [Hook schema](hooks/hook-schema.md) for the full list of event types.
+**Hook.** A point in Claude Code's execution flow where external code can intercept and influence behavior. Krav receives hook invocations and evaluates policies against them. See [Hook schema](hooks/hook-schema.md) for the full list of event types.
 
 **Hook event.** A specific type of hook invocation. Examples include pre_tool_call (before a tool executes), post_tool_call (after a tool executes), session_start (when a conversation begins), and pre_prompt (when the user sends a message). See [Hook schema](hooks/hook-schema.md) for event mapping.
 
-**Policy.** A self-contained unit of hook logic in ARCI. A policy declares its matching criteria, conditions, parameters, variables, macros, and rules all in one YAML document. See [Policy model](hooks/policy-model.md) for details.
+**Policy.** A self-contained unit of hook logic in Krav. A policy declares its matching criteria, conditions, parameters, variables, macros, and rules all in one YAML document. See [Policy model](hooks/policy-model.md) for details.
 
 **Rule.** A component within a policy that defines a specific check, mutation, or side effect. Rules contain one of validate (for admission decisions), mutate (for transforming input), or effects (for fire-and-forget actions), plus optional match constraints and conditions.
 
@@ -36,7 +36,7 @@ This document defines key terms used throughout ARCI's documentation.
 
 **Requirement.** a precise, testable design obligation derived from a need. Requirements use "shall" statements and must be verifiable. Test cases verify them.
 
-**Test case.** a verification specification that defines what to check and how. Test cases use one of four methods: test, inspection, demonstration, or analysis. They follow their own lifecycle (draft, specified, built, executable, obsolete), while ARCI tracks execution results separately via `currentResult` (pass/fail/skip/unknown). Test cases link to requirements via verifies/verifiedBy relationships.
+**Test case.** a verification specification that defines what to check and how. Test cases use one of four methods: test, inspection, demonstration, or analysis. They follow their own lifecycle (draft, specified, built, executable, obsolete), while Krav tracks execution results separately via `currentResult` (pass/fail/skip/unknown). Test cases link to requirements via verifies/verifiedBy relationships.
 
 **Task.** a unit of work to satisfy a requirement. Tasks form a DAG with dependency relationships and follow a process phase (architecture through validation).
 
@@ -44,11 +44,11 @@ This document defines key terms used throughout ARCI's documentation.
 
 **Spec.** A structured specification document containing modules. Specs use INCOSE-inspired systems engineering practices to organize requirements and traceability.
 
-**Knowledge graph.** The interconnected graph of spec modules and their relationships. On disk, per-table NDJSON files under `.arci/graph/` store vertex and edge data in a git-friendly format. At runtime, DuckDB with the DuckPGQ extension hydrates these files into relational tables queryable via SQL and SQL/PGQ. The knowledge graph provides full traceability from concepts through verified implementations. Inline prose uses the `summary` field; extended prose lives in markdown files at convention-derived paths under `.arci/`.
+**Knowledge graph.** The interconnected graph of spec modules and their relationships. On disk, per-table NDJSON files under `.krav/graph/` store vertex and edge data in a git-friendly format. At runtime, DuckDB with the DuckPGQ extension hydrates these files into relational tables queryable via SQL and SQL/PGQ. The knowledge graph provides full traceability from concepts through verified implementations. Inline prose uses the `summary` field; extended prose lives in markdown files at convention-derived paths under `.krav/`.
 
 ## Configuration
 
-**Project configuration.** Policies and settings that apply to a specific project, stored in the project's `.arci/` directory. Project policies have higher precedence than user-level policies.
+**Project configuration.** Policies and settings that apply to a specific project, stored in the project's `.krav/` directory. Project policies have higher precedence than user-level policies.
 
 **Drop-in directory.** a `policies.d/` directory containing individual YAML files that the loader merges into configuration. Local variants (`policies.local.d/`) are gitignored and take precedence over non-local policies at the same cascade layer.
 
@@ -90,7 +90,7 @@ This document defines key terms used throughout ARCI's documentation.
 
 ## State
 
-**State store.** A persistent key-value store backed by DuckDB for tracking data across hook invocations. The state database at `.arci/state.duckdb` attaches to the same DuckDB instance as the knowledge graph at runtime, so queries can join across both domains. See [State store](state-store.md) for details.
+**State store.** A persistent key-value store backed by DuckDB for tracking data across hook invocations. The state database at `.krav/state.duckdb` attaches to the same DuckDB instance as the knowledge graph at runtime, so queries can join across both domains. See [State store](state-store.md) for details.
 
 **Session scope.** State tied to a specific Claude Code session.
 
@@ -104,7 +104,7 @@ This document defines key terms used throughout ARCI's documentation.
 
 **Server.** Long-running process that caches configuration, pools connections, and serves an HTTP API. See [Server](server/index.md) for details.
 
-**Direct execution.** Running `arci hook apply` without a server, where configuration loading happens on every invocation.
+**Direct execution.** Running `krav hook apply` without a server, where configuration loading happens on every invocation.
 
 ## Parameters and variables
 
@@ -112,7 +112,7 @@ This document defines key terms used throughout ARCI's documentation.
 
 **Variable.** A computed value derived from parameters, the hook event, built-in functions, or other variables.
 
-**Provider.** a source of parameter values. The ARCI configuration defines named providers. Inline providers include file, http, and env.
+**Provider.** a source of parameter values. The Krav configuration defines named providers. Inline providers include file, http, and env.
 
 ## Extensions
 
@@ -126,7 +126,7 @@ This document defines key terms used throughout ARCI's documentation.
 
 ## Claude Code terms
 
-**Matcher.** a pattern that filters which tools trigger a hook. An empty matcher matches all tools. ARCI's policy match constraints provide more powerful filtering.
+**Matcher.** a pattern that filters which tools trigger a hook. An empty matcher matches all tools. Krav's policy match constraints provide more powerful filtering.
 
 **Tool.** An operation Claude Code can perform, like executing shell commands (Bash), writing files (Write), or reading files (Read). See [Hook schema](hooks/hook-schema.md) for canonical tool names.
 
@@ -138,12 +138,12 @@ This document defines key terms used throughout ARCI's documentation.
 
 **DuckPGQ.** DuckDB community extension that adds SQL/PGQ (SQL:2023 standard) for property graph queries over relational tables. Enables graph pattern matching, variable-length path traversals, and shortest path queries alongside standard SQL.
 
-**Hydrate/dehydrate.** The process of loading per-table NDJSON files from `.arci/graph/` into DuckDB tables (hydrate) and serializing DuckDB tables back to sorted NDJSON files (dehydrate). The server hydrates on startup and dehydrates on checkpoint, baseline creation, or graceful shutdown.
+**Hydrate/dehydrate.** The process of loading per-table NDJSON files from `.krav/graph/` into DuckDB tables (hydrate) and serializing DuckDB tables back to sorted NDJSON files (dehydrate). The server hydrates on startup and dehydrates on checkpoint, baseline creation, or graceful shutdown.
 
-**NDJSON.** Newline-delimited JSON format, one JSON object per line. Used for git-friendly serialization of knowledge graph tables under `.arci/graph/`. Each vertex table and edge table has its own NDJSON file, sorted deterministically for stable diffs.
+**NDJSON.** Newline-delimited JSON format, one JSON object per line. Used for git-friendly serialization of knowledge graph tables under `.krav/graph/`. Each vertex table and edge table has its own NDJSON file, sorted deterministically for stable diffs.
 
 **SQL/PGQ.** The property graph query extension to SQL, standardized in SQL:2023. Adds `MATCH` clause syntax for graph pattern matching over relational tables registered as a property graph. DuckPGQ provides this capability.
 
 ---
 
-This glossary expands as ARCI evolves. Add terms when they appear frequently in documentation or when vocabulary needs disambiguation.
+This glossary expands as Krav evolves. Add terms when they appear frequently in documentation or when vocabulary needs disambiguation.

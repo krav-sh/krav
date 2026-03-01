@@ -6,13 +6,13 @@ The developer says `fix this bug`, `add a --verbose flag`, `rename this function
 
 ## Why
 
-This is the most common interaction in a mature project, and it's where ARCI risks being an obstacle rather than an aid. If every three-line change requires graph ceremony, developers turn off ARCI or work around it. The system needs a graceful path for low-ceremony work that still leaves a useful trace without demanding a full transformation chain.
+This is the most common interaction in a mature project, and it's where Krav risks being an obstacle rather than an aid. If every three-line change requires graph ceremony, developers turn off Krav or work around it. The system needs a graceful path for low-ceremony work that still leaves a useful trace without demanding a full transformation chain.
 
 ## What happens in the graph
 
 This is the central design question. A few options, from least to most ceremony:
 
-**Nothing.** The agent writes code and ARCI isn't involved. The hooks might fire (PreToolUse on file writes) but no graph nodes get created. The change exists only in git history. This is the simplest option but means the graph drifts from reality: work happened that the graph doesn't know about.
+**Nothing.** The agent writes code and Krav isn't involved. The hooks might fire (PreToolUse on file writes) but no graph nodes get created. The change exists only in git history. This is the simplest option but means the graph drifts from reality: work happened that the graph doesn't know about.
 
 **Task only.** The agent creates a lightweight TASK-* node with minimal metadata (title, module, phase: coding, status: complete, deliverables: the commit). No concepts, needs, or requirements. The graph records that work happened on this module. This is a reasonable middle ground.
 
@@ -34,9 +34,9 @@ Depends on the ceremony level chosen. Might stay unchanged, might have a single 
 
 ### Skills
 
-The `arci:quickfix` skill builds this workflow. Unlike most skills, its primary job is triage rather than execution: it determines the appropriate ceremony level based on what the developer is changing and the current graph state. If the affected module has a baseline, the skill escalates toward task creation. If the change addresses an existing defect, it links to the remediation task. If neither applies, it may create a lightweight task record or skip the graph entirely.
+The `krav:quickfix` skill builds this workflow. Unlike most skills, its primary job is triage rather than execution: it determines the appropriate ceremony level based on what the developer is changing and the current graph state. If the affected module has a baseline, the skill escalates toward task creation. If the change addresses an existing defect, it links to the remediation task. If neither applies, it may create a lightweight task record or skip the graph entirely.
 
-Preprocessing loads the module's baseline status, open defects, and existing requirements for the area the developer is changing. This gives the agent the signals it needs to make the ceremony decision. The skill's instructed commands cover both the lightweight path (create a minimal task, record deliverables) and the escalation path (defer to `arci:task` or `arci:defect` for more structured execution).
+Preprocessing loads the module's baseline status, open defects, and existing requirements for the area the developer is changing. This gives the agent the signals it needs to make the ceremony decision. The skill's instructed commands cover both the lightweight path (create a minimal task, record deliverables) and the escalation path (defer to `krav:task` or `krav:defect` for more structured execution).
 
 ### Policies
 
@@ -58,6 +58,6 @@ When the quick-fix skill decides a task record warrants creation, the typical ty
 
 **Retrospective graph updates.** Can the developer do work informally and then retroactively "explain" it to the graph? Something like `that last commit was for REQ-C2H6N4P8` after the fact, creating a task record with the deliverable. This is friendlier than requiring graph involvement upfront.
 
-**How does the agent decide?** If the developer says `add a --verbose flag`, how does the agent decide whether this needs the full chain or just a quick task? Signals might include: does a need or requirement already exist for verbosity? Does the module have a baseline? Has the developer configured a ceremony policy? The agent's default behavior here shapes the entire user experience of ARCI.
+**How does the agent decide?** If the developer says `add a --verbose flag`, how does the agent decide whether this needs the full chain or just a quick task? Signals might include: does a need or requirement already exist for verbosity? Does the module have a baseline? Has the developer configured a ceremony policy? The agent's default behavior here shapes the entire user experience of Krav.
 
 **Interaction with verification.** If a quick fix changes behavior covered by existing test cases, those tests should run again and the agent should record the results. But if the change is documentation or cosmetic, no verification applies. The agent needs to distinguish.

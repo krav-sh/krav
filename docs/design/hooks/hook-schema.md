@@ -1,6 +1,6 @@
 # Hook schema
 
-This document defines ARCI's normalized hook schema for Claude Code integration. The schema maps Claude Code's hook events to canonical event types used in policy evaluation.
+This document defines Krav's normalized hook schema for Claude Code integration. The schema maps Claude Code's hook events to canonical event types used in policy evaluation.
 
 For how policies use this schema, see [Policy model](policy-model.md). For how evaluation works, see [Execution model](execution-model.md).
 
@@ -10,7 +10,7 @@ The schema follows three principles. First, use action-oriented event names and 
 
 ## Event types
 
-ARCI defines canonical event types that map to Claude Code's native hook event names.
+Krav defines canonical event types that map to Claude Code's native hook event names.
 
 ### Core lifecycle events
 
@@ -40,7 +40,7 @@ The `subagent_stop` event fires when a subagent completes its task. It shares th
 
 ## Tool names
 
-ARCI uses Claude Code's native tool names as canonical identifiers.
+Krav uses Claude Code's native tool names as canonical identifiers.
 
 ### Canonical tool names
 
@@ -204,7 +204,7 @@ variables:
 
 ## Output schema
 
-ARCI produces a response and translates it to Claude Code's expected output format.
+Krav produces a response and translates it to Claude Code's expected output format.
 
 ### Response structure
 
@@ -251,7 +251,7 @@ The `continue` field (boolean, default true) determines whether Claude should co
 
 ### Output format translation
 
-ARCI translates the abstract output to Claude Code's expected format:
+Krav translates the abstract output to Claude Code's expected format:
 
 | Action | Claude Code Behavior |
 |--------|---------------------|
@@ -305,7 +305,7 @@ conditions:
 
 ### Timeout handling
 
-Claude Code's settings control hook timeout behavior (default 30 seconds per hook). ARCI enforces its own timeout on policy evaluation. When evaluation times out, the engine skips the policy with fail-open semantics.
+Claude Code's settings control hook timeout behavior (default 30 seconds per hook). Krav enforces its own timeout on policy evaluation. When evaluation times out, the engine skips the policy with fail-open semantics.
 
 ### Regular expression patterns
 

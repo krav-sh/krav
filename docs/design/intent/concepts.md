@@ -38,7 +38,7 @@ State transitions:
 
 - `draft → exploring`: Work begins on fleshing out the concept
 - `exploring → crystallized`: Exploration complete, understanding settled
-- `crystallized → formalized`: the user ran `arci conceptformalize`
+- `crystallized → formalized`: the user ran `krav conceptformalize`
 - `* → superseded`: New concept replaces this one (via supersedes relationship)
 
 ## Concept types
@@ -56,7 +56,7 @@ The `conceptType` field categorizes the nature of the exploration:
 
 ## Storage model
 
-ARCI stores concept metadata in `graph.jsonlt` as JSON-LD compact form. Prose files have no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
+Krav stores concept metadata in `graph.jsonlt` as JSON-LD compact form. Prose files have no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
 
 ```json
 {"@context": "context.jsonld", "@id": "CON-C0NC3PT5", "@type": "Concept", "title": "Parser architecture", "status": "exploring", "conceptType": "architectural", "content": "concepts/20260103164500-C0NC3PT5-parser-architecture.md", "informs": {"@id": "MOD-P4RS3R01"}}
@@ -70,7 +70,7 @@ Fields:
 - `description`: Brief description (optional)
 - `status`: Lifecycle state (draft, exploring, crystallized, formalized, superseded)
 - `conceptType`: Type of exploration (architectural, operational, technical, interface, process, integration)
-- `content`: Path to prose file relative to `.arci/`
+- `content`: Path to prose file relative to `.krav/`
 - `created`, `updated`: ISO 8601 timestamps
 - `tags`: Array of strings (optional)
 
@@ -161,7 +161,7 @@ Example with relationships:
 When a concept crystallizes, formalization extracts stakeholder expectations as needs:
 
 ```bash
-arci conceptformalize CON-C0NC3PT5
+Krav conceptformalize CON-C0NC3PT5
 ```
 
 This interactive process:
@@ -197,7 +197,7 @@ class ConceptNode:
 
 All fields use proper types. The IO layer creates ConceptNode directly from JSON-LD records, preserving all type-specific fields.
 
-### Core layer (`arci.core.concept`)
+### Core layer (`krav.core.concept`)
 
 Pure functions and typed data structures:
 
@@ -237,7 +237,7 @@ def informs(graph: Graph, concept_id: str) -> str | None: ...  # Returns module 
 def derived_needs(graph: Graph, concept_id: str) -> frozenset[str]: ...  # Returns need IDs
 ```
 
-### Service layer (`arci.service.concept`)
+### Service layer (`krav.service.concept`)
 
 Orchestrates core and IO:
 
@@ -260,20 +260,20 @@ def formalize(store: GraphStore, concept_id: str, needs: list[NeedSpec]) -> list
 
 ```bash
 # CRUD
-arci conceptcreate --title "Parser architecture" --type architectural
-arci conceptshow CON-C0NC3PT5
-arci conceptlist
-arci conceptlist --status exploring --type architectural
-arci conceptupdate CON-C0NC3PT5 --status crystallized
-arci conceptdelete CON-C0NC3PT5
+Krav conceptcreate --title "Parser architecture" --type architectural
+Krav conceptshow CON-C0NC3PT5
+Krav conceptlist
+Krav conceptlist --status exploring --type architectural
+Krav conceptupdate CON-C0NC3PT5 --status crystallized
+Krav conceptdelete CON-C0NC3PT5
 
 # Lifecycle
-arci concepttransition CON-C0NC3PT5 --to crystallized
-arci conceptformalize CON-C0NC3PT5
+Krav concepttransition CON-C0NC3PT5 --to crystallized
+Krav conceptformalize CON-C0NC3PT5
 
 # Relationships
-arci conceptlink CON-C0NC3PT5 --supersedes CON-0LD3R123
-arci conceptlink CON-C0NC3PT5 --informs MOD-P4RS3R01
+Krav conceptlink CON-C0NC3PT5 --supersedes CON-0LD3R123
+Krav conceptlink CON-C0NC3PT5 --informs MOD-P4RS3R01
 ```
 
 ## Examples
@@ -281,7 +281,7 @@ arci conceptlink CON-C0NC3PT5 --informs MOD-P4RS3R01
 ### Architectural concept
 
 ```json
-{"@context": "context.jsonld", "@id": "CON-K7M3NP2Q", "@type": "Concept", "title": "arci data model", "status": "crystallized", "conceptType": "architectural", "content": "concepts/20260103133127-K7M3NP2Q-data-model.md", "informs": {"@id": "MOD-OAPSROOT"}}
+{"@context": "context.jsonld", "@id": "CON-K7M3NP2Q", "@type": "Concept", "title": "krav data model", "status": "crystallized", "conceptType": "architectural", "content": "concepts/20260103133127-K7M3NP2Q-data-model.md", "informs": {"@id": "MOD-OAPSROOT"}}
 ```
 
 ### Technical spike
@@ -313,10 +313,10 @@ The `informs` relationship is for navigation and documentation. The `module` fie
 
 | Layer | Status | Notes |
 |-------|--------|-------|
-| Core | Implemented | Typed node, operations, queries in `arci.core.concept` |
-| IO | Implemented | JSON-LD serialization via `arci.io.graph` |
-| Service | Implemented | CRUD, transitions, supersede, link_informs in `arci.service.concept` |
-| CLI | Implemented | All commands in `arci.cli._commands._concept` |
+| Core | Implemented | Typed node, operations, queries in `krav.core.concept` |
+| IO | Implemented | JSON-LD serialization via `krav.io.graph` |
+| Service | Implemented | CRUD, transitions, supersede, link_informs in `krav.service.concept` |
+| CLI | Implemented | All commands in `krav.cli._commands._concept` |
 | Tests | Implemented | 38 integration tests in `tests/integration/commands/test_concept.py` |
 
 ## Summary
@@ -326,7 +326,7 @@ Concepts capture exploration and crystallized thinking:
 - Progress from draft through exploring to crystallized
 - Typed by nature of exploration (architectural, technical, process, etc.)
 - Stored in graph.jsonlt with prose files having no frontmatter
-- Formalize into needs via `arci conceptformalize`
+- Formalize into needs via `krav conceptformalize`
 - Maintain traceability via derivesFrom relationships
 - Can inform modules via informal `informs` relationship
 - Implemented following three-layer architecture (core/io/service)

@@ -34,13 +34,13 @@ A completed review TASK-* with disposition. Zero or more DEF-* nodes linked to t
 
 ### Skills
 
-The `arci:review` skill builds this workflow. It runs inside the `arci-reviewer` subagent rather than the main agent context, so its preprocessing and instructions target an evaluator starting with a clean context window. Preprocessing loads the module's requirements and the deliverable file list from predecessor tasks via `!`command`` directives, giving the reviewer everything it needs to assess whether deliverables satisfy their requirements.
+The `krav:review` skill builds this workflow. It runs inside the `krav-reviewer` subagent rather than the main agent context, so its preprocessing and instructions target an evaluator starting with a clean context window. Preprocessing loads the module's requirements and the deliverable file list from predecessor tasks via `!`command`` directives, giving the reviewer everything it needs to assess whether deliverables satisfy their requirements.
 
-The skill's instructed commands create DEF-* nodes via `arci defect create` for each problem found, and produce a structured assessment covering each requirement's satisfaction status. The skill body sets the evaluative posture: check deliverables against requirements, not against the reviewer's aesthetic preferences.
+The skill's instructed commands create DEF-* nodes via `krav defect create` for each problem found, and produce a structured assessment covering each requirement's satisfaction status. The skill body sets the evaluative posture: check deliverables against requirements, not against the reviewer's aesthetic preferences.
 
 ### Agents
 
-The `arci-reviewer` subagent is the canonical execution context for this workflow. It starts with a fresh context window, eliminating the bias that comes from reviewing your own code. The reviewer has read-only tool access (Read, Grep, Glob, and Bash for `arci` CLI commands) so it can read any project file and create defect records but can't modify source code.
+The `krav-reviewer` subagent is the canonical execution context for this workflow. It starts with a fresh context window, eliminating the bias that comes from reviewing your own code. The reviewer has read-only tool access (Read, Grep, Glob, and Bash for `krav` CLI commands) so it can read any project file and create defect records but can't modify source code.
 
 The delegation message from the main agent handles different review types (code review, design review, architecture review, security audit), not separate subagents. The delegation message specifies the review scope, target module, and focus areas. The reviewer's system prompt provides the critical evaluation posture that stays consistent across review types.
 
@@ -54,7 +54,7 @@ The `graph-integrity` and `cli-auto-approve` policies apply within the subagent'
 
 ### Task types
 
-This workflow executes `review-code`, `review-design`, `review-architecture`, and `audit-security` task types. The deliverable expectations are identical across review types (review report, defect records, per-requirement assessment), with the review scope and evaluative focus varying by type. The `arci:advance` skill also creates review tasks as preconditions for phase advancement, so review tasks may originate from decomposition or from advancement checks.
+This workflow executes `review-code`, `review-design`, `review-architecture`, and `audit-security` task types. The deliverable expectations are identical across review types (review report, defect records, per-requirement assessment), with the review scope and evaluative focus varying by type. The `krav:advance` skill also creates review tasks as preconditions for phase advancement, so review tasks may originate from decomposition or from advancement checks.
 
 ## Open questions
 

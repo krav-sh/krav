@@ -4,13 +4,13 @@
 
 Every project has a domain: the subject matter that the system operates in, the vocabulary its users speak, the rules and invariants that constrain what the system can do. An agent working on a healthcare system needs to understand HIPAA. An agent working on a trading platform needs to know what a limit order is. An agent deriving requirements for a build tool needs to know how dependency graphs work.
 
-ARCI structures development work but does not manage domain knowledge directly. The agent layer needs domain context to do useful work at every stage: formulating concepts with the right vocabulary, writing needs in stakeholder language, deriving correct requirements, writing code that handles domain edge cases, and reviewing work against rules the specification might not fully capture. Domain context integration is how ARCI connects its engineering lifecycle to the actual subject matter of the project.
+Krav structures development work but does not manage domain knowledge directly. The agent layer needs domain context to do useful work at every stage: formulating concepts with the right vocabulary, writing needs in stakeholder language, deriving correct requirements, writing code that handles domain edge cases, and reviewing work against rules the specification might not fully capture. Domain context integration is how Krav connects its engineering lifecycle to the actual subject matter of the project.
 
-## `.arci/DOMAIN.md`
+## `.krav/DOMAIN.md`
 
-Every ARCI project has a conventional domain reference document at `.arci/DOMAIN.md`. This file is the project's primary domain context source. It describes the problem domain in plain language: what the system does, who it's for, what vocabulary the domain uses, what rules and invariants govern the domain, and what external standards or regulations apply.
+Every Krav project has a conventional domain reference document at `.krav/DOMAIN.md`. This file is the project's primary domain context source. It describes the problem domain in plain language: what the system does, who it's for, what vocabulary the domain uses, what rules and invariants govern the domain, and what external standards or regulations apply.
 
-The file is human-authored and human-maintained. ARCI does not generate or modify it. The agent reads it whenever domain understanding would improve the quality of a graph operation. Skill and subagent instructions reference it by convention, ensuring the agent loads domain context before formalization, derivation, decomposition, review, and other domain-sensitive workflows.
+The file is human-authored and human-maintained. Krav does not generate or modify it. The agent reads it whenever domain understanding would improve the quality of a graph operation. Skill and subagent instructions reference it by convention, ensuring the agent loads domain context before formalization, derivation, decomposition, review, and other domain-sensitive workflows.
 
 ### Content guidance
 
@@ -62,7 +62,7 @@ The `domainContext` object has two fields:
 
 `skills` is an array of agent skill names. These are Claude Code skills (defined in `.claude/skills/` or provided by plugins) that contain structured instructions and reference material for a specific domain area. When the agent begins work on this module, the listed skills load into context. Skill names follow whatever naming convention the project's Claude Code skills use.
 
-`documents` is an array of filesystem paths, relative to the project root. These are reference documents that the agent should read when working on this module. They might be internal documentation, excerpts from standards, domain model descriptions, or anything else that provides relevant context. ARCI validates paths at load time; missing documents produce warnings, not errors.
+`documents` is an array of filesystem paths, relative to the project root. These are reference documents that the agent should read when working on this module. They might be internal documentation, excerpts from standards, domain model descriptions, or anything else that provides relevant context. Krav validates paths at load time; missing documents produce warnings, not errors.
 
 Both fields are optional. A module with no `domainContext` inherits context from `DOMAIN.md` only.
 
@@ -70,7 +70,7 @@ Both fields are optional. A module with no `domainContext` inherits context from
 
 The context injection chain for a module is:
 
-1. `.arci/DOMAIN.md` is always loaded. Every agent interaction has access to the project's domain reference.
+1. `.krav/DOMAIN.md` is always loaded. Every agent interaction has access to the project's domain reference.
 2. The target module's `domainContext.skills` activate. Skill instructions become available to the agent.
 3. The agent reads the target module's `domainContext.documents` into context, making the document contents available for reference.
 
@@ -85,7 +85,7 @@ The schema adds the `domainContext` property to the JSON-LD context document:
 ```json
 {
   "@context": {
-    "domainContext": "arci:domainContext"
+    "domainContext": "krav:domainContext"
   }
 }
 ```
@@ -111,7 +111,7 @@ During verification, domain context informs what edge cases matter. Test cases f
 ### OSS parsing library
 
 ```markdown
-<!-- .arci/DOMAIN.md -->
+<!-- .krav/DOMAIN.md -->
 # Domain: parser construction
 
 This project builds a parsing library. The domain is formal language
@@ -149,7 +149,7 @@ No module-level domain context needed for a single-domain library.
 ### Healthcare API with payment processing
 
 ```markdown
-<!-- .arci/DOMAIN.md -->
+<!-- .krav/DOMAIN.md -->
 # Domain: healthcare practice management
 
 This system manages patient scheduling, clinical records, billing,
@@ -182,7 +182,7 @@ and insurance claims for small medical practices...
 ### Cross-platform mobile app
 
 ```markdown
-<!-- .arci/DOMAIN.md -->
+<!-- .krav/DOMAIN.md -->
 # Domain: personal finance tracking
 
 This app helps individuals track spending, set budgets, and understand
@@ -207,9 +207,9 @@ Platform skills here aren't strictly "domain" (they're platform knowledge), but 
 
 ## Open questions
 
-**Should `arci init` create a stub `DOMAIN.md`?** Probably yes, with a comment template guiding the developer to fill in the sections. An empty domain document is a missed opportunity; a template-based one prompts the developer to think about domain context from the start.
+**Should `krav init` create a stub `DOMAIN.md`?** Probably yes, with a comment template guiding the developer to fill in the sections. An empty domain document is a missed opportunity; a template-based one prompts the developer to think about domain context from the start.
 
-**Validation of document paths.** When should ARCI validate that paths in `domainContext.documents` actually exist? At graph load time? At context injection time? The fail-open principle suggests validation should warn, not error. A missing document shouldn't block the agent from working.
+**Validation of document paths.** When should Krav validate that paths in `domainContext.documents` actually exist? At graph load time? At context injection time? The fail-open principle suggests validation should warn, not error. A missing document shouldn't block the agent from working.
 
 **Context size management.** Domain documents and skills consume context window. For modules with extensive domain context (multiple skills, large documents), the injected context might crowd out the task-specific context the agent needs. Should there be a size budget? Should the agent summarize rather than inject full documents when context is tight? This is a general context engineering problem, not specific to domain context, but it matters here.
 

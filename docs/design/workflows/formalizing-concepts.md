@@ -34,9 +34,9 @@ The CON-* node transitions to `formalized`. Multiple NEED-* nodes (typically 2-6
 
 ### Skills
 
-The `arci:formalize` skill builds this workflow. Preprocessing loads the crystallized concept's prose content, its module context (the module the concept `informs` and that module's existing needs), and the project's active stakeholders (STK-* nodes). This gives the agent everything it needs to identify expectations without additional graph queries.
+The `krav:formalize` skill builds this workflow. Preprocessing loads the crystallized concept's prose content, its module context (the module the concept `informs` and that module's existing needs), and the project's active stakeholders (STK-* nodes). This gives the agent everything it needs to identify expectations without additional graph queries.
 
-The skill's instructed commands handle creating NEED-* nodes via `arci need create`, linking them back to the source concept and to relevant stakeholders, and transitioning the concept to `formalized` status when the agent has captured all needs. The skill instructions guide the agent through each active stakeholder, using the stakeholder's description and concerns to identify relevant expectations from the concept.
+The skill's instructed commands handle creating NEED-* nodes via `krav need create`, linking them back to the source concept and to relevant stakeholders, and transitioning the concept to `formalized` status when the agent has captured all needs. The skill instructions guide the agent through each active stakeholder, using the stakeholder's description and concerns to identify relevant expectations from the concept.
 
 ### Policies
 
@@ -46,11 +46,11 @@ The `prompt-context` policy fires if the developer mentions specific concepts or
 
 ### Task types
 
-Formalization doesn't create tasks. The workflow produces NEED-* nodes, which become inputs to the `arci:derive` workflow for producing requirements. Tasks only appear later when requirements get decomposed into work.
+Formalization doesn't create tasks. The workflow produces NEED-* nodes, which become inputs to the `krav:derive` workflow for producing requirements. Tasks only appear later when requirements get decomposed into work.
 
 ## Open questions
 
-**How interactive is formalization?** The design describes `arci concept formalize` as an "interactive process." But what does the agent do vs. what does the developer do? Does the agent propose needs and the developer approves/edits? Does the agent ask "what do users need from this?" for each stakeholder class? Does it draft all needs at once and present them for review?
+**How interactive is formalization?** The design describes `krav concept formalize` as an "interactive process." But what does the agent do vs. what does the developer do? Does the agent propose needs and the developer approves/edits? Does the agent ask "what do users need from this?" for each stakeholder class? Does it draft all needs at once and present them for review?
 
 **Which stakeholders are relevant?** Not every concept affects all stakeholders. An internal algorithm concept might only produce needs for contributors and maintainers. Should the agent filter stakeholders based on the concept type and module level, or always walk through every active stakeholder? The stakeholder's `concerns` field provides a signal (if the concept doesn't overlap with any of a stakeholder's concerns, the agent can skip them), but the agent may also discover unexpected relevance.
 

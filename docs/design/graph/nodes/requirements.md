@@ -107,7 +107,7 @@ Good requirements are:
 
 ## Storage model
 
-ARCI stores requirement vertex data in the `requirements` table (`requirements.ndjson` on disk). Edge tables hold all relationships separately.
+Krav stores requirement vertex data in the `requirements` table (`requirements.ndjson` on disk). Edge tables hold all relationships separately.
 
 ```json
 {"id": "REQ-C2H6N4P8", "type": "Requirement", "title": "Parser error latency", "statement": "The parser shall report the first syntax error within 50ms", "status": "approved", "priority": "must", "verificationMethod": "test", "verificationCriteria": "Benchmark suite achieves p99 < 50ms"}
@@ -144,7 +144,7 @@ The `module`, `derivesFrom`, `allocatesTo`, and `verifiedBy` predicates live in 
 
 ## Prose files
 
-Simple requirements are fully expressed by `statement`, `rationale`, and `verificationCriteria`. More complex requirements (interface protocols, security threat context, performance budget derivations) may need a prose file at `.arci/requirements/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
+Simple requirements are fully expressed by `statement`, `rationale`, and `verificationCriteria`. More complex requirements (interface protocols, security threat context, performance budget derivations) may need a prose file at `.krav/requirements/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
 
 ## Priority levels
 
@@ -207,8 +207,8 @@ In `verified_by.ndjson`: `{"src": "REQ-C2H6N4P8", "dst": "TC-D9J5Q1R3"}`
 Parent module requirements allocate to child modules:
 
 ```bash
-arci req allocate REQ-H4J7N2P5 --to MOD-A4F8R2X1 --budget "50ms"
-arci req allocate REQ-H4J7N2P5 --to MOD-B9G3M7K2 --budget "30ms"
+Krav req allocate REQ-H4J7N2P5 --to MOD-A4F8R2X1 --budget "50ms"
+Krav req allocate REQ-H4J7N2P5 --to MOD-B9G3M7K2 --budget "30ms"
 ```
 
 This creates:
@@ -237,42 +237,42 @@ In `allocates_to.ndjson` (with budget metadata):
 When stakeholders validate a need, derivation produces requirements:
 
 ```bash
-arci need derive NEED-B7G3M9K2
+Krav need derive NEED-B7G3M9K2
 ```
 
 Or from a parent requirement (flow-down):
 
 ```bash
-arci req derive REQ-H4J7N2P5 --to MOD-A4F8R2X1
+Krav req derive REQ-H4J7N2P5 --to MOD-A4F8R2X1
 ```
 
 ## CLI commands
 
 ```bash
 # CRUD
-arci req create --module MOD-A4F8R2X1 \
+Krav req create --module MOD-A4F8R2X1 \
   --statement "The parser shall report errors within 50ms" \
   --verification-method test
-arci req show REQ-C2H6N4P8
-arci req list
-arci req list --module MOD-A4F8R2X1 --status approved
-arci req update REQ-C2H6N4P8 --status implemented
-arci req delete REQ-C2H6N4P8
+Krav req show REQ-C2H6N4P8
+Krav req list
+Krav req list --module MOD-A4F8R2X1 --status approved
+Krav req update REQ-C2H6N4P8 --status implemented
+Krav req delete REQ-C2H6N4P8
 
 # Relationships
-arci req link REQ-C2H6N4P8 --derives-from NEED-B7G3M9K2
-arci req link REQ-C2H6N4P8 --verified-by TC-D9J5Q1R3
+Krav req link REQ-C2H6N4P8 --derives-from NEED-B7G3M9K2
+Krav req link REQ-C2H6N4P8 --verified-by TC-D9J5Q1R3
 
 # Flow-down
-arci req derive REQ-C2H6N4P8 --to MOD-L3X3R001
-arci req allocate REQ-H4J7N2P5 --to MOD-A4F8R2X1 --budget "50ms"
+Krav req derive REQ-C2H6N4P8 --to MOD-L3X3R001
+Krav req allocate REQ-H4J7N2P5 --to MOD-A4F8R2X1 --budget "50ms"
 
 # Traceability
-arci req trace REQ-C2H6N4P8  # Show full chain: concept → need → req → verifications
+Krav req trace REQ-C2H6N4P8  # Show full chain: concept → need → req → verifications
 
 # Coverage
-arci req coverage                    # Overall verification coverage
-arci req unverified                  # Requirements without verifications
+Krav req coverage                    # Overall verification coverage
+Krav req unverified                  # Requirements without verifications
 ```
 
 See [REQ](../../cli/commands/req.md) for full CLI documentation.
@@ -320,7 +320,7 @@ Requirements are verifiable design obligations:
 - Verified by tests, inspections, demonstrations, or analyses
 - Flow down from parent modules with budget allocations
 - Progress from draft through approved to verified
-- Stored as rows in the `requirements` vertex table (`.arci/graph/requirements.ndjson` on disk)
+- Stored as rows in the `requirements` vertex table (`.krav/graph/requirements.ndjson` on disk)
 - Implemented following three-layer architecture (core/io/service)
 
 Requirements are the contract between stakeholder expectations (needs) and coding (code). Every requirement should trace back to a need and forward to verifications that provide evidence.

@@ -14,7 +14,7 @@ The categorization also matters for process improvement. If the graph consistent
 
 **Triage phase.** The agent presents open DEF-* nodes with their subject, category, severity, and the context of how the detection task found them (the `detectedBy` task). For each defect, the developer decides:
 
-Confirm: the defect is real. It stays open with `status: confirmed` and the agent generates a remediation TASK-* node via `arci defect generate-task`.
+Confirm: the defect is real. It stays open with `status: confirmed` and the agent generates a remediation TASK-* node via `krav defect generate-task`.
 
 Reject: the defect is not real (false positive, misunderstanding, working as intended). It transitions to `rejected` with a rationale on record.
 
@@ -40,9 +40,9 @@ Defects dispositioned (confirmed, rejected, deferred). Remediation tasks created
 
 ### Skills
 
-The `arci:defect` skill builds this workflow. Preprocessing loads the module's open defects with their subjects, categories, severities, and detection context (which review or verification task found them). This gives the agent a complete triage queue without additional graph queries.
+The `krav:defect` skill builds this workflow. Preprocessing loads the module's open defects with their subjects, categories, severities, and detection context (which review or verification task found them). This gives the agent a complete triage queue without additional graph queries.
 
-The skill's instructed commands handle the full defect lifecycle: confirming, rejecting, and deferring defects via `arci defect disposition`; generating remediation tasks via `arci defect generate-task`; and recording resolution and verification via `arci defect resolve` and `arci defect verify`. The skill instructions walk the agent through presenting each defect in context and helping the developer make disposition decisions.
+The skill's instructed commands handle the full defect lifecycle: confirming, rejecting, and deferring defects via `krav defect disposition`; generating remediation tasks via `krav defect generate-task`; and recording resolution and verification via `krav defect resolve` and `krav defect verify`. The skill instructions walk the agent through presenting each defect in context and helping the developer make disposition decisions.
 
 ### Policies
 
@@ -58,7 +58,7 @@ The defect skill creates `remediate-defect` tasks for confirmed defects. This ta
 
 **Who decides disposition?** Triage involves judgment calls: is this really a bug? Is it severe enough to block? The developer should make these calls, but the agent can help by presenting the defect in context (the requirement it targets, the code it affects, similar past defects). Should the agent propose dispositions, or just present the information?
 
-**Remediation task scope.** `arci defect generate-task` creates a single remediation task per defect. But some defects require multiple steps to fix (design change, code changes, updated tests). Should the agent generate a task DAG for complex fixes, or is one task per defect the right default?
+**Remediation task scope.** `krav defect generate-task` creates a single remediation task per defect. But some defects require multiple steps to fix (design change, code changes, updated tests). Should the agent generate a task DAG for complex fixes, or is one task per defect the right default?
 
 **Defect clustering.** Multiple defects from the same review might have a common root cause. Fixing one might fix the others. The agent should recognize this and link related defects, or at minimum warn when a remediation task addresses a scope that overlaps with other open defects. The graph doesn't currently have a "related to" relationship between defects.
 

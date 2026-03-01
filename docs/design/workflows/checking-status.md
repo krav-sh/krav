@@ -14,7 +14,7 @@ Nothing. The agent runs graph queries and presents results.
 
 The queries depend on the scope of the question. The project-wide query hits everything: module phases, task completion rates, defect status, coverage percentages. A module-scoped query focuses on that subtree. A goal-directed query traverses the dependency graph backward from the release milestone.
 
-Key CLI commands involved: `arci moduletree` (hierarchy overview), `arci taskready` (available work), `arci taskblocking TASK-X` (blockers for a specific goal), `arci reqcoverage` (verification coverage), `arci defect open` (unresolved defects), `arci modulephase` (phase status).
+Key CLI commands involved: `krav moduletree` (hierarchy overview), `krav taskready` (available work), `krav taskblocking TASK-X` (blockers for a specific goal), `krav reqcoverage` (verification coverage), `krav defect open` (unresolved defects), `krav modulephase` (phase status).
 
 ## Trigger patterns
 
@@ -32,9 +32,9 @@ Unchanged.
 
 ### Skills
 
-The `arci:status` skill builds this workflow. Preprocessing loads the graph summary via `arci moduletree` and other read-only queries, giving the agent a precomputed overview of module phases, task progress, defect counts, verification coverage, and suspect links pending review. The skill body is shorter than graph-building skills: it tells the agent how to synthesize raw graph data into a narrative status report rather than guiding a complex transformation.
+The `krav:status` skill builds this workflow. Preprocessing loads the graph summary via `krav moduletree` and other read-only queries, giving the agent a precomputed overview of module phases, task progress, defect counts, verification coverage, and suspect links pending review. The skill body is shorter than graph-building skills: it tells the agent how to synthesize raw graph data into a narrative status report rather than guiding a complex transformation.
 
-The skill's instructed commands let the agent drill into specific areas during the conversation: `arci taskready` for available work, `arci defect open` for unresolved problems, `arci reqcoverage` for verification gaps. These on-demand queries complement the preprocessed overview when the developer asks follow-up questions about specific modules or blockers.
+The skill's instructed commands let the agent drill into specific areas during the conversation: `krav taskready` for available work, `krav defect open` for unresolved problems, `krav reqcoverage` for verification gaps. These on-demand queries complement the preprocessed overview when the developer asks follow-up questions about specific modules or blockers.
 
 ### Policies
 
@@ -54,4 +54,4 @@ This workflow doesn't create or execute tasks. It reports on them.
 
 **Status over time.** "How have things changed since last week?" requires comparing current state to historical state. Baselines provide point-in-time snapshots, but they're created intentionally, not continuously. Is there a lightweight mechanism for tracking progress over time beyond baseline diffs?
 
-**Proactive status.** Should ARCI surface status information without the developer asking? A SessionStart hook could inject "since your last session: 2 tasks completed, 1 defect opened, parser advanced to coding" into the agent's context. This keeps the developer oriented between sessions, but it consumes context window for information the developer might not care about.
+**Proactive status.** Should Krav surface status information without the developer asking? A SessionStart hook could inject "since your last session: 2 tasks completed, 1 defect opened, parser advanced to coding" into the agent's context. This keeps the developer oriented between sessions, but it consumes context window for information the developer might not care about.

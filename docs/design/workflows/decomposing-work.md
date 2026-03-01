@@ -32,7 +32,7 @@ Multiple TASK-* nodes forming a DAG, with `dependsOn` edges, phase labels, and m
 
 ### Skills
 
-The `arci:decompose` skill builds this workflow. Preprocessing is among the heaviest of any skill: it loads the module's requirements, existing tasks (so the agent doesn't create duplicates or ignore completed work), the module's current phase, and available decomposition templates. The templates provide reusable patterns for common requirement shapes, so the agent doesn't reinvent the same task chains every time.
+The `krav:decompose` skill builds this workflow. Preprocessing is among the heaviest of any skill: it loads the module's requirements, existing tasks (so the agent doesn't create duplicates or ignore completed work), the module's current phase, and available decomposition templates. The templates provide reusable patterns for common requirement shapes, so the agent doesn't reinvent the same task chains every time.
 
 The skill's instructed commands create TASK-* nodes, set `dependsOn` edges between them, assign `taskType` and `processPhase` labels, and generate prose content files for complex tasks. The skill instructions encode the logic for selecting task types based on requirement characteristics: a requirement with `verificationMethod: test` produces `implement-tests` and `execute-tests` tasks, a requirement about API behavior produces `design-api` then `implement-feature`, and so on.
 

@@ -1,6 +1,6 @@
 # Recipes and examples
 
-This document collects practical examples of ARCI policies for common use cases. Each recipe includes complete policy definitions, explanations of the approach, and notes on customization.
+This document collects practical examples of Krav policies for common use cases. Each recipe includes complete policy definitions, explanations of the approach, and notes on customization.
 
 ## Safety policies
 
@@ -938,7 +938,7 @@ conditions:
 rules:
   - name: notify-slack
     effects:
-      # Requires arci-slack native extension
+      # Requires krav-slack native extension
       - type: slack:send_message
         channel: "#security-alerts"
         message: "Sensitive file accessed: {{ file_path }}"
@@ -1082,7 +1082,7 @@ rules:
 
 ## Code pattern detection with GritQL
 
-GritQL enables structural code matching beyond regular expression patterns. Unlike regular expressions which operate on text, GritQL understands syntax trees and can match code patterns regardless of formatting or whitespace. ARCI integrates GritQL through CEL functions available in conditions and validation expressions.
+GritQL enables structural code matching beyond regular expression patterns. Unlike regular expressions which operate on text, GritQL understands syntax trees and can match code patterns regardless of formatting or whitespace. Krav integrates GritQL through CEL functions available in conditions and validation expressions.
 
 ### Detect unsafe eval usage
 
@@ -1393,7 +1393,7 @@ version = "1.0.0"
 description = "Standard policies for My Company projects"
 type = "policies"
 
-[extension.arci]
+[extension.krav]
 min_version = "0.1.0"
 ```
 
@@ -1452,7 +1452,7 @@ version = "1.0.0"
 description = "Custom policies with helper macros"
 type = "full"
 
-[extension.arci]
+[extension.krav]
 min_version = "0.1.0"
 
 [extension.scripts]
@@ -1531,16 +1531,16 @@ linear-extension/
 ```toml
 # linear-extension/extension.toml
 [extension]
-name = "arci-linear"
+name = "krav-linear"
 version = "1.0.0"
-description = "Linear integration for arci"
+description = "Linear integration for krav"
 type = "native"
 
-[extension.arci]
+[extension.krav]
 min_version = "0.1.0"
 
 [extension.native]
-binary = "arci-ext-linear"
+binary = "krav-ext-linear"
 ```
 
 The `main.go` file satisfies the extension interface by registering a custom effect handler for the `linear:create_issue` effect type. The handler accepts parameters (such as `title`, `team_id`, and `api_key`), constructs a GraphQL mutation, and sends it to the Linear API. The extension declares its name (`linear`) and the list of effect handlers it provides.
@@ -1581,7 +1581,7 @@ conditions:
 rules:
   - name: create-linear-issue
     effects:
-      # Requires arci-linear native extension
+      # Requires krav-linear native extension
       - type: linear:create_issue
         api_key: '{{ params.linearApiKey }}'
         title: 'AI Session: {{ session_id }}'
