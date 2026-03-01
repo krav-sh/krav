@@ -32,6 +32,15 @@
       "Bash(just watch-plantuml:*)"
     ]
   },
+  "extraKnownMarketplaces": {
+    "arci": {
+      "source": {
+        "source": "directory",
+        "path": "."
+      },
+      "installLocation": "."
+    }
+  },
   "enabledPlugins": {
     "arci@arci": true
   },
