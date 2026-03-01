@@ -1,0 +1,406 @@
+# Policies can declare mutations (transformations) to apply.
+# They define mutations with names and expressions.
+# Whether mutations apply is controlled by mutationsEnabled in PolicyBindings.
+#
+# This enables:
+# - Test mutations in audit mode before enabling
+# - Different mutation behavior per environment
+# - Gradual rollout of transformations
+
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: python-standards
+  description: Inject Python coding standards and add file headers
+  owner: platform-team@company.com
+  version: 1.4.0
+  labels:
+    team: platform
+    language: python
+
+spec:
+  failurePolicy: allow
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Write
+      - Edit
+
+    paths:
+      include:
+        - "**/*.py"
+      exclude:
+        - "**/tests/**"
+        - "**/*_test.py"
+        - "**/test_*.py"
+
+  matchConditions:
+    - name: has-content
+      expression: 'has(tool_input.content) && tool_input.content != ""'
+
+  variables:
+    - key: file_path
+      expression: tool_input.file_path
+    - key: content
+      expression: tool_input.content
+    - key: is_new_file
+      expression: "!$file_exists(file_path)"
+    - key: has_header
+      expression: 'content.startsWith("#")'
+    - key: module_name
+      expression: 'file_path.split("/").last().replace(".py", "")'
+    - key: current_year
+      expression: "string($now().year)"
+
+  mutations:
+    - name: python-standards
+      expression: |
+        object.with({
+          context: object.context + "\n\nWhen writing Python code for this project:\n\n- Use Python 3.11+ features\n- Type hints required for all function signatures\n- Google-style docstrings for public functions\n- Use pathlib, not os.path\n- Prefer dataclasses or Pydantic\n- Max line length: 100 characters\n\nThe project uses pytest, ruff, and mypy."
+        })
+
+    - name: add-file-header
+      expression: |
+        object.with({
+          tool_input: object.tool_input.with({
+            content: "# Copyright " + current_year + " Company Name\n# SPDX-License-Identifier: MIT\n\n\"\"\"" + module_name + " module.\"\"\"\n\n" + object.tool_input.content
+          })
+        })
+
+  sideEffects:
+    - effect:
+        type: setState
+        scope: session
+        key: files_modified_count
+        value: '{{ $session_get("files_modified_count", 0) + 1 }}'
+
+  auditAnnotations:
+    - key: policy-version
+      valueExpression: '"1.4.0"'
+    - key: file-path
+      valueExpression: file_path
+
+---
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: typescript-standards
+  description: Inject TypeScript coding standards and add file headers
+  owner: platform-team@company.com
+  version: 1.4.0
+  labels:
+    team: platform
+    language: typescript
+
+spec:
+  failurePolicy: allow
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Write
+      - Edit
+
+    paths:
+      include:
+        - "**/*.ts"
+        - "**/*.tsx"
+      exclude:
+        - "**/*.test.ts"
+        - "**/*.spec.ts"
+        - "**/tests/**"
+
+  matchConditions:
+    - name: has-content
+      expression: 'has(tool_input.content) && tool_input.content != ""'
+
+  variables:
+    - key: file_path
+      expression: tool_input.file_path
+    - key: content
+      expression: tool_input.content
+    - key: is_new_file
+      expression: "!$file_exists(file_path)"
+    - key: has_header
+      expression: 'content.startsWith("//")'
+    - key: current_year
+      expression: "string($now().year)"
+
+  mutations:
+    - name: typescript-standards
+      expression: |
+        object.with({
+          context: object.context + "\n\nWhen writing TypeScript code for this project:\n\n- Use strict TypeScript configuration\n- Prefer interfaces over type aliases for objects\n- Use readonly where mutation not needed\n- Avoid any; use unknown for truly unknown types\n- Max line length: 100 characters\n- Use named exports over default exports"
+        })
+
+    - name: add-file-header
+      expression: |
+        object.with({
+          tool_input: object.tool_input.with({
+            content: "// Copyright " + current_year + " Company Name\n// SPDX-License-Identifier: MIT\n\n" + object.tool_input.content
+          })
+        })
+
+---
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: normalize-paths
+  description: Convert relative paths to absolute paths
+
+spec:
+  failurePolicy: allow
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Write
+      - Edit
+      - Read
+
+  matchConditions:
+    - name: has-relative-path
+      expression: |
+        has(tool_input.file_path) &&
+        tool_input.file_path != "" &&
+        !tool_input.file_path.startsWith("/")
+
+  variables:
+    - key: file_path
+      expression: tool_input.file_path
+    - key: absolute_path
+      expression: 'cwd + "/" + file_path'
+
+  mutations:
+    - name: normalize-to-absolute
+      expression: |
+        object.with({
+          tool_input: object.tool_input.with({
+            file_path: absolute_path
+          })
+        })
+
+---
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: git-context
+  description: Inject git repository context
+
+spec:
+  failurePolicy: allow
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Write
+      - Edit
+      - Bash
+
+  matchConditions:
+    - name: in-git-repo
+      expression: "$git_is_repo()"
+
+  variables:
+    - key: current_branch
+      expression: "$current_branch()"
+    - key: is_dirty
+      expression: "$git_is_dirty()"
+    - key: staged_files
+      expression: "$git_staged_files()"
+    - key: staged_list
+      expression: 'size(staged_files) > 0 ? "\n- Staged: " + staged_files.join(", ") : ""'
+
+  mutations:
+    - name: git-context-injection
+      expression: |
+        object.with({
+          context: object.context + "\n\nGit context:\n- Branch: " + current_branch + "\n- Working tree: " + (is_dirty ? "dirty" : "clean") + staged_list
+        })
+
+---
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: convert-console-to-logger
+  description: Convert console.log to structured logger
+
+spec:
+  failurePolicy: allow
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Write
+      - Edit
+
+    paths:
+      include:
+        - "src/**/*.ts"
+        - "src/**/*.js"
+        - "lib/**/*.ts"
+        - "lib/**/*.js"
+      exclude:
+        - "**/*.test.*"
+        - "**/*.spec.*"
+
+  matchConditions:
+    - name: has-console-log
+      expression: |
+        has(tool_input.content) &&
+        $gritql_matches(tool_input.content, '`console.log($args)`', tool_input.file_path)
+
+  variables:
+    - key: file_path
+      expression: tool_input.file_path
+
+  mutations:
+    - name: convert-console-to-logger
+      gritql:
+        pattern: "`console.log($args)` => `logger.debug($args)`"
+        language: typescript
+
+    - name: add-logger-import
+      gritql:
+        pattern: |
+          file($body) where {
+            $body <: contains `logger.`,
+            $body <: not contains `import { logger }`,
+          } => `import { logger } from "@/lib/logger";\n\n$body`
+        language: typescript
+
+---
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: sanitize-shell-secrets
+  description: Replace inline secrets with environment variable references
+
+spec:
+  failurePolicy: allow
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Bash
+
+  matchConditions:
+    - name: has-inline-secrets
+      expression: |
+        has(tool_input.command) &&
+        tool_input.command.matches("(?i)(password|secret|token|api_key)\\s*=\\s*['\"][^'\"]+['\"]")
+
+  variables:
+    - key: command
+      expression: tool_input.command
+
+  mutations:
+    - name: redact-inline-secrets
+      expression: |
+        object.with({
+          tool_input: object.tool_input.with({
+            command: command.replaceAll("(?i)(password|secret|token|api_key)\\s*=\\s*['\"][^'\"]+['\"]", "$1=${$1}")
+          })
+        })
+
+---
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: ban-var-keyword
+  description: Convert var declarations to const
+
+spec:
+  failurePolicy: allow
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Write
+      - Edit
+
+    paths:
+      include:
+        - "**/*.js"
+        - "**/*.ts"
+        - "**/*.jsx"
+        - "**/*.tsx"
+      exclude:
+        - "**/vendor/**"
+        - "**/node_modules/**"
+
+  matchConditions:
+    - name: has-var-keyword
+      expression: |
+        has(tool_input.content) &&
+        $gritql_matches(tool_input.content, '`var $name = $value`', tool_input.file_path)
+
+  variables:
+    - key: file_path
+      expression: tool_input.file_path
+
+  mutations:
+    - name: convert-var-to-const
+      gritql:
+        pattern: "`var $name = $value` => `const $name = $value`"
+        language: typescript
+
+---
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: session-context
+  description: Inject session activity context
+
+spec:
+  failurePolicy: allow
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Write
+      - Edit
+      - MultiEdit
+
+  matchConditions:
+    - name: has-activity
+      expression: '$session_get("files_modified_count", 0) > 5'
+
+  variables:
+    - key: files_modified_count
+      expression: '$session_get("files_modified_count", 0)'
+    - key: current_branch
+      expression: "$current_branch()"
+    - key: commit_suggestion
+      expression: 'files_modified_count > 10 ? "\n\nConsider committing changes in logical chunks." : ""'
+
+  mutations:
+    - name: session-context
+      expression: |
+        object.with({
+          context: object.context + "\n\nSession activity:\n- Files modified: " + string(files_modified_count) + "\n- Branch: " + current_branch + commit_suggestion
+        })
+
+  sideEffects:
+    - effect:
+        type: setState
+        scope: session
+        key: files_modified_count
+        value: "{{ files_modified_count + 1 }}"

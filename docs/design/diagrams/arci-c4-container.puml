@@ -1,0 +1,71 @@
+@startuml arci-c4-container
+!include <C4/C4_Container>
+
+title Container diagram for arci
+
+Person(developer, "Developer", "Configures policies, manages graph,\nand reviews agent work")
+
+System_Ext(claude_code, "Claude Code", "AI coding assistant.\nSessions, subagents, agent teams.")
+System_Ext(git, "Git", "Local repo: branch context,\ncommit history, working tree")
+System_Ext(github, "GitHub", "Remote repo, PRs, Discussions,\nActions CI/CD")
+System_Ext(param_providers, "Parameter providers", "HTTP APIs, config files, env vars\nfor dynamic policy parameters")
+
+System_Boundary(arci, "arci") {
+
+    Container(cli, "arci CLI", "", "Unified entry point for hook\nevaluation, graph management,\ndeveloper commands, and\ndaemon/dashboard/MCP control.")
+
+    Container(daemon, "Daemon", "", "Long-running process.\nCaches compiled policies and\nmaterialized graph. REST API,\nWebSocket events, config hot-reload.")
+
+    Container(dashboard, "Dashboard", "", "Web diagnostics, policy testing,\nlive event streaming, graph\nbrowser, coverage reports.")
+
+    Container(mcp, "MCP Server", "stdio", "Model Context Protocol server.\nExposes policy diagnostics and\ngraph queries to Claude Code.")
+
+    ContainerDb(state_store, "State Store", "Embedded DB", "Session-scoped and project-scoped\npersistent state for hook\ncross-invocation tracking.")
+
+    ContainerDb(graph_db, "Knowledge Graph", "graph.jsonlt", "JSON-LD compact form.\nAll typed nodes (CON, MOD, NEED,\nREQ, TC, TASK, DEF, BSL) with\nembedded relationships.")
+
+    ContainerDb(prose_files, "Prose Files", ".arci/ Markdown", "Concept explorations, module docs,\ntask instructions, defect details.\nNo frontmatter.")
+
+    ContainerDb(policy_config, "Policies + Settings", "", "Hook policies, arci settings.\nUser, project, local layers.\nConfig cascade with precedence.")
+
+    ContainerDb(harness_config, "Agent Harness", "Markdown / YAML / JSON", "CLAUDE.md, hooks.json, agent skills,\ntask/decomposition templates.\nRead by Claude Code at session start.")
+}
+
+' === Developer relationships ===
+Rel(developer, claude_code, "Prompts AI, reviews work", "Terminal")
+Rel(developer, cli, "Manages policies and graph,\ninspects state", "Terminal")
+Rel(developer, dashboard, "Views diagnostics,\ntests policies", "HTTPS")
+Rel(developer, policy_config, "Authors policies", "Editor")
+Rel(developer, harness_config, "Authors skills\nand templates", "Editor")
+Rel(developer, git, "Commits, branches", "Git CLI")
+Rel(developer, github, "PRs, discussions", "Git / GitHub")
+
+' === Claude Code relationships ===
+Rel(claude_code, cli, "Hook events (PreToolUse, etc.)\nGraph queries (show, status)", "stdin/stdout JSON, CLI")
+Rel(claude_code, mcp, "Diagnostics, policy status,\ngraph queries", "MCP stdio")
+Rel(claude_code, harness_config, "Reads skills, templates,\nCLAUDE.md at session start", "Filesystem")
+Rel(claude_code, git, "Commits, branches", "Git CLI")
+Rel(claude_code, github, "Pushes, creates PRs", "Git / GitHub API")
+
+' === Runtime relationships ===
+Rel(cli, daemon, "Delegates when daemon.enabled", "HTTP")
+Rel(cli, state_store, "Reads/persists hook state", "Embedded DB")
+Rel(cli, graph_db, "Loads/persists graph", "Filesystem")
+Rel(cli, prose_files, "Reads/writes prose", "Filesystem")
+Rel(cli, policy_config, "Loads policies", "Filesystem")
+Rel(cli, harness_config, "Loads templates\nfor instantiation", "Filesystem")
+Rel(cli, git, "Branch context", "Git CLI")
+Rel(cli, param_providers, "Dynamic parameters", "HTTPS / File")
+
+Rel(daemon, state_store, "Pooled connections", "Embedded DB")
+Rel(daemon, graph_db, "Cached graph, hot-reload", "Filesystem")
+Rel(daemon, policy_config, "Watches for hot-reload", "Filesystem / fsnotify")
+Rel(daemon, param_providers, "Cached parameters", "HTTPS / File")
+Rel(daemon, git, "Branch context", "Git CLI")
+
+Rel(mcp, daemon, "API requests", "HTTP")
+Rel(dashboard, daemon, "Cached state, live events", "HTTP / WebSocket")
+
+SHOW_LEGEND()
+
+@enduml

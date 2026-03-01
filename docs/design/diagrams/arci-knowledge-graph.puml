@@ -1,0 +1,171 @@
+@startuml arci-knowledge-graph
+
+skinparam {
+    ClassFontSize 13
+    ClassAttributeFontSize 11
+    ArrowFontSize 11
+    NoteFontSize 11
+    ClassStereotypeFontSize 10
+    Padding 4
+    RoundCorner 8
+    Shadowing false
+    DefaultFontName "Helvetica"
+}
+
+skinparam class {
+    BackgroundColor<<exploration>> #E8F0FE
+    BorderColor<<exploration>> #4285F4
+    HeaderBackgroundColor<<exploration>> #C6DAFC
+
+    BackgroundColor<<container>> #E6F4EA
+    BorderColor<<container>> #34A853
+    HeaderBackgroundColor<<container>> #CEEAD6
+
+    BackgroundColor<<stakeholder>> #FFF3E0
+    BorderColor<<stakeholder>> #F9AB00
+    HeaderBackgroundColor<<stakeholder>> #FEEFC3
+
+    BackgroundColor<<obligation>> #FCE4EC
+    BorderColor<<obligation>> #EA4335
+    HeaderBackgroundColor<<obligation>> #FADBD8
+
+    BackgroundColor<<evidence>> #F3E5F5
+    BorderColor<<evidence>> #9C27B0
+    HeaderBackgroundColor<<evidence>> #E1BEE7
+
+    BackgroundColor<<work>> #E0F2F1
+    BorderColor<<work>> #00897B
+    HeaderBackgroundColor<<work>> #B2DFDB
+
+    BackgroundColor<<quality>> #ECEFF1
+    BorderColor<<quality>> #607D8B
+    HeaderBackgroundColor<<quality>> #CFD8DC
+}
+
+title arci knowledge graph domain model
+
+class "CON-*\nConcept" as CON <<exploration>> {
+    status: draft | exploring | crystallized
+    \t| formalized | superseded
+    --
+    Exploration and design thinking.
+    Captures ideas, options analysis,
+    and crystallized decisions.
+}
+
+class "MOD-*\nModule" as MOD <<container>> {
+    phase: architecture | design | implementation
+    \t| integration | verification | validation
+    status: active | deprecated | archived
+    --
+    Architectural container.
+    Owns needs, requirements, and tasks.
+    Forms hierarchy via childOf.
+}
+
+class "NEED-*\nNeed" as NED <<stakeholder>> {
+    priority: must | should | could | wont
+    status: draft | proposed | validated
+    \t| satisfied | obsolete
+    --
+    Stakeholder expectation.
+    Validated (stakeholder confirms),
+    not verified.
+}
+
+class "REQ-*\nRequirement" as REQ <<obligation>> {
+    priority: must | should | could | wont
+    status: draft | proposed | approved
+    \t| implemented | verified | obsolete
+    verification_method: test | inspection
+    \t| demonstration | analysis
+    --
+    Design obligation.
+    Verified (evidence proves),
+    not validated.
+}
+
+class "TC-*\nTest Case" as TC <<evidence>> {
+    method: test | inspection | demonstration | analysis
+    level: unit | integration | system | acceptance
+    status: draft | specified | implemented
+    \t| executable | obsolete
+    currentResult: pass | fail | skip | unknown
+    --
+    Test specification for verifying
+    requirements are satisfied.
+}
+
+class "TASK-*\nTask" as TSK <<work>> {
+    process_phase: architecture | design | ...
+    task_type: exploration | code-review | ...
+    status: pending | ready | in_progress
+    \t| blocked | complete | cancelled
+    deliverables: [{kind, type, path, ...}]
+    --
+    Atomic work unit in DAG.
+    Executed in Claude Code sessions.
+}
+
+class "DEF-*\nDefect" as DEF <<quality>> {
+    category: missing | incorrect | ambiguous | ...
+    severity: critical | major | minor | trivial
+    status: open | confirmed | resolved
+    \t| verified | closed | rejected | deferred
+    --
+    Identified problem requiring action.
+    Critical/major defects block
+    phase advancement.
+}
+
+' === FORMAL TRANSFORMATION CHAIN ===
+
+CON -[#4285F4,bold]-> NED : **formalize**
+NED -[#F9AB00,bold]-> REQ : **derive**
+REQ -[#EA4335,bold]-> TSK : **decompose**
+
+' === STRUCTURAL RELATIONSHIPS ===
+
+MOD -[#34A853]--> MOD : childOf
+
+MOD <-[#34A853,dashed]- NED : module
+MOD <-[#34A853,dashed]- REQ : module
+MOD <-[#34A853,dashed]- TSK : module
+MOD <-[#34A853,dashed]- TC : module
+MOD <-[#34A853,dashed]- DEF : module
+
+' === TRACEABILITY RELATIONSHIPS ===
+
+CON .[#4285F4].> MOD : informs
+
+REQ -[#EA4335]-> MOD : allocatesTo
+
+NED <.[#F9AB00].. REQ : derivesFrom
+
+TSK -[#00897B]-> TSK : dependsOn
+
+REQ <-[#9C27B0]-- TC : verifies
+REQ .[#9C27B0].> TC : verifiedBy
+
+DEF -[#607D8B]-> CON : subject
+DEF -[#607D8B]-> MOD : subject
+DEF -[#607D8B]-> NED : subject
+DEF -[#607D8B]-> REQ : subject
+
+DEF -[#607D8B,bold]-> TSK : generates
+
+' === LEGEND ===
+
+legend bottom left
+  |= Arrow style |= Meaning |
+  | **Bold colored** | Formal transformation: Concept > Need > Requirement > Task > Deliverable |
+  | Solid colored | Structural (childOf, allocatesTo, verifies, generates) |
+  | Dashed green | Ownership: all nodes belong to a Module via //module// |
+  | Dotted | Inverse/traceability (derivesFrom, verifiedBy) |
+  | Gray solid | Defect //subject// — any node type |
+
+  All nodes stored in **graph.jsonlt** (JSON-LD compact form).
+  Prose in **.arci/** markdown (no frontmatter).
+end legend
+
+@enduml

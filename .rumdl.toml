@@ -4,7 +4,7 @@ disable = [
   "MD033", # Inline HTML
 ]
 respect_gitignore = true
-exclude = [".git", ".vale", "tmp"]
+exclude = [".git", ".vale", ".claude/skills/*/SKILL.md", "tmp"]
 
 [MD003]
 style = "atx"

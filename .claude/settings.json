@@ -26,7 +26,36 @@
       "Bash(just vale-sync:*)",
       "Bash(just generate-changelog:*)",
       "Bash(just preview-changelog:*)",
-      "Bash(just generate-release-notes:*)"
+      "Bash(just generate-release-notes:*)",
+      "Bash(just lint-plantuml:*)",
+      "Bash(just export-plantuml:*)",
+      "Bash(just watch-plantuml:*)"
+    ]
+  },
+  "enabledPlugins": {
+    "arci@arci": true
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/format-lint-md.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/vale-stop.sh"
+          }
+        ]
+      }
     ]
   }
 }

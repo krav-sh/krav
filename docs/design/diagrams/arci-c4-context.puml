@@ -1,0 +1,36 @@
+@startuml arci-c4-context
+!include <C4/C4_Context>
+
+title System context diagram for arci
+
+Person(developer, "Developer", "Uses Claude Code for AI-assisted development.\nConfigures policies, manages graph,\nand reviews agent work.")
+
+System(arci, "arci", "Policy-driven hooks and knowledge graph\nframework for Claude Code. Combines INCOSE-inspired\nrequirements engineering with agentic task execution\nunder policy governance.")
+
+System_Ext(claude_code, "Claude Code", "Anthropic's AI coding assistant.\nExecutes agent sessions, subagents,\nand agent teams.")
+
+System_Ext(git, "Git", "Local repository providing branch context,\ncommit history, and working tree.\narci graph and policies are version-controlled.")
+
+System_Ext(github, "GitHub", "Remote repository, pull requests,\nDiscussions, Actions CI/CD.\nOSS contributor intake pipeline.")
+
+System_Ext(param_providers, "Parameter providers", "HTTP APIs, config files, environment\nvariables supplying dynamic policy\nparameters at evaluation time.")
+
+' Developer relationships
+Rel(developer, claude_code, "Prompts AI assistant,\nreviews agent work", "Terminal")
+Rel(developer, arci, "Manages policies, manages graph,\ninspects state, runs diagnostics", "CLI / Dashboard")
+Rel(developer, git, "Commits, branches,\nreviews changes", "Git CLI")
+Rel(developer, github, "Reviews PRs, manages\nrepository and discussions", "Git / GitHub")
+
+' Claude Code relationships
+Rel(claude_code, arci, "Hook events for policy evaluation,\ngraph queries for task context,\nskill-driven workflows", "stdin/stdout, CLI, MCP")
+Rel(claude_code, git, "Commits, branches,\nmanages version control", "Git CLI")
+Rel(claude_code, github, "Pushes changes, creates PRs,\nreads issues", "Git / GitHub API")
+
+' arci relationships
+Rel(arci, git, "Reads branch context,\nstores graph and policies\nin version control", "Git CLI / Filesystem")
+Rel(arci, github, "OSS intake via Actions,\nreads repo context", "GitHub API / Actions")
+Rel(arci, param_providers, "Fetches dynamic\npolicy parameters", "HTTPS / File / CLI")
+
+SHOW_LEGEND()
+
+@enduml

@@ -4,6 +4,8 @@ coverage.out
 coverage.html
 
 # Local development
+.claude/settings.local.json
+.claude/worktrees/
 tmp/
 .env
 
@@ -19,3 +21,10 @@ node_modules/
 !.vale/config/vocabularies/
 .vale/config/vocabularies/*
 !.vale/config/vocabularies/arci/
+
+# PlantUML exports (regenerated from .puml source)
+docs/diagrams/png/
+docs/diagrams/svg/
+
+# Snyk Security Extension - AI Rules (auto-generated)
+.github/instructions/snyk_rules.instructions.md

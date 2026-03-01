@@ -1,0 +1,3 @@
+# Verify pattern annotations against test cases
+
+Inspected all three test cases against completed annotations. TC-9VM3MXRS: all 22 SKILL.md files have stage-classification frontmatter (20 temporary with replacement-stage/replacement, 2 permanent with rationale). TC-M0J1BFDC: all 45 CLAUDE.md rules classified in per-section tables (24 temporary with stage and mechanism, 21 permanent). TC-XFDXYFJN: 'Before starting work' jq pattern annotated Temporary/Stage 1, 'When finishing work' conventions annotated, 19 skill files with jq patterns have graph-editing convention tables, 3 without patterns correctly excluded. All checklist items pass.

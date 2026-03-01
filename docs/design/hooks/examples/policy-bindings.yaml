@@ -1,0 +1,335 @@
+# PolicyBindings connect policies to params and control enforcement.
+#
+# Bindings have:
+# - policyRef: which policy (name only, kind is always Policy)
+# - paramRef/paramProviderRef: where params come from
+# - matchResources: structural scoping (narrows policy's matchConstraints)
+# - actions: enforcement level (deny/warn/audit)
+# - mutationsEnabled: whether to apply mutations from the policy
+#
+# Bindings do NOT have matchConditions. All conditional logic lives in the policy.
+# Use different params to vary behavior, not conditions on bindings.
+
+---
+# Simple binding - no additional scoping
+
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: enterprise-security-global
+
+spec:
+  managed: true
+
+  policyRef:
+    name: enterprise-security-baseline
+
+  paramRef:
+    name: enterprise-security-params
+
+  # No matchResources - applies everywhere policy's constraints match
+
+  actions: [deny]
+
+---
+# Binding that narrows to specific paths
+
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: typescript-quality-src
+
+spec:
+  policyRef:
+    name: typescript-quality
+
+  # Narrow to src/ (policy already constrains to *.ts/*.tsx)
+  matchResources:
+    paths:
+      include:
+        - "src/**"
+      exclude:
+        - "src/generated/**"
+
+  actions: [deny]
+
+---
+# Same policy, different enforcement for tests
+
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: typescript-quality-tests
+
+spec:
+  policyRef:
+    name: typescript-quality
+
+  matchResources:
+    paths:
+      include:
+        - "**/*.test.ts"
+        - "**/*.spec.ts"
+
+  # Just warn in tests, don't block
+  actions: [warn]
+
+---
+# Branch-specific binding
+
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: git-workflow-protected
+
+spec:
+  policyRef:
+    name: git-workflow
+
+  paramRef:
+    name: strict-git-params
+
+  # Only on protected branches
+  matchResources:
+    branches:
+      include:
+        - main
+        - master
+        - "release/*"
+
+  actions: [deny]
+
+---
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: git-workflow-feature
+
+spec:
+  policyRef:
+    name: git-workflow
+
+  paramRef:
+    name: relaxed-git-params
+
+  matchResources:
+    branches:
+      include:
+        - "feature/*"
+        - "fix/*"
+
+  actions: [warn]
+
+---
+# arci specs-driven binding
+# Different params provide different context, policy's matchConditions react
+
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: workflow-restrictions-specs
+
+spec:
+  policyRef:
+    name: workflow-phase-restrictions
+
+  # arci specs provides workflowPhase, userRole, etc.
+  paramProviderRef:
+    name: arci-specs
+
+  # No matchResources - let specs context control via policy's matchConditions
+
+  actions: [deny]
+
+---
+# Gradual rollout - audit mode first
+
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: typescript-quality-rollout
+
+spec:
+  policyRef:
+    name: typescript-quality
+
+  # Start with audit to evaluate impact
+  actions: [audit]
+
+  # Can upgrade to [warn] then [deny]
+
+---
+# Mutating policy binding with mutations enabled
+
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: python-standards-apply
+
+spec:
+  policyRef:
+    name: python-standards
+
+  actions: [warn]
+  mutationsEnabled: true
+
+---
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: typescript-standards-apply
+
+spec:
+  policyRef:
+    name: typescript-standards
+
+  actions: [warn]
+  mutationsEnabled: true
+
+---
+# Mutation in audit mode first (mutations disabled)
+
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: console-to-logger-audit
+
+spec:
+  policyRef:
+    name: convert-console-to-logger
+
+  # Just log what would be mutated
+  actions: [audit]
+  mutationsEnabled: false
+
+---
+# Different params for different contexts
+# Policy's matchConditions use params to decide applicability
+
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: protected-branch-main
+
+spec:
+  policyRef:
+    name: protected-branch-restrictions
+
+  paramRef:
+    name: main-branch-params # strictMode: true, protectedBranches: ["main"]
+
+  actions: [deny]
+
+---
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: protected-branch-release
+
+spec:
+  policyRef:
+    name: protected-branch-restrictions
+
+  paramRef:
+    name: release-branch-params # strictMode: true, protectedBranches: ["release/*"]
+
+  actions: [deny]
+
+---
+# Disabled binding
+
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: typescript-quality-disabled
+
+spec:
+  policyRef:
+    name: typescript-quality
+
+  # Empty actions = disabled
+  actions: []
+
+---
+# Binding with fallback params
+
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: workflow-with-fallback
+
+spec:
+  policyRef:
+    name: workflow-phase-restrictions
+
+  paramProviderRef:
+    name: arci-specs
+
+  # If specs subsystem unavailable, use static params
+  fallbackParamRef:
+    name: default-workflow-params
+
+  actions: [warn]
+
+---
+# User role binding via different params
+# arci specs provides userRole, policy's matchConditions check it
+
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: security-with-roles
+
+spec:
+  policyRef:
+    name: role-aware-security # Has matchCondition: params.userRole != "senior"
+
+  paramProviderRef:
+    name: arci-specs
+
+  actions: [deny]
+
+---
+# Combining structural scope with param-driven conditions
+
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: strict-mode-src
+
+spec:
+  policyRef:
+    name: strict-mode-checks # Has matchCondition: params.strictMode
+
+  paramRef:
+    name: strict-enabled-params # strictMode: true
+
+  # Structural narrowing
+  matchResources:
+    paths:
+      include:
+        - "src/**"
+
+  actions: [deny]
+
+---
+apiVersion: arci.dev/v1
+kind: PolicyBinding
+metadata:
+  name: strict-mode-experiments
+
+spec:
+  policyRef:
+    name: strict-mode-checks
+
+  paramRef:
+    name: strict-disabled-params # strictMode: false
+
+  matchResources:
+    paths:
+      include:
+        - "experiments/**"
+
+  # Policy won't match because matchConditions fail (strictMode: false)
+  # But if we want to be explicit:
+  actions: [audit]

@@ -1,0 +1,204 @@
+# ParamProviders define how policies receive dynamic parameters at evaluation time.
+# This enables external systems like arci's specs subsystem to inject context into policy evaluation
+# without arci needing to understand their internal state management.
+
+---
+# HTTP-based param provider - arci specs integration
+# The specs subsystem runs a lightweight HTTP endpoint that receives the hook event
+# and returns params based on its rich project/workflow context.
+
+apiVersion: arci.dev/v1
+kind: ParamProvider
+metadata:
+  name: arci-specs
+  description: arci specs integration for dynamic policy context
+  labels:
+    integration: arci-specs
+
+spec:
+  http:
+    # The specs subsystem exposes this endpoint for arci param requests
+    endpoint: http://localhost:9100/arci/params
+
+    # Timeout for param fetch - keep short to avoid blocking
+    timeout: 100ms
+
+    # Optional headers for authentication
+    headers:
+      Authorization: Bearer ${ARCI_SPECS_TOKEN}
+
+    # What to send to the provider
+    # full: entire hook event (tool_name, tool_input, session, etc.)
+    # minimal: just identifiers (session_id, project_path, tool_name)
+    requestBody: full
+
+  # What to do if the specs subsystem is unavailable
+  failurePolicy: useDefaults
+
+  # Fallback values when provider fails
+  defaults:
+    projectType: unknown
+    strictMode: false
+    workflowPhase: none
+    allowedPaths: []
+
+---
+# Unix socket provider - lower latency for local daemons
+# Useful when the param provider runs on the same machine
+
+apiVersion: arci.dev/v1
+kind: ParamProvider
+metadata:
+  name: arci-specs-socket
+  description: arci specs via Unix socket for minimal latency
+
+spec:
+  socket:
+    path: /tmp/arci-specs.sock
+    timeout: 50ms
+
+  failurePolicy: useDefaults
+  defaults:
+    strictMode: false
+
+---
+# File-based provider - simplest integration
+# External system writes params to a file, arci reads it
+# Good for systems that can't run an HTTP server
+
+apiVersion: arci.dev/v1
+kind: ParamProvider
+metadata:
+  name: project-context
+  description: Project context from file updated by build system
+
+spec:
+  file:
+    path: .arci/params.json
+
+    # Watch for changes and reload automatically
+    watch: true
+
+    # How often to check for changes if watch is false
+    pollInterval: 5s
+
+    # Relative paths are resolved from project root
+    relativeTo: project
+
+  failurePolicy: useDefaults
+  defaults:
+    environment: development
+
+---
+# OPA-based provider - enterprise policy integration
+# Fetches params from Open Policy Agent for organizations
+# that manage policy data centrally
+
+apiVersion: arci.dev/v1
+kind: ParamProvider
+metadata:
+  name: enterprise-opa
+  description: Enterprise policy parameters from OPA
+
+spec:
+  opa:
+    endpoint: https://opa.internal.corp/v1/data
+    policyPath: arci/params
+    timeout: 200ms
+
+    headers:
+      Authorization: Bearer ${OPA_TOKEN}
+
+    # OPA can make decisions based on the hook event
+    # and return structured params
+    inputMapping:
+      tool: tool_name
+      path: tool_input.file_path
+      user: session.user
+      project: project.path
+
+  failurePolicy: useDefaults
+  defaults:
+    complianceLevel: standard
+    allowedLicenses: ["MIT", "Apache-2.0", "BSD-3-Clause"]
+
+---
+# Environment-based provider - params from env vars
+# Simple way to configure policies without external systems
+
+apiVersion: arci.dev/v1
+kind: ParamProvider
+metadata:
+  name: env-config
+  description: Policy parameters from environment variables
+
+spec:
+  env:
+    mapping:
+      strictMode: ARCI_STRICT_MODE
+      maxFileSize: ARCI_MAX_FILE_SIZE
+      allowedBranches: ARCI_ALLOWED_BRANCHES
+      teamName: TEAM_NAME
+
+    # Type coercion for non-string values
+    types:
+      strictMode: boolean
+      maxFileSize: integer
+      allowedBranches: stringArray
+
+  failurePolicy: useDefaults
+  defaults:
+    strictMode: false
+    maxFileSize: 100000
+    allowedBranches: ["main", "develop"]
+
+---
+# Composite provider - combine multiple sources
+# Params are merged with later sources taking precedence
+
+apiVersion: arci.dev/v1
+kind: ParamProvider
+metadata:
+  name: layered-config
+  description: Layered params from multiple sources
+
+spec:
+  composite:
+    providers:
+      # Base defaults from environment
+      - ref: env-config
+        priority: 1
+
+      # Project-specific overrides from file
+      - ref: project-context
+        priority: 2
+
+      # Dynamic context from arci specs
+      - ref: arci-specs
+        priority: 3
+
+    # How to merge when same key exists
+    mergeStrategy: lastWins
+
+  failurePolicy: useDefaults
+  defaults:
+    strictMode: false
+
+---
+# Static provider - inline params for simple cases
+# No external system needed, just literal values
+
+apiVersion: arci.dev/v1
+kind: ParamProvider
+metadata:
+  name: production-hardened
+  description: Static hardened settings for production
+
+spec:
+  static:
+    strictMode: true
+    maxFileSize: 10000
+    maxPipelineComplexity: 3
+    blockedCommands: ["rm -rf", "chmod 777", "curl | bash"]
+    requiredReviewers: 2
+    allowedBranches: ["release/*", "hotfix/*"]

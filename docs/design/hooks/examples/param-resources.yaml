@@ -1,0 +1,316 @@
+# Parameter resources define concrete values for parameterized policies.
+# They're referenced by PolicyBindings to provide context-specific configuration.
+# This separates policy logic from policy configuration.
+
+---
+# File size limits - different thresholds for different contexts
+
+apiVersion: arci.dev/v1
+kind: FileSizeParams
+metadata:
+  name: strict-limits
+  description: Strict file size limits for CI/production
+  labels:
+    environment: production
+
+spec:
+  maxBytes: 10000
+  warnBytes: 5000
+  exemptPatterns:
+    - "*.generated.*"
+    - "*.min.js"
+    - "*.lock"
+
+---
+apiVersion: arci.dev/v1
+kind: FileSizeParams
+metadata:
+  name: relaxed-limits
+  description: Relaxed limits for local development
+  labels:
+    environment: development
+
+spec:
+  maxBytes: 100000
+  warnBytes: 50000
+  exemptPatterns:
+    - "*"
+
+---
+# Security parameters - different security postures
+
+apiVersion: arci.dev/v1
+kind: SecurityParams
+metadata:
+  name: enterprise-baseline
+  description: Enterprise security baseline settings
+  labels:
+    compliance: soc2
+
+spec:
+  strictMode: true
+
+  blockedCommands:
+    - pattern: "rm -rf /"
+      reason: "Catastrophic deletion"
+    - pattern: "chmod 777"
+      reason: "Overly permissive permissions"
+    - pattern: "curl * | bash"
+      reason: "Arbitrary code execution"
+    - pattern: "wget * | sh"
+      reason: "Arbitrary code execution"
+    - pattern: "> /dev/sd*"
+      reason: "Direct disk write"
+
+  blockedPaths:
+    - "/etc/*"
+    - "/usr/*"
+    - "/var/*"
+    - "~/.ssh/*"
+    - "~/.aws/*"
+    - "~/.gnupg/*"
+
+  secretPatterns:
+    - "(?i)api[_-]?key\\s*=\\s*['\"][^'\"]+['\"]"
+    - "(?i)password\\s*=\\s*['\"][^'\"]+['\"]"
+    - "(?i)secret\\s*=\\s*['\"][^'\"]+['\"]"
+    - "(?i)token\\s*=\\s*['\"][^'\"]+['\"]"
+    - "-----BEGIN (RSA |EC |DSA )?PRIVATE KEY-----"
+
+  requireBranchProtection: true
+  protectedBranches:
+    - main
+    - master
+    - release/*
+    - production
+
+---
+apiVersion: arci.dev/v1
+kind: SecurityParams
+metadata:
+  name: developer-baseline
+  description: Less restrictive settings for trusted developers
+  labels:
+    environment: development
+
+spec:
+  strictMode: false
+
+  blockedCommands:
+    - pattern: "rm -rf /"
+      reason: "Catastrophic deletion"
+
+  blockedPaths:
+    - "/etc/*"
+    - "~/.ssh/*"
+
+  secretPatterns:
+    - "-----BEGIN (RSA |EC |DSA )?PRIVATE KEY-----"
+
+  requireBranchProtection: false
+  protectedBranches: []
+
+---
+# Code style parameters - language-specific settings
+
+apiVersion: arci.dev/v1
+kind: CodeStyleParams
+metadata:
+  name: typescript-strict
+  description: Strict TypeScript style enforcement
+
+spec:
+  language: typescript
+
+  maxLineLength: 100
+  maxFileLines: 500
+  maxFunctionLines: 50
+  maxComplexity: 10
+
+  requiredPatterns:
+    - pattern: "^// Copyright"
+      location: fileStart
+      message: "Files must start with copyright header"
+
+  bannedPatterns:
+    - pattern: "any"
+      message: "Avoid 'any' type, use 'unknown' or specific types"
+    - pattern: "console.log"
+      message: "Use structured logger instead of console.log"
+      exemptPaths: ["**/*.test.ts", "**/*.spec.ts"]
+    - pattern: "// @ts-ignore"
+      message: "Fix type errors instead of ignoring them"
+
+  requiredImports:
+    - when: "logger\\."
+      import: "import { logger } from '@/lib/logger'"
+
+---
+apiVersion: arci.dev/v1
+kind: CodeStyleParams
+metadata:
+  name: python-standard
+  description: Python style enforcement
+
+spec:
+  language: python
+
+  maxLineLength: 100
+  maxFileLines: 500
+  maxFunctionLines: 50
+  maxComplexity: 10
+
+  requiredPatterns:
+    - pattern: "^# Copyright"
+      location: fileStart
+      message: "Files must start with copyright header"
+    - pattern: '""".*"""'
+      location: afterImports
+      message: "Modules must have docstrings"
+
+  bannedPatterns:
+    - pattern: "from typing import Any"
+      message: "Avoid Any type, use specific types"
+    - pattern: "except:"
+      message: "Use 'except Exception:' or catch specific exceptions"
+    - pattern: "print("
+      message: "Use logging instead of print"
+      exemptPaths: ["**/tests/**", "scripts/**"]
+
+---
+# License compliance parameters
+
+apiVersion: arci.dev/v1
+kind: LicenseParams
+metadata:
+  name: permissive-only
+  description: Only allow permissive open source licenses
+
+spec:
+  allowedLicenses:
+    - MIT
+    - Apache-2.0
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - ISC
+    - Unlicense
+    - CC0-1.0
+
+  blockedLicenses:
+    - GPL-2.0
+    - GPL-3.0
+    - AGPL-3.0
+    - LGPL-2.1
+    - LGPL-3.0
+    - SSPL-1.0
+    - BSL-1.1
+
+  requireLicenseFile: true
+  requireSPDXHeader: true
+
+  exemptPackages:
+    - name: "some-gpl-dev-tool"
+      reason: "Dev dependency only, not distributed"
+      scope: devDependencies
+
+---
+# Git workflow parameters
+
+apiVersion: arci.dev/v1
+kind: GitWorkflowParams
+metadata:
+  name: trunk-based
+  description: Trunk-based development workflow
+
+spec:
+  mainBranch: main
+
+  protectedBranches:
+    - main
+    - release/*
+
+  branchNamingPattern: "^(feature|fix|chore|docs)/[a-z0-9-]+$"
+
+  commitMessagePattern: "^(feat|fix|chore|docs|refactor|test|style)(\\([a-z-]+\\))?: .{10,72}$"
+
+  requireSignedCommits: false
+  requireLinearHistory: true
+
+  maxCommitsPerPR: 10
+  requireSquashMerge: true
+
+---
+apiVersion: arci.dev/v1
+kind: GitWorkflowParams
+metadata:
+  name: gitflow
+  description: GitFlow workflow
+
+spec:
+  mainBranch: main
+  developBranch: develop
+
+  protectedBranches:
+    - main
+    - develop
+    - release/*
+    - hotfix/*
+
+  branchNamingPattern: "^(feature|release|hotfix)/[A-Z]+-[0-9]+-[a-z0-9-]+$"
+
+  commitMessagePattern: "^[A-Z]+-[0-9]+: .{10,72}$"
+
+  requireSignedCommits: true
+  requireLinearHistory: false
+
+  maxCommitsPerPR: 50
+  requireSquashMerge: false
+
+---
+# arci specs-style dynamic context parameters
+# These would typically be provided by arci specs at runtime,
+# but can be defined statically for testing or fallback
+
+apiVersion: arci.dev/v1
+kind: arci specsContextParams
+metadata:
+  name: specs-fallback
+  description: Fallback params when arci specs is unavailable
+
+spec:
+  # Project context
+  projectType: unknown
+  projectPhase: development
+  projectMaturity: experimental
+
+  # Workflow context
+  workflowPhase: none
+  workflowStep: null
+  previousToolResults: []
+
+  # Session context
+  sessionGoal: null
+  filesModifiedThisSession: []
+  testsRunThisSession: 0
+  lastTestResult: null
+
+  # Feature flags
+  features:
+    strictMode: false
+    experimentalTransforms: false
+    verboseLogging: true
+
+  # Dynamic paths based on project structure
+  paths:
+    source: src
+    tests: tests
+    docs: docs
+    generated: generated
+
+  # Team/user context
+  team: null
+  userRole: developer
+  permissions:
+    canModifyConfig: true
+    canDeleteFiles: true
+    canRunArbitraryCommands: true

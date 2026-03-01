@@ -1,0 +1,14 @@
+{
+  "name": "arci",
+  "version": "0.0.0",
+  "description": "Agentic requirements composition integration.",
+  "author": {
+    "name": "Tony Burns",
+    "email": "tony@tonyburns.net",
+    "url": "https://github.com/tbhb"
+  },
+  "homepage": "https://github.com/tbhb/arci",
+  "repository": "https://github.com/tbhb/arci",
+  "license": "MIT",
+  "keywords": ["development"]
+}

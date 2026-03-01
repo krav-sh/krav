@@ -1,0 +1,306 @@
+# Policies declare what's correct.
+# matchConstraints defines structural scope (what this policy understands).
+# matchConditions defines conditional logic (when it applies, can reference params).
+# Enforcement is specified in PolicyBindings.
+
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: enterprise-security-baseline
+  description: Enterprise security baseline for Claude Code
+  labels:
+    owner: infosec
+
+spec:
+  failurePolicy: allow
+
+  paramKind:
+    kind: SecurityParams
+
+  # Structural: what this policy is capable of validating
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Bash
+      - Write
+      - Edit
+      - MultiEdit
+
+    paths:
+      exclude:
+        - "**/node_modules/**"
+        - "**/.git/**"
+        - "**/vendor/**"
+
+  # Conditional: CEL expressions, can reference params
+  matchConditions:
+    - name: not-safe-mode
+      expression: "!has(session.safe_mode) || !session.safe_mode"
+
+  variables:
+    - key: is_shell
+      expression: 'tool_name == "Bash"'
+    - key: is_write
+      expression: 'tool_name in ["Write", "Edit", "MultiEdit"]'
+    - key: command
+      expression: 'has(tool_input.command) ? tool_input.command : ""'
+    - key: file_path
+      expression: 'has(tool_input.file_path) ? tool_input.file_path : ""'
+    - key: content
+      expression: 'has(tool_input.content) ? tool_input.content : ""'
+    - key: content_size
+      expression: "size(content)"
+
+    # Params with defaults
+    - key: blocked_commands
+      expression: "has(params.blockedCommands) ? params.blockedCommands : []"
+    - key: blocked_paths
+      expression: "has(params.blockedPaths) ? params.blockedPaths : []"
+    - key: protected_branches
+      expression: 'has(params.protectedBranches) ? params.protectedBranches : ["main"]'
+
+  validations:
+    - expression: '!(is_shell && command.startsWith("rm ") && command.contains(" -rf "))'
+      reason: rf-flag-blocked
+      message: "Blocked: rm with -rf flag"
+
+    - expression: |
+        !(is_shell &&
+          (command.contains("curl ") || command.contains("wget ")) &&
+          (command.contains(" | bash") || command.contains(" | sh")))
+      reason: curl-pipe-blocked
+      message: "Piping remote content to shell is not permitted"
+
+    - expression: "!(is_write && content_size > 50000)"
+      reason: large-write-blocked
+      messageExpression: '"File size " + string(content_size) + " exceeds 50KB limit"'
+
+    - expression: "!blocked_commands.exists(b, command.contains(b.pattern))"
+      reason: blocked-command
+      message: "Command blocked by security policy"
+
+    - expression: "!blocked_paths.exists(p, file_path.matches(p))"
+      reason: blocked-path
+      message: "Path {{ file_path }} is restricted"
+
+    - gritql: "`eval($code)`"
+      language: typescript
+      reason: eval-blocked
+      message: "eval() is prohibited"
+
+    - gritql: "`eval($code)`"
+      language: python
+      reason: eval-blocked
+      message: "eval() is prohibited"
+
+---
+# TypeScript-specific policy
+
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: typescript-quality
+  description: TypeScript code quality checks
+
+spec:
+  failurePolicy: allow
+
+  # This policy only makes sense for TypeScript files
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Write
+      - Edit
+
+    paths:
+      include:
+        - "**/*.ts"
+        - "**/*.tsx"
+      exclude:
+        - "**/*.d.ts"
+        - "**/*.test.ts"
+        - "**/*.spec.ts"
+
+  # No matchConditions - always applies when structural match
+
+  variables:
+    - key: content
+      expression: tool_input.content
+    - key: file_path
+      expression: tool_input.file_path
+
+  validations:
+    - gritql: "`any`"
+      language: typescript
+      reason: any-type
+      message: "Avoid 'any' type, use 'unknown' or specific types"
+
+    - gritql: "`// @ts-ignore`"
+      language: typescript
+      reason: ts-ignore
+      message: "Fix type errors instead of ignoring them"
+
+    - gritql: "`console.log($args)`"
+      language: typescript
+      reason: console-log
+      message: "Use structured logging instead of console.log"
+
+---
+# Git workflow policy
+
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: git-workflow
+  description: Git workflow enforcement
+
+spec:
+  failurePolicy: allow
+
+  paramKind:
+    kind: GitWorkflowParams
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Bash
+
+  # Only applies to git commands
+  matchConditions:
+    - name: is-git-command
+      expression: 'tool_input.command.startsWith("git ")'
+
+  variables:
+    - key: command
+      expression: tool_input.command
+    - key: current_branch
+      expression: "$current_branch()"
+    - key: protected_branches
+      expression: 'has(params.protectedBranches) ? params.protectedBranches : ["main"]'
+    - key: is_force_push
+      expression: 'command.startsWith("git push") && (command.contains(" -f") || command.contains(" --force"))'
+
+  validations:
+    - expression: "!(is_force_push && current_branch in protected_branches)"
+      reason: force-push-protected
+      message: "Force push to {{ current_branch }} is not allowed"
+
+---
+# Branch-aware policy using matchConditions
+
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: protected-branch-restrictions
+  description: Extra restrictions on protected branches
+
+spec:
+  failurePolicy: allow
+
+  paramKind:
+    kind: BranchParams
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Write
+      - Edit
+      - Bash
+
+  # Only active on protected branches (via params from arci specs or config)
+  matchConditions:
+    - name: on-protected-branch
+      expression: "$current_branch() in params.protectedBranches"
+
+    - name: strict-mode
+      expression: "params.strictMode"
+
+  variables:
+    - key: command
+      expression: 'has(tool_input.command) ? tool_input.command : ""'
+
+  validations:
+    - expression: '!command.contains("--no-verify")'
+      reason: no-verify-blocked
+      message: "Cannot skip git hooks on protected branches"
+
+    - expression: '!command.startsWith("git commit --amend")'
+      reason: amend-blocked
+      message: "Cannot amend commits on protected branches"
+
+---
+# arci specs-aware policy
+
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: workflow-phase-restrictions
+  description: Restrictions based on arci specs workflow phase
+
+spec:
+  failurePolicy: allow
+
+  paramKind:
+    kind: arci specsContextParams
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Bash
+      - Write
+      - Edit
+
+  # arci specs provides workflowPhase via params
+  matchConditions:
+    - name: in-review-phase
+      expression: 'params.workflowPhase == "review"'
+
+  variables:
+    - key: command
+      expression: 'has(tool_input.command) ? tool_input.command : ""'
+
+  validations:
+    # During review, block destructive operations
+    - expression: '!command.contains("rm ")'
+      reason: destructive-during-review
+      message: "File deletion blocked during code review phase"
+
+    - expression: '!command.contains("git reset")'
+      reason: reset-during-review
+      message: "Git reset blocked during code review phase"
+
+---
+# Simple policy with no conditions
+
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: no-force-delete
+  description: Never allow rm -rf /
+
+spec:
+  failurePolicy: allow
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Bash
+
+  # No matchConditions - always applies
+
+  validations:
+    - expression: '!tool_input.command.matches("rm\\s+-rf\\s+/")'
+      reason: catastrophic-delete
+      message: "Catastrophic deletion blocked"

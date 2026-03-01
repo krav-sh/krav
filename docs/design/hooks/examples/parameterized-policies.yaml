@@ -1,0 +1,393 @@
+# Parameterized policies define logic referencing params.*
+# Concrete values come from ParamResources or ParamProviders via bindings.
+# Enforcement (deny/warn/audit) is also specified in bindings, not here.
+
+---
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: security-baseline
+  description: Parameterized security baseline
+
+spec:
+  failurePolicy: allow
+
+  paramKind:
+    kind: SecurityParams
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Bash
+      - Write
+      - Edit
+
+  variables:
+    - key: command
+      expression: 'has(tool_input.command) ? tool_input.command : ""'
+    - key: file_path
+      expression: 'has(tool_input.file_path) ? tool_input.file_path : ""'
+    - key: content
+      expression: 'has(tool_input.content) ? tool_input.content : ""'
+    - key: current_branch
+      expression: "$current_branch()"
+
+    # Params with defaults
+    - key: strict_mode
+      expression: "has(params.strictMode) ? params.strictMode : false"
+    - key: blocked_commands
+      expression: "has(params.blockedCommands) ? params.blockedCommands : []"
+    - key: blocked_paths
+      expression: "has(params.blockedPaths) ? params.blockedPaths : []"
+    - key: protected_branches
+      expression: 'has(params.protectedBranches) ? params.protectedBranches : ["main"]'
+    - key: secret_patterns
+      expression: "has(params.secretPatterns) ? params.secretPatterns : []"
+
+  validations:
+    - expression: |
+        !blocked_commands.exists(b, command.contains(b.pattern))
+      reason: blocked-command
+      messageExpression: |
+        "Blocked: " + blocked_commands.filter(b, command.contains(b.pattern)).map(b, b.reason).join(", ")
+
+    - expression: |
+        !blocked_paths.exists(p, file_path.matches(p))
+      reason: blocked-path
+      message: "Path {{ file_path }} is blocked by policy"
+
+    - expression: |
+        !strict_mode || !(current_branch in protected_branches && tool_name in ["Write", "Edit"])
+      reason: protected-branch
+      message: "Direct modifications to {{ current_branch }} blocked in strict mode"
+
+    - expression: |
+        !secret_patterns.exists(p, content.matches(p))
+      reason: secret-detected
+      message: "Content appears to contain secrets"
+
+---
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: max-file-size
+  description: Enforce file size limits from params
+
+spec:
+  failurePolicy: allow
+
+  paramKind:
+    kind: FileSizeParams
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Write
+
+  matchConditions:
+    - name: has-content
+      expression: "has(tool_input.content)"
+
+  variables:
+    - key: content_size
+      expression: "size(tool_input.content)"
+    - key: file_path
+      expression: "tool_input.file_path"
+    - key: max_bytes
+      expression: "has(params.maxBytes) ? params.maxBytes : 100000"
+    - key: exempt_patterns
+      expression: "has(params.exemptPatterns) ? params.exemptPatterns : []"
+    - key: is_exempt
+      expression: "exempt_patterns.exists(p, file_path.matches(p))"
+
+  validations:
+    - expression: "is_exempt || content_size <= max_bytes"
+      reason: file-too-large
+      messageExpression: |
+        "File " + string(content_size) + " bytes exceeds limit of " + string(max_bytes)
+
+---
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: code-style
+  description: Enforce code style rules from params
+
+spec:
+  failurePolicy: allow
+
+  paramKind:
+    kind: CodeStyleParams
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Write
+      - Edit
+
+  matchConditions:
+    - name: has-content
+      expression: 'has(tool_input.content) && tool_input.content != ""'
+
+  variables:
+    - key: file_path
+      expression: "tool_input.file_path"
+    - key: content
+      expression: "tool_input.content"
+    - key: lines
+      expression: 'content.split("\n")'
+    - key: line_count
+      expression: "size(lines)"
+
+    - key: max_file_lines
+      expression: "has(params.maxFileLines) ? params.maxFileLines : 1000"
+    - key: banned_patterns
+      expression: "has(params.bannedPatterns) ? params.bannedPatterns : []"
+
+  validations:
+    - expression: "line_count <= max_file_lines"
+      reason: file-too-long
+      messageExpression: |
+        "File has " + string(line_count) + " lines, max is " + string(max_file_lines)
+
+    - expression: |
+        !banned_patterns.exists(bp,
+          content.contains(bp.pattern) &&
+          (!has(bp.exemptPaths) || !bp.exemptPaths.exists(ep, file_path.matches(ep)))
+        )
+      reason: banned-pattern
+      messageExpression: |
+        banned_patterns.filter(bp, content.contains(bp.pattern)).map(bp, bp.message).join("; ")
+
+---
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: git-workflow
+  description: Enforce git workflow rules from params
+
+spec:
+  failurePolicy: allow
+
+  paramKind:
+    kind: GitWorkflowParams
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Bash
+
+  matchConditions:
+    - name: is-git-command
+      expression: 'tool_input.command.startsWith("git ")'
+
+  variables:
+    - key: command
+      expression: "tool_input.command"
+    - key: current_branch
+      expression: "$current_branch()"
+
+    - key: protected_branches
+      expression: 'has(params.protectedBranches) ? params.protectedBranches : ["main"]'
+    - key: require_linear
+      expression: "has(params.requireLinearHistory) ? params.requireLinearHistory : false"
+
+    - key: is_push
+      expression: 'command.startsWith("git push")'
+    - key: is_force_push
+      expression: 'is_push && (command.contains(" -f") || command.contains(" --force"))'
+    - key: is_merge
+      expression: 'command.startsWith("git merge")'
+
+  validations:
+    - expression: |
+        !(is_force_push && protected_branches.exists(b,
+          current_branch == b || current_branch.matches(b)
+        ))
+      reason: force-push-protected
+      message: "Force push to {{ current_branch }} is not allowed"
+
+    - expression: "!require_linear || !is_merge"
+      reason: merge-not-allowed
+      message: "Merge commits not allowed; use rebase"
+
+---
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: specs-context-aware
+  description: Policy leveraging arci specs workflow context
+
+spec:
+  failurePolicy: allow
+
+  paramKind:
+    kind: arci specsContextParams
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Bash
+      - Write
+      - Edit
+
+  variables:
+    - key: command
+      expression: 'has(tool_input.command) ? tool_input.command : ""'
+    - key: file_path
+      expression: 'has(tool_input.file_path) ? tool_input.file_path : ""'
+
+    # arci specs context
+    - key: workflow_phase
+      expression: 'has(params.workflowPhase) ? params.workflowPhase : "none"'
+    - key: strict_mode
+      expression: "has(params.features.strictMode) ? params.features.strictMode : false"
+    - key: tests_run
+      expression: "has(params.testsRunThisSession) ? params.testsRunThisSession : 0"
+    - key: last_test_result
+      expression: "has(params.lastTestResult) ? params.lastTestResult : null"
+    - key: user_role
+      expression: 'has(params.userRole) ? params.userRole : "developer"'
+    - key: files_modified
+      expression: "has(params.filesModifiedThisSession) ? params.filesModifiedThisSession : []"
+
+  validations:
+    # Block destructive operations during review
+    - expression: |
+        !(workflow_phase == "review" &&
+          (command.contains("rm ") || command.contains("git reset")))
+      reason: destructive-during-review
+      message: "Destructive operations blocked during review phase"
+
+    # Require tests before deployment
+    - expression: |
+        !(workflow_phase == "deploy" && tests_run == 0)
+      reason: no-tests-before-deploy
+      message: "Run tests before deployment"
+
+    # Block changes if tests failing (strict mode)
+    - expression: |
+        !(strict_mode && last_test_result == "failed" && tool_name in ["Write", "Edit"])
+      reason: tests-failing
+      message: "Fix failing tests before modifying files"
+
+    # Restrict junior devs
+    - expression: |
+        !(user_role in ["junior", "intern"] &&
+          (command.contains("DROP ") || command.contains("git push --force")))
+      reason: restricted-operation
+      message: "Operation requires senior approval"
+
+    # Scope creep warning
+    - expression: "size(files_modified) <= 20"
+      reason: scope-creep
+      message: "{{ size(files_modified) }} files modified. Consider smaller changes."
+
+---
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: license-compliance
+  description: Enforce license restrictions from params
+
+spec:
+  failurePolicy: allow
+
+  paramKind:
+    kind: LicenseParams
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Write
+      - Edit
+
+    paths:
+      include:
+        - "package.json"
+        - "Cargo.toml"
+        - "pyproject.toml"
+        - "go.mod"
+
+  variables:
+    - key: file_path
+      expression: "tool_input.file_path"
+    - key: content
+      expression: "tool_input.content"
+    - key: blocked_licenses
+      expression: "has(params.blockedLicenses) ? params.blockedLicenses : []"
+
+  validations:
+    - expression: |
+        !blocked_licenses.exists(license,
+          content.contains('"license": "' + license + '"') ||
+          content.contains("license = \"" + license + "\"")
+        )
+      reason: blocked-license
+      message: "Dependency with blocked license detected"
+
+---
+# Parameterized policy with mutations
+
+apiVersion: arci.dev/v1
+kind: Policy
+metadata:
+  name: inject-standards
+  description: Inject coding standards based on params
+
+spec:
+  failurePolicy: allow
+
+  paramKind:
+    kind: CodingStandardsParams
+
+  matchConstraints:
+    events:
+      - pre_tool_call
+
+    tools:
+      - Write
+      - Edit
+
+  matchConditions:
+    - name: has-content
+      expression: "has(tool_input.content)"
+
+  variables:
+    - key: file_path
+      expression: tool_input.file_path
+    - key: standards_text
+      expression: 'has(params.standardsText) ? params.standardsText : ""'
+    - key: header_template
+      expression: 'has(params.headerTemplate) ? params.headerTemplate : ""'
+    - key: copyright_holder
+      expression: 'has(params.copyrightHolder) ? params.copyrightHolder : "Company Name"'
+    - key: current_year
+      expression: "string($now().year)"
+
+  mutations:
+    - name: inject-standards
+      expression: |
+        object.with({
+          context: object.context + "\n\n" + standards_text
+        })
+
+    - name: add-header
+      expression: |
+        object.with({
+          tool_input: object.tool_input.with({
+            content: header_template.replace("{{year}}", current_year).replace("{{holder}}", copyright_holder) + "\n\n" + object.tool_input.content
+          })
+        })

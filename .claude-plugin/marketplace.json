@@ -1,0 +1,17 @@
+{
+  "name": "arci",
+  "description": "Agentic requirements composition integration.",
+  "owner": {
+    "name": "Tony Burns",
+    "email": "tony@tonyburns.net"
+  },
+  "plugins": [
+    {
+      "name": "arci",
+      "description": "Agentic requirements composition integration.",
+      "source": "./claude",
+      "category": "development",
+      "homepage": "https://github.com/tbhb/arci"
+    }
+  ]
+}
