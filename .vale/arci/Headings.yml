@@ -8,12 +8,20 @@ match: $sentence
 indicators:
   - ":"
 exceptions:
+  - ARCI
   - Azure
+  - CEL
   - CLI
+  - Claude
+  - CRUD
+  - DAG
+  - Code
+  - I/O
   - Cosmos
   - Docker
   - Dockerfile
   - Emmet
+  - GritQL
   - gRPC
   - I
   - JSON
@@ -21,8 +29,13 @@ exceptions:
   - Linux
   - macOS
   - Marketplace
+  - MCP
   - MongoDB
+  - PagerDuty
+  - React
   - REPL
+  - SQL
+  - Starlark
   - Studio
   - TypeScript
   - URLs

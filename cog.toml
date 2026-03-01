@@ -9,5 +9,6 @@ owner = "tbhb"
 authors = [{ username = "tbhb", signature = "Tony Burns" }]
 
 [commit_types]
+arci = { omit_from_changelog = true }
 chore = { omit_from_changelog = true }
 test = { omit_from_changelog = true }
