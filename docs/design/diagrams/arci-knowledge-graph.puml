@@ -1,0 +1,170 @@
+@startuml arci-knowledge-graph
+
+skinparam {
+    ClassFontSize 13
+    ClassAttributeFontSize 11
+    ArrowFontSize 11
+    NoteFontSize 11
+    ClassStereotypeFontSize 10
+    Padding 4
+    RoundCorner 8
+    Shadowing false
+    DefaultFontName "Helvetica"
+}
+
+skinparam class {
+    BackgroundColor<<exploration>> #E8F0FE
+    BorderColor<<exploration>> #4285F4
+    HeaderBackgroundColor<<exploration>> #C6DAFC
+
+    BackgroundColor<<container>> #E6F4EA
+    BorderColor<<container>> #34A853
+    HeaderBackgroundColor<<container>> #CEEAD6
+
+    BackgroundColor<<stakeholder>> #FFF3E0
+    BorderColor<<stakeholder>> #F9AB00
+    HeaderBackgroundColor<<stakeholder>> #FEEFC3
+
+    BackgroundColor<<obligation>> #FCE4EC
+    BorderColor<<obligation>> #EA4335
+    HeaderBackgroundColor<<obligation>> #FADBD8
+
+    BackgroundColor<<evidence>> #F3E5F5
+    BorderColor<<evidence>> #9C27B0
+    HeaderBackgroundColor<<evidence>> #E1BEE7
+
+    BackgroundColor<<work>> #E0F2F1
+    BorderColor<<work>> #00897B
+    HeaderBackgroundColor<<work>> #B2DFDB
+
+    BackgroundColor<<observation>> #ECEFF1
+    BorderColor<<observation>> #607D8B
+    HeaderBackgroundColor<<observation>> #CFD8DC
+}
+
+title arci knowledge graph domain model
+
+class "CON-*\nConcept" as CON <<exploration>> {
+    status: seed | exploring | crystallized | superseded
+    --
+    Exploration and design thinking.
+    Captures ideas, options analysis,
+    and crystallized decisions.
+}
+
+class "MOD-*\nModule" as ENT <<container>> {
+    phase: architecture | design | implementation
+    \t| integration | verification | validation
+    status: active | deprecated | archived
+    --
+    Architectural container.
+    Owns needs, requirements, and tasks.
+    Forms hierarchy via childOf.
+}
+
+class "NED-*\nNeed" as NED <<stakeholder>> {
+    priority: must | should | could | wont
+    status: draft | proposed | validated | deferred | rejected
+    --
+    Stakeholder expectation.
+    Validated (stakeholder confirms),
+    not verified.
+}
+
+class "REQ-*\nRequirement" as REQ <<obligation>> {
+    priority: must | should | could | wont
+    status: draft | proposed | approved | implemented
+    \t| verified | deferred | rejected
+    verification_method: test | inspection
+    \t| demonstration | analysis
+    --
+    Design obligation.
+    Verified (evidence proves),
+    not validated.
+}
+
+class "VRF-*\nVerification" as VRF <<evidence>> {
+    method: test | inspection | demonstration | analysis
+    level: unit | integration | system | acceptance
+    status: draft | ready | passing | failing
+    \t| skipped | obsolete
+    --
+    Evidence that requirements
+    are satisfied.
+}
+
+class "TSK-*\nTask" as TSK <<work>> {
+    process_phase: architecture | design | ...
+    task_type: exploration | code-review | ...
+    status: pending | ready | in_progress
+    \t| blocked | done | cancelled
+    deliverables: [{kind, type, path, ...}]
+    --
+    Atomic work unit in DAG.
+    Executed in Claude Code sessions.
+}
+
+class "FND-*\nFinding" as FND <<observation>> {
+    finding_type: issue | recommendation
+    \t| question | decision | observation
+    severity: critical | major | minor | trivial
+    status: open | acknowledged | addressed
+    \t| closed | wont_fix
+    --
+    Observation from review.
+    Issues and questions can
+    block phase advancement.
+}
+
+' === FORMAL TRANSFORMATION CHAIN ===
+
+CON -[#4285F4,bold]-> NED : **formalize**
+NED -[#F9AB00,bold]-> REQ : **derive**
+REQ -[#EA4335,bold]-> TSK : **decompose**
+
+' === STRUCTURAL RELATIONSHIPS ===
+
+ENT -[#34A853]--> ENT : childOf
+
+ENT <-[#34A853,dashed]- NED : module
+ENT <-[#34A853,dashed]- REQ : module
+ENT <-[#34A853,dashed]- TSK : module
+ENT <-[#34A853,dashed]- VRF : module
+ENT <-[#34A853,dashed]- FND : module
+
+' === TRACEABILITY RELATIONSHIPS ===
+
+CON .[#4285F4].> ENT : informs
+
+REQ -[#EA4335]-> ENT : allocatesTo
+
+NED <.[#F9AB00].. REQ : derivesFrom
+
+TSK -[#00897B]-> TSK : dependsOn
+
+REQ <-[#9C27B0]-- VRF : verifies
+REQ .[#9C27B0].> VRF : verifiedBy
+
+FND -[#607D8B]-> CON : regarding
+FND -[#607D8B]-> ENT : regarding
+FND -[#607D8B]-> NED : regarding
+FND -[#607D8B]-> REQ : regarding
+
+FND -[#607D8B,bold]-> TSK : generates
+TSK .[#607D8B].> FND : addressedBy
+
+' === LEGEND ===
+
+legend bottom left
+  |= Arrow style |= Meaning |
+  | **Bold colored** | Formal transformation: Concept > Need > Requirement > Task > Deliverable |
+  | Solid colored | Structural (childOf, allocatesTo, verifies, generates) |
+  | Dashed green | Ownership: all nodes belong to an Module via //module// |
+  | Dotted | Inverse/traceability (derivesFrom, verifiedBy, addressedBy) |
+  | Gray solid | Finding //regarding// any node type |
+
+  All nodes stored in **graph.jsonlt** (JSON-LD compact form).
+  Prose in **.arci/** markdown (no frontmatter).
+end legend
+
+@enduml

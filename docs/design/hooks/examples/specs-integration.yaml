@@ -1,0 +1,366 @@
+# Specs Integration Guide
+#
+# This document shows how arci's specs subsystem integrates with arci
+# as a ParamProvider, enabling rich contextual policy evaluation.
+#
+# The flow:
+# 1. AI assistant (Claude Code) fires a hook event
+# 2. arci receives the event and prepares to evaluate policies
+# 3. For policies bound to the specs provider, arci requests params
+# 4. The specs subsystem receives the request with hook context, returns params based on its state
+# 5. arci evaluates policies with params.* populated from specs
+# 6. arci returns decision to the AI assistant
+
+# ============================================================================
+# Specs ParamProvider configuration
+# ============================================================================
+
+---
+apiVersion: arci.dev/v1
+kind: ParamProvider
+metadata:
+  name: arci-specs
+  description: arci specs subsystem integration
+
+spec:
+  http:
+    endpoint: http://localhost:9100/arci/params
+    timeout: 100ms
+
+    # Specs subsystem authenticates via token
+    headers:
+      Authorization: Bearer ${ARCI_SPECS_TOKEN}
+
+    # Send full context so specs can make informed decisions
+    requestBody: full
+
+  failurePolicy: useDefaults
+  defaults:
+    projectType: unknown
+    strictMode: false
+    workflowPhase: none
+    features: {}
+
+
+# ============================================================================
+# Request format (arci -> specs subsystem)
+# ============================================================================
+#
+# When arci needs params, it POSTs to the specs endpoint:
+#
+# POST /arci/params
+# Content-Type: application/json
+# Authorization: Bearer <token>
+#
+# {
+#   "hook_event": {
+#     "event_type": "pre_tool_call",
+#     "tool_name": "Write",
+#     "tool_input": {
+#       "file_path": "src/api/users.ts",
+#       "content": "export function getUser(id: string) { ... }"
+#     },
+#     "timestamp": "2026-01-23T15:30:00Z"
+#   },
+#   "session": {
+#     "id": "sess_abc123",
+#     "started_at": "2026-01-23T14:00:00Z"
+#   },
+#   "project": {
+#     "path": "/Users/tony/Code/myproject",
+#     "git_branch": "feature/user-api",
+#     "git_dirty": true
+#   },
+#   "policy_context": {
+#     "policy_name": "security-baseline",
+#     "binding_name": "specs-driven-security"
+#   }
+# }
+
+# ============================================================================
+# Response format (specs subsystem -> arci)
+# ============================================================================
+#
+# The specs subsystem returns params as JSON:
+#
+# HTTP 200 OK
+# Content-Type: application/json
+#
+# {
+#   "params": {
+#     "projectType": "typescript-api",
+#     "projectPhase": "active-development",
+#     "workflowPhase": "implementing",
+#     "workflowStep": "write-user-endpoint",
+#
+#     "strictMode": false,
+#     "features": {
+#       "experimentalTransforms": true,
+#       "verboseLogging": false
+#     },
+#
+#     "sessionGoal": "Implement user CRUD endpoints",
+#     "filesModifiedThisSession": [
+#       "src/api/index.ts",
+#       "src/models/user.ts"
+#     ],
+#     "testsRunThisSession": 2,
+#     "lastTestResult": "passed",
+#
+#     "userRole": "senior",
+#     "permissions": {
+#       "canModifyConfig": true,
+#       "canDeleteFiles": true,
+#       "canRunArbitraryCommands": true
+#     },
+#
+#     "paths": {
+#       "source": "src",
+#       "tests": "tests",
+#       "generated": "src/generated"
+#     },
+#
+#     "securityOverrides": {
+#       "allowedPaths": ["src/**", "tests/**"],
+#       "blockedCommands": []
+#     }
+#   },
+#   "ttl": 30,
+#   "cache_key": "sess_abc123:feature/user-api"
+# }
+
+# ============================================================================
+# Example specs scenarios
+# ============================================================================
+
+# Scenario 1: Normal development
+# Specs sees: feature branch, tests passing, senior developer
+# Specs returns: relaxed params, no workflow restrictions
+---
+example: scenario-normal-development
+request:
+  hook_event:
+    tool_name: Write
+    tool_input:
+      file_path: src/api/users.ts
+  project:
+    git_branch: feature/user-api
+
+response:
+  params:
+    strictMode: false
+    workflowPhase: implementing
+    userRole: senior
+    lastTestResult: passed
+
+
+# Scenario 2: Code review in progress
+# Specs sees: PR open, review comments pending
+# Specs returns: review phase, block destructive ops
+---
+example: scenario-code-review
+request:
+  hook_event:
+    tool_name: Bash
+    tool_input:
+      command: git reset --hard HEAD~3
+  project:
+    git_branch: feature/user-api
+
+response:
+  params:
+    strictMode: true
+    workflowPhase: review
+    workflowStep: addressing-review-comments
+    # Policy will block destructive ops during review
+
+
+# Scenario 3: Deployment workflow
+# Specs sees: release branch, deployment in progress
+# Specs returns: deploy phase, require tests, strict mode
+---
+example: scenario-deployment
+request:
+  hook_event:
+    tool_name: Bash
+    tool_input:
+      command: kubectl apply -f deployment.yaml
+  project:
+    git_branch: release/v2.1.0
+
+response:
+  params:
+    strictMode: true
+    workflowPhase: deploy
+    testsRunThisSession: 0
+    # Policy will block deploy without tests
+
+
+# Scenario 4: Junior developer
+# Specs sees: user marked as junior in team config
+# Specs returns: restricted permissions
+---
+example: scenario-junior-developer
+request:
+  hook_event:
+    tool_name: Bash
+    tool_input:
+      command: git push --force origin main
+  session:
+    user: intern@company.com
+
+response:
+  params:
+    userRole: intern
+    permissions:
+      canModifyConfig: false
+      canDeleteFiles: false
+      canRunArbitraryCommands: false
+    # Policy will block force push for interns
+
+
+# Scenario 5: After hours / on-call
+# Specs sees: current time outside business hours, on-call rotation
+# Specs returns: emergency mode with audit logging
+---
+example: scenario-after-hours
+request:
+  hook_event:
+    tool_name: Write
+    tool_input:
+      file_path: src/config/production.yaml
+  timestamp: "2026-01-23T23:30:00Z"
+
+response:
+  params:
+    afterHours: true
+    strictMode: true
+    workflowPhase: emergency
+    requireAuditLog: true
+    notifyOnCall: true
+
+
+# Scenario 6: Test failure recovery
+# Specs sees: tests failed, user is trying to modify code
+# Specs returns: encourage fixing tests first
+---
+example: scenario-test-failure
+request:
+  hook_event:
+    tool_name: Write
+    tool_input:
+      file_path: src/api/users.ts
+  project:
+    git_branch: feature/user-api
+
+response:
+  params:
+    lastTestResult: failed
+    failingTests:
+      - tests/api/users.test.ts
+    strictMode: true
+    # Policy may warn/block changes until tests pass
+
+
+# Scenario 7: Scope creep detection
+# Specs sees: session started with specific goal, many unrelated files modified
+# Specs returns: warning about scope
+---
+example: scenario-scope-creep
+request:
+  hook_event:
+    tool_name: Write
+    tool_input:
+      file_path: src/billing/invoices.ts
+  session:
+    id: sess_abc123
+
+response:
+  params:
+    sessionGoal: "Implement user CRUD endpoints"
+    filesModifiedThisSession:
+      - src/api/users.ts
+      - src/models/user.ts
+      - src/billing/invoices.ts
+      - src/billing/payments.ts
+      - src/config/database.ts
+    scopeWarning: "Current file appears unrelated to session goal"
+
+# ============================================================================
+# Specs endpoint implementation sketch (Python)
+# ============================================================================
+#
+# @app.post("/arci/params")
+# async def get_params(request: ArciRequest) -> ParamsResponse:
+#     session = get_specs_session(request.session.id)
+#     project = get_specs_project(request.project.path)
+#     user = get_specs_user(request.session.user)
+#     workflow = get_current_workflow(session)
+#
+#     params = {
+#         "projectType": project.type,
+#         "projectPhase": project.phase,
+#         "workflowPhase": workflow.phase if workflow else "none",
+#         "workflowStep": workflow.current_step if workflow else None,
+#
+#         "strictMode": should_be_strict(project, workflow, user),
+#
+#         "sessionGoal": session.goal,
+#         "filesModifiedThisSession": session.files_modified,
+#         "testsRunThisSession": session.test_count,
+#         "lastTestResult": session.last_test_result,
+#
+#         "userRole": user.role,
+#         "permissions": user.permissions,
+#
+#         "afterHours": is_after_hours(),
+#         "features": project.features,
+#     }
+#
+#     return ParamsResponse(
+#         params=params,
+#         ttl=30,  # Cache for 30 seconds
+#         cache_key=f"{session.id}:{project.branch}"
+#     )
+
+# ============================================================================
+# Caching and performance
+# ============================================================================
+#
+# To minimize latency, arci can cache params:
+#
+# - Use cache_key from response for cache lookup
+# - Respect ttl for cache expiration
+# - Pre-warm cache on session start
+# - Invalidate on branch switch or significant events
+#
+# The specs subsystem can also push param updates proactively:
+#
+# POST /arci/params/invalidate
+# {
+#   "cache_keys": ["sess_abc123:*"],
+#   "reason": "workflow_phase_changed"
+# }
+
+# ============================================================================
+# Error handling
+# ============================================================================
+#
+# If the specs subsystem returns an error or times out:
+#
+# 1. arci uses defaults from ParamProvider.spec.defaults
+# 2. Policy evaluation continues with degraded context
+# 3. Audit log records that params came from defaults
+# 4. Optional: notify user that full context unavailable
+#
+# The specs subsystem should return partial params rather than error when possible:
+#
+# HTTP 200 OK (partial)
+# {
+#   "params": {
+#     "projectType": "unknown",  // Couldn't determine
+#     "strictMode": true,        // Default to strict when uncertain
+#     "workflowPhase": "none"
+#   },
+#   "warnings": ["Could not determine project type from pyproject.toml"]
+# }
