@@ -3,6 +3,7 @@ package settings
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -170,8 +171,12 @@ func loadFileWithPolicy(opts LoadOpts, cfg *DefaultCascade, source Source, path 
 		return nil
 	}
 
-	// Check if file exists
-	if _, err := os.Stat(path); err != nil {
+	path = filepath.Clean(path)
+
+	// Check if file exists.
+	// Paths originate from platform-specific config directories (toolpaths) or
+	// environment variable overrides, not from untrusted external input.
+	if _, err := os.Stat(path); err != nil { //nolint:gosec // G703: paths come from config resolution, not user input
 		if os.IsNotExist(err) {
 			opts.debug("skipping source", "source", source, "reason", "file not found", "path", path)
 			return nil
