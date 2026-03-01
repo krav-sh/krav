@@ -38,11 +38,13 @@ After identifying the CON-* identifier, load its context:
 
 1. Read the concept's prose file for the full exploration content.
 2. For each active stakeholder, consider: does this concept imply an expectation from their perspective?
-3. For each expectation found, draft a NEED-* node with: `derivesFrom` pointing to the concept, `stakeholder` pointing to the relevant STK-* nodes, a `statement` expressing the expectation from the stakeholder's perspective, and `status: "draft"`.
+3. For each expectation found, draft a NEED-* node with: `derivesFrom` pointing to the concept, `stakeholder` pointing to the relevant STK-* nodes, and a `statement` expressing the expectation from the stakeholder's perspective.
 4. Write needs as stakeholder expectations, not solution descriptions. "The developer needs feedback within 500 ms" not "The system shall respond in 500 ms" (that's a requirement).
 5. Before writing to the graph, run the review loop (see below).
 6. Incorporate review feedback, then present the final needs to the developer for approval.
-7. Write approved needs to `graph.jsonlt` and transition the concept to `"formalized"` once all expectations have landed.
+7. Write approved needs to `graph.jsonlt` with `status: "validated"`. The developer's approval during this skill constitutes stakeholder validation: they review the need statement and confirm it captures their expectation. In team workflows where a separate stakeholder review must happen, set `status: "proposed"` instead and note that validation is pending.
+8. For each need, create a prose file at `.arci/needs/{timestamp}-{NANOID}-{slug}.md`. Include the full statement, rationale, stakeholder perspective, and any context from the concept exploration that informed this need. The prose file gives future readers (and agents) the "why" behind the need without chasing graph edges.
+9. Transition the concept to `"formalized"` once all expectations have landed.
 
 ## Review loop
 

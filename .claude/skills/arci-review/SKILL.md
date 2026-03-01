@@ -36,7 +36,7 @@ Examine deliverables against requirements and record defects for problems found.
 1. Read the module's requirements. These are the criteria for the review.
 2. Read the deliverables from completed tasks. These are the artifacts under review.
 3. For each deliverable, evaluate against the relevant requirements. Check for: correctness (does it satisfy the requirement?), completeness (does it cover the full requirement scope?), consistency (does it conflict with other deliverables or requirements?), and quality (code style, error handling, edge cases).
-4. For each problem found, create a DEF-* node in `.arci/graph.jsonlt` with: `subject` pointing to the relevant REQ-* or TASK-*, `category` (missing, incorrect, ambiguous, inconsistent, etc.), `severity` (critical, major, minor, trivial), `statement` describing the problem, and `status: "open"`.
+4. For each problem found, create a DEF-* node in `.arci/graph.jsonlt` with: `subject` pointing to the relevant REQ-* or TASK-*, `category` (missing, incorrect, ambiguous, inconsistent, etc.), `severity` (critical, major, minor, trivial), `statement` describing the problem, and `status: "open"`. Create a prose file at `.arci/defects/{timestamp}-{NANOID}-{slug}.md` with the full problem description, evidence from the reviewed artifact, the requirement or quality standard it violates, and suggested remediation approach.
 5. Summarize findings at the end: how many defects found, severity breakdown, and assessment.
 
 Be thorough but fair. Not every imperfection is a defect. Focus on problems that affect requirement satisfaction or system quality.

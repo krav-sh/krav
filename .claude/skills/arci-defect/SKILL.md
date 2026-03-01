@@ -25,10 +25,11 @@ Walk through open defects and drive them toward resolution.
 For each open defect:
 
 1. Read the defect statement and the subject node it references.
-2. Determine disposition: confirm (it's a real problem), defer (real but not now, set `deferralTarget`), or reject (not a problem, add `rationale`).
-3. For confirmed defects, create a remediation TASK-* node and link it with `generates`.
-4. After the fix lands, update the defect: `status` → `"resolved"`, add `resolutionNotes`.
-5. After verification of the fix, update to `"verified"`, then `"closed"`.
+2. If the defect lacks a prose file at `.arci/defects/{timestamp}-{NANOID}-{slug}.md`, create one during triage. Include the full problem description, evidence, reproduction context, and the reasoning behind the disposition decision.
+3. Determine disposition: confirm (it's a real problem), defer (real but not now, set `deferralTarget`), or reject (not a problem, add `rationale`).
+4. For confirmed defects, create a remediation TASK-* node and link it with `generates`. Create a prose file for the task at `.arci/tasks/{timestamp}-{NANOID}-{slug}.md` with the remediation approach and constraints.
+5. After the fix lands, update the defect: `status` → `"resolved"`, add `resolutionNotes`.
+6. After verification of the fix, update to `"verified"`, then `"closed"`.
 
 Prioritize by severity. Critical and major defects block module advancement.
 

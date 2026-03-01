@@ -44,12 +44,13 @@ After identifying the NEED-* identifier, load its context and trace the derivati
 1. Read the need's statement and rationale.
 2. Read the originating concepts' prose files for full context on the design thinking and alternatives considered. The concept prose informs what the requirement should constrain, not just what the need says at face value.
 3. Derive one or more requirements that, if satisfied, would address the need. Each requirement should be more specific and constrained than the need.
-4. For each requirement, draft a REQ-* node with: `derivesFrom` pointing to the need, `module` matching the need's module, a `statement` using "shall" language ("The system shall"), `priority`, and `status: "draft"`.
+4. For each requirement, draft a REQ-* node with: `derivesFrom` pointing to the need, `module` matching the need's module, a `statement` using "shall" language ("The system shall"), and `priority`.
 5. Check against existing requirements in the module to avoid duplication.
 6. Each requirement must be verifiable. If you can't describe how to verify it, it's not specific enough.
 7. Before writing to the graph, run the review loop (see below).
 8. Incorporate review feedback, then present the final requirements to the developer for approval.
-9. Write approved requirements to `graph.jsonlt`.
+9. Write approved requirements to `graph.jsonlt` with `status: "approved"`. The developer's approval during this skill constitutes requirement approval: they review the obligation and confirm it should go into the build. In team workflows where a separate review board or architect must sign off, set `status: "draft"` instead and note that approval is pending.
+10. For each requirement, create a prose file at `.arci/requirements/{timestamp}-{NANOID}-{slug}.md`. Include the full statement, rationale, verification approach, and the design context from originating concepts and needs that motivated this obligation. The prose file captures the reasoning chain so future readers understand not just what the requirement says but why it exists and how to verify it.
 
 ## Review loop
 

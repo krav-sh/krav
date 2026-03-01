@@ -51,6 +51,7 @@ After identifying the MOD-* identifier, load its context:
 7. Before writing to the graph, run the review loop (see below).
 8. Incorporate review feedback, then present the final task DAG to the developer for approval.
 9. Write approved tasks to `graph.jsonlt`.
+10. For each task, create a prose file at `.arci/tasks/{timestamp}-{NANOID}-{slug}.md`. Include the task's scope, approach, relevant design context, key decisions or constraints from the requirements it covers, and any notes on integration with dependency deliverables. The prose file gives the agent working the task a richer starting point than the graph node's summary field alone.
 
 ## Review loop
 

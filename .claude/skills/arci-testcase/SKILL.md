@@ -43,12 +43,13 @@ After identifying the MOD-* identifier, load its context:
 ## Instructions
 
 1. Identify requirements that lack test cases (no `verifiedBy` edges).
-2. For each, draft a TC-* node with: `module`, `method` (test, inspection, demonstration, or analysis), `level` (unit, integration, system, acceptance), `acceptanceCriteria` (explicit pass/fail), `verifies` edges to the requirements, and `status: "draft"`.
+2. For each, draft a TC-* node with: `module`, `method` (test, inspection, demonstration, or analysis), `level` (unit, integration, system, acceptance), `acceptanceCriteria` (explicit pass/fail), and `verifies` edges to the requirements.
 3. Choose the verification method based on the requirement: behavioral requirements → test, documentation requirements → inspection, user-facing workflows → demonstration, performance projections → analysis.
-4. This skill creates specifications only. Implementation is a separate verification-phase task.
+4. Set initial status based on the verification method. For inspection and demonstration test cases, the checklist or procedure already constitutes the runnable artifact, so set `status: "executable"` when the acceptance criteria are fully defined. For test and analysis test cases, set `status: "specified"` since they still need a separate task to produce test code or analysis artifacts.
 5. Before writing to the graph, run the review loop (see below).
 6. Incorporate review feedback, then present the final test cases to the developer for approval.
 7. Write approved test cases to `graph.jsonlt` and add corresponding `verifiedBy` edges on the requirement nodes.
+8. For each test case, create a prose file at `.arci/test-cases/{timestamp}-{NANOID}-{slug}.md`. Include the full acceptance criteria, rationale for the chosen verification method, any environment or precondition notes, and for inspection checklists the reasoning behind each checklist item. The prose file ensures the person or agent running verification later understands the intent behind each check, not just the pass/fail criteria.
 
 ## Review loop
 
