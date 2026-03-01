@@ -130,24 +130,31 @@ When a parent regresses:
 
 ## Storage model
 
-ARCI stores module metadata in `graph.jsonlt` as JSON-LD compact form. Prose files contain no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
+ARCI stores module vertex data in the `modules` table (`modules.ndjson` on disk). Edge tables hold all relationships separately.
 
 ```json
-{"@context": "context.jsonld", "@id": "MOD-A4F8R2X1", "@type": "Module", "title": "Parser", "description": "Parses input into AST", "childOf": {"@id": "MOD-OAPSROOT"}, "phase": "implementation", "status": "active"}
+{"id": "MOD-A4F8R2X1", "type": "Module", "title": "Parser", "description": "Parses input into AST", "phase": "implementation", "status": "active"}
+```
+
+The `childOf` relationship lives in the `child_of.ndjson` edge table:
+
+```json
+{"src": "MOD-A4F8R2X1", "dst": "MOD-OAPSROOT"}
 ```
 
 Fields:
 
-- `@id`: Unique identifier (MOD-XXXXXXXX format)
-- `@type`: Always "Module"
+- `id`: Unique identifier (MOD-XXXXXXXX format)
+- `type`: Always "Module"
 - `title`: Human-readable title
 - `description`: Brief description (optional)
-- `childOf`: Parent module reference (null/absent for root)
 - `phase`: Current lifecycle phase
 - `status`: active, deprecated, archived
 - `summary`: Inline prose for extended context (architectural overview, component purpose, design rationale; optional)
 - `created`, `updated`: ISO 8601 timestamps
 - `tags`: Array of strings (optional)
+
+The `childOf` and `integrates` predicates live in their respective edge tables.
 
 ## Stakeholder classes
 
@@ -161,7 +168,7 @@ Modules at different levels serve different stakeholder classes:
 
 ## Relationships
 
-ARCI embeds relationships in the module's JSON-LD record using `{"@id": "..."}` values.
+Edge tables hold all relationships. Each edge table row has `src` and `dst` columns identifying the source and target nodes.
 
 ### Outgoing relationships
 
@@ -181,10 +188,19 @@ ARCI embeds relationships in the module's JSON-LD record using `{"@id": "..."}` 
 | module       | TASK-*  | Tasks for this module                                  |
 | informs      | CON-*  | Concepts that inform this module                       |
 
-Example with relationships:
+Example vertex record and associated edge table rows:
 
 ```json
-{"@context": "context.jsonld", "@id": "MOD-0BS3RV01", "@type": "Module", "title": "Observability", "childOf": {"@id": "MOD-OAPSROOT"}, "integrates": [{"@id": "MOD-A4F8R2X1"}, {"@id": "MOD-B9G3M7K2"}], "phase": "architecture", "status": "active"}
+{"id": "MOD-0BS3RV01", "type": "Module", "title": "Observability", "phase": "architecture", "status": "active"}
+```
+
+In `child_of.ndjson`: `{"src": "MOD-0BS3RV01", "dst": "MOD-OAPSROOT"}`
+
+In `integrates.ndjson`:
+
+```json
+{"src": "MOD-0BS3RV01", "dst": "MOD-A4F8R2X1"}
+{"src": "MOD-0BS3RV01", "dst": "MOD-B9G3M7K2"}
 ```
 
 ## Prose files
@@ -216,7 +232,7 @@ ARCI organizes task deliverables by module in subdirectories under `.arci/module
 Every project has a root module representing the project as a whole:
 
 ```json
-{"@context": "context.jsonld", "@id": "MOD-OAPSROOT", "@type": "Module", "title": "arci", "description": "Agentic Requirements Composition & Integration", "phase": "implementation", "status": "active"}
+{"id": "MOD-OAPSROOT", "type": "Module", "title": "arci", "description": "Agentic Requirements Composition & Integration", "phase": "implementation", "status": "active"}
 ```
 
 Root-level needs capture project-wide stakeholder expectations. Root-level requirements flow down to child modules.
@@ -226,8 +242,10 @@ Root-level needs capture project-wide stakeholder expectations. Root-level requi
 Some modules represent integrations between siblings rather than components:
 
 ```json
-{"@context": "context.jsonld", "@id": "MOD-0BS3RV01", "@type": "Module", "title": "Observability", "childOf": {"@id": "MOD-OAPSROOT"}, "integrates": [{"@id": "MOD-A4F8R2X1"}, {"@id": "MOD-B9G3M7K2"}], "phase": "design", "status": "active"}
+{"id": "MOD-0BS3RV01", "type": "Module", "title": "Observability", "phase": "design", "status": "active"}
 ```
+
+With edges: `child_of` → MOD-OAPSROOT, `integrates` → MOD-A4F8R2X1, `integrates` → MOD-B9G3M7K2.
 
 Integration modules aren't constrained by sibling phases but their integration tasks may depend on sibling verification.
 
@@ -268,20 +286,24 @@ See [Module](../../cli/commands/module.md) for full CLI documentation.
 ### Root module
 
 ```json
-{"@context": "context.jsonld", "@id": "MOD-OAPSROOT", "@type": "Module", "title": "arci", "description": "Agentic Requirements Composition & Integration", "phase": "implementation", "status": "active"}
+{"id": "MOD-OAPSROOT", "type": "Module", "title": "arci", "description": "Agentic Requirements Composition & Integration", "phase": "implementation", "status": "active"}
 ```
 
 ### Subsystem module
 
 ```json
-{"@context": "context.jsonld", "@id": "MOD-A4F8R2X1", "@type": "Module", "title": "Parser", "description": "Parses arci commands and configuration", "childOf": {"@id": "MOD-OAPSROOT"}, "phase": "design", "status": "active", "tags": ["core"]}
+{"id": "MOD-A4F8R2X1", "type": "Module", "title": "Parser", "description": "Parses arci commands and configuration", "phase": "design", "status": "active", "tags": ["core"]}
 ```
+
+With edge: `child_of` → MOD-OAPSROOT.
 
 ### Component module
 
 ```json
-{"@context": "context.jsonld", "@id": "MOD-L3X3R001", "@type": "Module", "title": "Lexer", "description": "Tokenizes input stream", "childOf": {"@id": "MOD-A4F8R2X1"}, "phase": "architecture", "status": "active"}
+{"id": "MOD-L3X3R001", "type": "Module", "title": "Lexer", "description": "Tokenizes input stream", "phase": "architecture", "status": "active"}
 ```
+
+With edge: `child_of` → MOD-A4F8R2X1.
 
 ## Summary
 
@@ -292,7 +314,7 @@ Modules are architectural containers that:
 - Track lifecycle phase independently with module-scoped advancement criteria
 - Scope tasks and deliverables
 - Serve as the primary organizing principle for the project
-- Store metadata in graph.jsonlt; `summary` for inline context, prose files at derived paths for extended content
+- Stored as rows in the `modules` vertex table (`.arci/graph/modules.ndjson` on disk)
 - Implemented following three-layer architecture (core/io/service)
 
 The module hierarchy replaces document-centric organization: the thing under construction is the organizing principle, not documents describing it.

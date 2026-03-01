@@ -49,24 +49,28 @@ Agent nodes are never deleted. Even after a session closes, the AGT-* node remai
 
 ## Storage model
 
-ARCI stores agent metadata in `graph.jsonlt` as JSON-LD compact form. Like all node types, `graph.jsonlt` is the single source of truth for structured data.
+ARCI stores agent vertex data in the `agents` table (`agents.ndjson` on disk). Edge tables hold all relationships separately.
 
 ### Session agent
 
 ```json
-{"@context": "context.jsonld", "@id": "AGT-M5V9K3X7", "@type": "Agent", "title": "Session 2026-01-15T14:30:00Z", "sessionId": "cc-sess-a1b2c3d4", "subagentId": null, "status": "closed", "startedAt": "2026-01-15T14:30:00Z", "endedAt": "2026-01-15T15:45:00Z", "operator": {"@id": "DEV-J4R8T2W6"}}
+{"id": "AGT-M5V9K3X7", "type": "Agent", "title": "Session 2026-01-15T14:30:00Z", "sessionId": "cc-sess-a1b2c3d4", "subagentId": null, "status": "closed", "startedAt": "2026-01-15T14:30:00Z", "endedAt": "2026-01-15T15:45:00Z"}
 ```
+
+With edge in `operator.ndjson`: `{"src": "AGT-M5V9K3X7", "dst": "DEV-J4R8T2W6"}`
 
 ### Subagent
 
 ```json
-{"@context": "context.jsonld", "@id": "AGT-SUB4G3NT", "@type": "Agent", "title": "Subagent: implement parser tests", "sessionId": "cc-sess-a1b2c3d4", "subagentId": "sub-e5f6g7h8", "status": "closed", "startedAt": "2026-01-15T14:45:00Z", "endedAt": "2026-01-15T15:10:00Z", "parentAgent": {"@id": "AGT-M5V9K3X7"}, "operator": {"@id": "DEV-J4R8T2W6"}}
+{"id": "AGT-SUB4G3NT", "type": "Agent", "title": "Subagent: implement parser tests", "sessionId": "cc-sess-a1b2c3d4", "subagentId": "sub-e5f6g7h8", "status": "closed", "startedAt": "2026-01-15T14:45:00Z", "endedAt": "2026-01-15T15:10:00Z"}
 ```
+
+With edges: `parent_agent` → AGT-M5V9K3X7, `operator` → DEV-J4R8T2W6.
 
 Fields:
 
-- `@id`: Unique identifier (AGT-XXXXXXXX format)
-- `@type`: Always "Agent"
+- `id`: Unique identifier (AGT-XXXXXXXX format)
+- `type`: Always "Agent"
 - `title`: Human-readable label (typically includes timestamp or task context)
 - `description`: What this session or subagent was doing (optional)
 - `sessionId`: Claude Code session identifier (required)
@@ -77,6 +81,8 @@ Fields:
 - `summary`: Inline prose for session notes or context (optional)
 - `created`, `updated`: ISO 8601 timestamps
 - `tags`: Array of strings (optional)
+
+The `operator` and `parentAgent` predicates live in their respective edge tables.
 
 Most agents are fully described by their structured fields. Agents that accumulate extensive session logs or notes can use a prose file at `.arci/agents/{timestamp}-{NANOID}-{slug}.md`. See [Prose files](../schema.md#prose-files) for the path convention.
 
@@ -118,8 +124,8 @@ See Agent for full CLI documentation.
 
 ## Design notes
 
-Agents are ephemeral by design. Each Claude Code invocation creates a fresh AGT-* node because session identity matters for provenance; knowing that two modifications happened in the same session is different from knowing they happened in separate sessions. The `sessionId` field captures Claude Code's own session identifier, while the ARCI `@id` (AGT-XXXXXXXX) provides a stable graph identity.
+Agents are ephemeral by design. Each Claude Code invocation creates a fresh AGT-* node because session identity matters for provenance; knowing that two modifications happened in the same session is different from knowing they happened in separate sessions. The `sessionId` field captures Claude Code's own session identifier, while the ARCI `id` (AGT-XXXXXXXX) provides a stable graph identity.
 
 The `parentAgent` predicate is only valid when `subagentId` is non-null. A main session agent has no parent. This constraint is semantic rather than enforced by the schema; the schema allows any AGT-* to reference any other AGT-* via `parentAgent`, but the convention restricts it to the subagent relationship.
 
-Both Developer and Agent declare `rdfs:subClassOf prov:Agent` in the schema's T-Box. RDF-aware tools can query across both types using the PROV-O Agent class, while ARCI's own code distinguishes them by `@type`.
+Both Developer and Agent align with `prov:Agent` in the vocabulary mapping. ARCI's own code distinguishes them by `type`.

@@ -107,18 +107,29 @@ Good requirements are:
 
 ## Storage model
 
-`graph.jsonlt` stores requirement metadata as JSON-LD compact form. Prose files contain no frontmatter;`graph.jsonlt` is the single source of truth for all structured data.
+ARCI stores requirement vertex data in the `requirements` table (`requirements.ndjson` on disk). Edge tables hold all relationships separately.
 
 ```json
-{"@context": "context.jsonld", "@id": "REQ-C2H6N4P8", "@type": "Requirement", "title": "Parser error latency", "module": {"@id": "MOD-A4F8R2X1"}, "statement": "The parser shall report the first syntax error within 50ms", "status": "approved", "priority": "must", "verificationMethod": "test", "verificationCriteria": "Benchmark suite achieves p99 < 50ms", "derivesFrom": [{"@id": "NEED-B7G3M9K2"}]}
+{"id": "REQ-C2H6N4P8", "type": "Requirement", "title": "Parser error latency", "statement": "The parser shall report the first syntax error within 50ms", "status": "approved", "priority": "must", "verificationMethod": "test", "verificationCriteria": "Benchmark suite achieves p99 < 50ms"}
+```
+
+The `module` and `derivesFrom` relationships live in edge tables. In `module.ndjson`:
+
+```json
+{"src": "REQ-C2H6N4P8", "dst": "MOD-A4F8R2X1"}
+```
+
+In `derives_from.ndjson`:
+
+```json
+{"src": "REQ-C2H6N4P8", "dst": "NEED-B7G3M9K2"}
 ```
 
 Fields:
 
-- `@id`: Unique identifier (REQ-XXXXXXXX format)
-- `@type`: Always "Requirement"
+- `id`: Unique identifier (REQ-XXXXXXXX format)
+- `type`: Always "Requirement"
 - `title`: Human-readable title
-- `module`: Module this requirement belongs to (required)
 - `statement`: The requirement statement ("shall" language)
 - `rationale`: Why this requirement exists (optional)
 - `status`: Lifecycle state (draft, proposed, approved, implemented, verified, obsolete)
@@ -128,6 +139,8 @@ Fields:
 - `verificationCriteria`: How to verify this requirement
 - `created`, `updated`: ISO 8601 timestamps
 - `tags`: Array of strings (optional)
+
+The `module`, `derivesFrom`, `allocatesTo`, and `verifiedBy` predicates live in their respective edge tables.
 
 ## Prose files
 
@@ -159,7 +172,7 @@ Each requirement specifies its verification method and criteria.
 
 ## Relationships
 
-ARCI embeds relationships in the requirement's JSON-LD record using `{"@id": "..."}` values.
+Edge tables hold all relationships. Each edge table row has `src` and `dst` columns identifying the source and target nodes.
 
 ### Outgoing relationships
 
@@ -177,11 +190,17 @@ ARCI embeds relationships in the requirement's JSON-LD record using `{"@id": "..
 | derivesFrom| REQ-*  | Child requirements (flow-down)     |
 | verifiedBy | TC-*  | Verifications that verify this requirement |
 
-Example with relationships:
+Example vertex record and associated edge table rows:
 
 ```json
-{"@context": "context.jsonld", "@id": "REQ-C2H6N4P8", "@type": "Requirement", "title": "Parser error latency", "module": {"@id": "MOD-A4F8R2X1"}, "statement": "The parser shall report the first syntax error within 50ms", "status": "approved", "priority": "must", "verificationMethod": "test", "derivesFrom": [{"@id": "NEED-B7G3M9K2"}], "verifiedBy": [{"@id": "TC-D9J5Q1R3"}]}
+{"id": "REQ-C2H6N4P8", "type": "Requirement", "title": "Parser error latency", "statement": "The parser shall report the first syntax error within 50ms", "status": "approved", "priority": "must", "verificationMethod": "test"}
 ```
+
+In `module.ndjson`: `{"src": "REQ-C2H6N4P8", "dst": "MOD-A4F8R2X1"}`
+
+In `derives_from.ndjson`: `{"src": "REQ-C2H6N4P8", "dst": "NEED-B7G3M9K2"}`
+
+In `verified_by.ndjson`: `{"src": "REQ-C2H6N4P8", "dst": "TC-D9J5Q1R3"}`
 
 ## Flow-down
 
@@ -201,7 +220,16 @@ This creates:
 Example with allocation:
 
 ```json
-{"@context": "context.jsonld", "@id": "REQ-H4J7N2P5", "@type": "Requirement", "title": "System latency", "module": {"@id": "MOD-OAPSROOT"}, "statement": "System latency shall be under 100ms", "status": "approved", "allocatesTo": [{"@id": "MOD-A4F8R2X1", "budget": "50ms"}, {"@id": "MOD-B9G3M7K2", "budget": "30ms"}]}
+{"id": "REQ-H4J7N2P5", "type": "Requirement", "title": "System latency", "statement": "System latency shall be under 100ms", "status": "approved"}
+```
+
+In `module.ndjson`: `{"src": "REQ-H4J7N2P5", "dst": "MOD-OAPSROOT"}`
+
+In `allocates_to.ndjson` (with budget metadata):
+
+```json
+{"src": "REQ-H4J7N2P5", "dst": "MOD-A4F8R2X1", "budget": "50ms"}
+{"src": "REQ-H4J7N2P5", "dst": "MOD-B9G3M7K2", "budget": "30ms"}
 ```
 
 ## Derivation
@@ -254,26 +282,34 @@ See [REQ](../../cli/commands/req.md) for full CLI documentation.
 ### Functional requirement
 
 ```json
-{"@context": "context.jsonld", "@id": "REQ-C2H6N4P8", "@type": "Requirement", "title": "Parser error latency", "module": {"@id": "MOD-A4F8R2X1"}, "statement": "The parser shall report the first syntax error within 50ms", "status": "approved", "priority": "must", "verificationMethod": "test", "verificationCriteria": "Benchmark suite achieves p99 < 50ms", "derivesFrom": [{"@id": "NEED-B7G3M9K2"}]}
+{"id": "REQ-C2H6N4P8", "type": "Requirement", "title": "Parser error latency", "statement": "The parser shall report the first syntax error within 50ms", "status": "approved", "priority": "must", "verificationMethod": "test", "verificationCriteria": "Benchmark suite achieves p99 < 50ms"}
 ```
+
+With edges: `module` → MOD-A4F8R2X1, `derives_from` → NEED-B7G3M9K2.
 
 ### Interface requirement
 
 ```json
-{"@context": "context.jsonld", "@id": "REQ-1NT3RF01", "@type": "Requirement", "title": "Parser API signature", "module": {"@id": "MOD-A4F8R2X1"}, "statement": "The parser shall expose a parse() function accepting string input", "status": "implemented", "priority": "must", "verificationMethod": "inspection", "verificationCriteria": "API signature matches specification"}
+{"id": "REQ-1NT3RF01", "type": "Requirement", "title": "Parser API signature", "statement": "The parser shall expose a parse() function accepting string input", "status": "implemented", "priority": "must", "verificationMethod": "inspection", "verificationCriteria": "API signature matches specification"}
 ```
+
+With edge: `module` → MOD-A4F8R2X1.
 
 ### Quality requirement
 
 ```json
-{"@context": "context.jsonld", "@id": "REQ-QU4L1TY1", "@type": "Requirement", "title": "Test coverage threshold", "module": {"@id": "MOD-OAPSROOT"}, "statement": "Test coverage shall exceed 80% for all modules", "status": "approved", "priority": "should", "verificationMethod": "analysis", "verificationCriteria": "Coverage report shows >80% for each module"}
+{"id": "REQ-QU4L1TY1", "type": "Requirement", "title": "Test coverage threshold", "statement": "Test coverage shall exceed 80% for all modules", "status": "approved", "priority": "should", "verificationMethod": "analysis", "verificationCriteria": "Coverage report shows >80% for each module"}
 ```
+
+With edge: `module` → MOD-OAPSROOT.
 
 ### Allocated requirement
 
 ```json
-{"@context": "context.jsonld", "@id": "REQ-L3X3R001", "@type": "Requirement", "title": "Lexer latency budget", "module": {"@id": "MOD-L3X3R001"}, "statement": "Lexer latency shall be under 30ms", "status": "approved", "priority": "must", "verificationMethod": "test", "derivesFrom": [{"@id": "REQ-H4J7N2P5"}]}
+{"id": "REQ-L3X3R001", "type": "Requirement", "title": "Lexer latency budget", "statement": "Lexer latency shall be under 30ms", "status": "approved", "priority": "must", "verificationMethod": "test"}
 ```
+
+With edges: `module` → MOD-L3X3R001, `derives_from` → REQ-H4J7N2P5.
 
 ## Summary
 
@@ -284,7 +320,7 @@ Requirements are verifiable design obligations:
 - Verified by tests, inspections, demonstrations, or analyses
 - Flow down from parent modules with budget allocations
 - Progress from draft through approved to verified
-- Store metadata in graph.jsonlt; `summary` for inline context, prose files at derived paths for extended content
+- Stored as rows in the `requirements` vertex table (`.arci/graph/requirements.ndjson` on disk)
 - Implemented following three-layer architecture (core/io/service)
 
 Requirements are the contract between stakeholder expectations (needs) and coding (code). Every requirement should trace back to a need and forward to verifications that provide evidence.

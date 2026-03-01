@@ -94,25 +94,41 @@ State transitions:
 
 Each need references one or more stakeholders via the `stakeholder` object property. Stakeholders are project-defined STK-* nodes representing the actual parties who have expectations about the system. ARCI provides no fixed taxonomy of stakeholder types; each project defines whatever stakeholders make sense for its context.
 
-A need may reference multiple stakeholders when they share the expectation. "The system shall produce machine-readable error output" might serve both a CI/CD pipeline operator and a tool integration developer. The `stakeholder` property is always an array of `{"@id": "STK-*"}` references, even when there's only one stakeholder.
+A need may reference multiple stakeholders when they share the expectation. "The system shall produce machine-readable error output" might serve both a CI/CD pipeline operator and a tool integration developer. The `stakeholder` edge table captures this relationship; a need with multiple stakeholders has multiple rows in `stakeholder.ndjson`.
 
 See [Stakeholders](stakeholders.md) for the full STK-* node specification.
 
 ## Storage model
 
-`graph.jsonlt` stores need metadata as JSON-LD compact form. Prose files contain no frontmatter;`graph.jsonlt` is the single source of truth for all structured data.
+ARCI stores need vertex data in the `needs` table (`needs.ndjson` on disk). Edge tables hold all relationships separately.
 
 ```json
-{"@context": "context.jsonld", "@id": "NEED-B7G3M9K2", "@type": "Need", "title": "Quick parsing feedback", "module": {"@id": "MOD-A4F8R2X1"}, "stakeholder": [{"@id": "STK-H5N7P3Q9"}], "statement": "Users need quick feedback when parsing fails", "rationale": "Slow error reporting disrupts developer flow", "status": "validated", "priority": "must", "derivesFrom": [{"@id": "CON-K7M3NP2Q"}]}
+{"id": "NEED-B7G3M9K2", "type": "Need", "title": "Quick parsing feedback", "statement": "Users need quick feedback when parsing fails", "rationale": "Slow error reporting disrupts developer flow", "status": "validated", "priority": "must"}
+```
+
+The `module`, `stakeholder`, and `derivesFrom` relationships live in edge tables. In `module.ndjson`:
+
+```json
+{"src": "NEED-B7G3M9K2", "dst": "MOD-A4F8R2X1"}
+```
+
+In `stakeholder.ndjson`:
+
+```json
+{"src": "NEED-B7G3M9K2", "dst": "STK-H5N7P3Q9"}
+```
+
+In `derives_from.ndjson`:
+
+```json
+{"src": "NEED-B7G3M9K2", "dst": "CON-K7M3NP2Q"}
 ```
 
 Fields:
 
-- `@id`: Unique identifier (NEED-XXXXXXXX format)
-- `@type`: Always "Need"
+- `id`: Unique identifier (NEED-XXXXXXXX format)
+- `type`: Always "Need"
 - `title`: Human-readable title
-- `module`: Module this need belongs to (required)
-- `stakeholder`: Stakeholders who have this expectation (required, array of STK-* references)
 - `statement`: The need statement in stakeholder terms
 - `rationale`: Why this need exists (optional)
 - `status`: Lifecycle state (draft, proposed, validated, satisfied, obsolete)
@@ -121,6 +137,8 @@ Fields:
 - `validationEvidence`: Evidence of stakeholder validation (optional)
 - `created`, `updated`: ISO 8601 timestamps
 - `tags`: Array of strings (optional)
+
+The `module`, `stakeholder`, and `derivesFrom` predicates live in their respective edge tables.
 
 ## Prose files
 
@@ -139,7 +157,7 @@ Needs use MoSCoW prioritization:
 
 ## Relationships
 
-ARCI embeds relationships in the need's JSON-LD record using `{"@id": "..."}` values.
+Edge tables hold all relationships. Each edge table row has `src` and `dst` columns identifying the source and target nodes.
 
 ### Outgoing relationships
 
@@ -156,10 +174,21 @@ ARCI embeds relationships in the need's JSON-LD record using `{"@id": "..."}` va
 | derivesFrom | REQ-*  | Requirements derived from this need  |
 | derivesFrom | NEED-*  | Child needs (for need decomposition) |
 
-Example with relationships:
+Example vertex record and associated edge table rows:
 
 ```json
-{"@context": "context.jsonld", "@id": "NEED-B7G3M9K2", "@type": "Need", "title": "Quick parsing feedback", "module": {"@id": "MOD-A4F8R2X1"}, "stakeholder": [{"@id": "STK-H5N7P3Q9"}], "statement": "Users need quick feedback when parsing fails", "status": "validated", "priority": "must", "derivesFrom": [{"@id": "CON-K7M3NP2Q"}, {"@id": "CON-P3RF0RM1"}]}
+{"id": "NEED-B7G3M9K2", "type": "Need", "title": "Quick parsing feedback", "statement": "Users need quick feedback when parsing fails", "status": "validated", "priority": "must"}
+```
+
+In `module.ndjson`: `{"src": "NEED-B7G3M9K2", "dst": "MOD-A4F8R2X1"}`
+
+In `stakeholder.ndjson`: `{"src": "NEED-B7G3M9K2", "dst": "STK-H5N7P3Q9"}`
+
+In `derives_from.ndjson`:
+
+```json
+{"src": "NEED-B7G3M9K2", "dst": "CON-K7M3NP2Q"}
+{"src": "NEED-B7G3M9K2", "dst": "CON-P3RF0RM1"}
 ```
 
 ## Derivation
@@ -228,20 +257,26 @@ See [Need](../../cli/commands/need.md) for full CLI documentation.
 ### Single-stakeholder need
 
 ```json
-{"@context": "context.jsonld", "@id": "NEED-B7G3M9K2", "@type": "Need", "title": "Quick parsing feedback", "module": {"@id": "MOD-A4F8R2X1"}, "stakeholder": [{"@id": "STK-H5N7P3Q9"}], "statement": "Users need quick feedback when parsing fails", "rationale": "Slow error reporting disrupts developer flow", "status": "validated", "priority": "must", "validationEvidence": "User interviews confirmed <3s threshold", "derivesFrom": [{"@id": "CON-K7M3NP2Q"}]}
+{"id": "NEED-B7G3M9K2", "type": "Need", "title": "Quick parsing feedback", "statement": "Users need quick feedback when parsing fails", "rationale": "Slow error reporting disrupts developer flow", "status": "validated", "priority": "must", "validationEvidence": "User interviews confirmed <3s threshold"}
 ```
+
+With edges: `module` → MOD-A4F8R2X1, `stakeholder` → STK-H5N7P3Q9, `derives_from` → CON-K7M3NP2Q.
 
 ### Multi-stakeholder need
 
 ```json
-{"@context": "context.jsonld", "@id": "NEED-ERR0R002", "@type": "Need", "title": "Structured error output", "module": {"@id": "MOD-A4F8R2X1"}, "stakeholder": [{"@id": "STK-H5N7P3Q9"}, {"@id": "STK-1NT3GR8R"}], "statement": "The system needs machine-readable error output for automated processing", "rationale": "Enables both end-user tooling and CI/CD integration", "status": "validated", "priority": "must", "derivesFrom": [{"@id": "CON-K7M3NP2Q"}]}
+{"id": "NEED-ERR0R002", "type": "Need", "title": "Structured error output", "statement": "The system needs machine-readable error output for automated processing", "rationale": "Enables both end-user tooling and CI/CD integration", "status": "validated", "priority": "must"}
 ```
+
+With edges: `module` → MOD-A4F8R2X1, `stakeholder` → STK-H5N7P3Q9, `stakeholder` → STK-1NT3GR8R, `derives_from` → CON-K7M3NP2Q.
 
 ### Project-level need
 
 ```json
-{"@context": "context.jsonld", "@id": "NEED-3C0SYS01", "@type": "Need", "title": "Accurate package metadata", "module": {"@id": "MOD-OAPSROOT"}, "stakeholder": [{"@id": "STK-3C0SYS01"}], "statement": "The project needs accurate package metadata", "rationale": "Enables discovery and dependency resolution", "status": "validated", "priority": "must"}
+{"id": "NEED-3C0SYS01", "type": "Need", "title": "Accurate package metadata", "statement": "The project needs accurate package metadata", "rationale": "Enables discovery and dependency resolution", "status": "validated", "priority": "must"}
 ```
+
+With edges: `module` → MOD-OAPSROOT, `stakeholder` → STK-3C0SYS01.
 
 ## Relationship to concepts and requirements
 
@@ -276,7 +311,7 @@ Needs capture stakeholder expectations:
 - Serve as derivation source for requirements
 - Maintain traceability via derivesFrom relationships
 - Progress from draft through validated to satisfied
-- Store metadata in graph.jsonlt; `summary` for inline context, prose files at derived paths for extended content
+- Stored as rows in the `needs` vertex table (`.arci/graph/needs.ndjson` on disk)
 - Implemented following three-layer architecture (core/io/service)
 
 Needs are the bridge between exploration (concepts) and obligation (requirements), ensuring that what the system delivers traces back to what stakeholders actually need.

@@ -85,16 +85,22 @@ The `conceptType` field categorizes the nature of the exploration:
 
 ## Storage model
 
-ARCI stores concept metadata in `graph.jsonlt` as JSON-LD compact form. Prose files contain no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
+ARCI stores concept vertex data in the `concepts` table (`concepts.ndjson` on disk). Edge tables hold all relationships separately.
 
 ```json
-{"@context": "context.jsonld", "@id": "CON-C0NC3PT5", "@type": "Concept", "title": "Parser architecture", "status": "exploring", "conceptType": "architectural", "informs": {"@id": "MOD-P4RS3R01"}}
+{"id": "CON-C0NC3PT5", "type": "Concept", "title": "Parser architecture", "status": "exploring", "conceptType": "architectural"}
+```
+
+The `informs` relationship to a module lives in the `informs.ndjson` edge table:
+
+```json
+{"src": "CON-C0NC3PT5", "dst": "MOD-P4RS3R01"}
 ```
 
 Fields:
 
-- `@id`: Unique identifier (CON-XXXXXXXX format)
-- `@type`: Always "Concept"
+- `id`: Unique identifier (CON-XXXXXXXX format)
+- `type`: Always "Concept"
 - `title`: Human-readable title
 - `description`: Brief description (optional)
 - `status`: Lifecycle state (draft, exploring, crystallized, formalized, superseded)
@@ -162,7 +168,7 @@ What should we do based on this?
 
 ## Relationships
 
-ARCI embeds relationships in the concept's JSON-LD record using `{"@id": "..."}` values.
+Edge tables hold all relationships. Each edge table row has `src` and `dst` columns identifying the source and target nodes.
 
 ### Outgoing relationships
 
@@ -180,10 +186,29 @@ ARCI embeds relationships in the concept's JSON-LD record using `{"@id": "..."}`
 | derivesFrom  | CON-*  | Other concepts that build on this one |
 | supersedes   | CON-*  | Concept that replaced this one        |
 
-Example with relationships:
+Example vertex record and associated edge table rows:
 
 ```json
-{"@context": "context.jsonld", "@id": "CON-N3W3R001", "@type": "Concept", "title": "Refined architecture", "status": "draft", "conceptType": "architectural", "derivesFrom": [{"@id": "CON-0LD3R001"}, {"@id": "CON-SP1K3456"}], "supersedes": {"@id": "CON-D3PR3C8D"}, "informs": {"@id": "MOD-P4RS3R01"}}
+{"id": "CON-N3W3R001", "type": "Concept", "title": "Refined architecture", "status": "draft", "conceptType": "architectural"}
+```
+
+In `derives_from.ndjson`:
+
+```json
+{"src": "CON-N3W3R001", "dst": "CON-0LD3R001"}
+{"src": "CON-N3W3R001", "dst": "CON-SP1K3456"}
+```
+
+In `supersedes.ndjson`:
+
+```json
+{"src": "CON-N3W3R001", "dst": "CON-D3PR3C8D"}
+```
+
+In `informs.ndjson`:
+
+```json
+{"src": "CON-N3W3R001", "dst": "MOD-P4RS3R01"}
 ```
 
 ## Formalization
@@ -230,20 +255,24 @@ See [Concept](../../cli/commands/concept.md) for full CLI documentation.
 ### Architectural concept
 
 ```json
-{"@context": "context.jsonld", "@id": "CON-K7M3NP2Q", "@type": "Concept", "title": "arci data model", "status": "crystallized", "conceptType": "architectural", "informs": {"@id": "MOD-OAPSROOT"}}
+{"id": "CON-K7M3NP2Q", "type": "Concept", "title": "arci data model", "status": "crystallized", "conceptType": "architectural"}
 ```
+
+With an `informs` edge: `{"src": "CON-K7M3NP2Q", "dst": "MOD-OAPSROOT"}`
 
 ### Technical spike
 
 ```json
-{"@context": "context.jsonld", "@id": "CON-SP1K3456", "@type": "Concept", "title": "JSONLT performance characteristics", "status": "formalized", "conceptType": "technical"}
+{"id": "CON-SP1K3456", "type": "Concept", "title": "JSONLT performance characteristics", "status": "formalized", "conceptType": "technical"}
 ```
 
 ### Process concept with derivation
 
 ```json
-{"@context": "context.jsonld", "@id": "CON-PR0C3SS1", "@type": "Concept", "title": "Phase-gated execution model", "status": "exploring", "conceptType": "process", "derivesFrom": [{"@id": "CON-K7M3NP2Q"}]}
+{"id": "CON-PR0C3SS1", "type": "Concept", "title": "Phase-gated execution model", "status": "exploring", "conceptType": "process"}
 ```
+
+With a `derives_from` edge: `{"src": "CON-PR0C3SS1", "dst": "CON-K7M3NP2Q"}`
 
 ## Relationship to modules
 
@@ -264,7 +293,7 @@ Concepts capture exploration and crystallized thinking:
 
 - Progress from draft through exploring to crystallized
 - Typed by nature of exploration (architectural, technical, process, etc.)
-- Stored in graph.jsonlt with prose files at derived paths (no frontmatter)
+- Stored as rows in the `concepts` vertex table (`.arci/graph/concepts.ndjson` on disk)
 - Formalize into needs via `arci concept formalize`
 - Maintain traceability via derivesFrom relationships
 - Can inform modules via informal `informs` relationship

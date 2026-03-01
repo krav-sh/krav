@@ -144,18 +144,29 @@ arci task ready
 
 ## Storage model
 
-ARCI stores task metadata in `graph.jsonlt` as JSON-LD compact form. Prose files contain no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
+ARCI stores task vertex data in the `tasks` table (`tasks.ndjson` on disk). Edge tables hold all relationships separately.
 
 ```json
-{"@context": "context.jsonld", "@id": "TASK-E3K8S6V2", "@type": "Task", "title": "Implement lexer tokenization", "module": {"@id": "MOD-A4F8R2X1"}, "processPhase": "implementation", "taskType": "implement-feature", "status": "complete", "priority": "high", "summary": "Lexer needs to handle Unicode identifiers and produce a flat token stream. State machine approach preferred.", "dependsOn": [{"@id": "TASK-G5M2R8X4"}]}
+{"id": "TASK-E3K8S6V2", "type": "Task", "title": "Implement lexer tokenization", "processPhase": "implementation", "taskType": "implement-feature", "status": "complete", "priority": "high", "summary": "Lexer needs to handle Unicode identifiers and produce a flat token stream. State machine approach preferred."}
+```
+
+The `module` and `dependsOn` relationships live in edge tables. In `module.ndjson`:
+
+```json
+{"src": "TASK-E3K8S6V2", "dst": "MOD-A4F8R2X1"}
+```
+
+In `depends_on.ndjson`:
+
+```json
+{"src": "TASK-E3K8S6V2", "dst": "TASK-G5M2R8X4"}
 ```
 
 Fields:
 
-- `@id`: Unique identifier (TASK-XXXXXXXX format)
-- `@type`: Always "Task"
+- `id`: Unique identifier (TASK-XXXXXXXX format)
+- `type`: Always "Task"
 - `title`: Human-readable title
-- `module`: Module this task is for (required)
 - `description`: Brief description (optional)
 - `summary`: Inline prose for context, approach, and notes (optional)
 - `processPhase`: Process phase (architecture, design, coding, integration, verification, validation)
@@ -167,6 +178,8 @@ Fields:
 - `created`, `updated`: ISO 8601 timestamps
 - `tags`: Array of strings (optional)
 - `deliverables`: Array of deliverable objects (optional)
+
+The `module`, `dependsOn`, and `implements` predicates live in their respective edge tables.
 
 ## Deliverables
 
@@ -186,8 +199,10 @@ Tasks track outputs via a `deliverables` array with `kind` discriminator:
 Example with deliverables:
 
 ```json
-{"@context": "context.jsonld", "@id": "TASK-E3K8S6V2", "@type": "Task", "title": "Implement lexer", "module": {"@id": "MOD-A4F8R2X1"}, "processPhase": "implementation", "status": "complete", "deliverables": [{"kind": "commit", "sha": "a1b2c3d4e5f6", "message": "Implement lexer tokenization"}, {"kind": "file", "path": "src/parser/lexer.ts", "action": "created"}]}
+{"id": "TASK-E3K8S6V2", "type": "Task", "title": "Implement lexer", "processPhase": "implementation", "status": "complete", "deliverables": [{"kind": "commit", "sha": "a1b2c3d4e5f6", "message": "Implement lexer tokenization"}, {"kind": "file", "path": "src/parser/lexer.ts", "action": "created"}]}
 ```
+
+With edge: `module` → MOD-A4F8R2X1.
 
 ## Prose files
 
@@ -226,7 +241,7 @@ Discovered edge case with Unicode identifiers...
 
 ## Relationships
 
-The task's JSON-LD record embeds relationships using `{"@id": "..."}` values.
+Edge tables hold all relationships. Each edge table row has `src` and `dst` columns identifying the source and target nodes.
 
 ### Outgoing relationships
 
@@ -243,10 +258,19 @@ The task's JSON-LD record embeds relationships using `{"@id": "..."}` values.
 | dependsOn | TASK-*  | Tasks that depend on this       |
 | generates | DEF-*  | Findings that created this task |
 
-Example with relationships:
+Example vertex record and associated edge table rows:
 
 ```json
-{"@context": "context.jsonld", "@id": "TASK-E3K8S6V2", "@type": "Task", "title": "Implement lexer", "module": {"@id": "MOD-A4F8R2X1"}, "processPhase": "implementation", "status": "ready", "dependsOn": [{"@id": "TASK-G5M2R8X4"}, {"@id": "TASK-D3S1GN01"}]}
+{"id": "TASK-E3K8S6V2", "type": "Task", "title": "Implement lexer", "processPhase": "implementation", "status": "ready"}
+```
+
+In `module.ndjson`: `{"src": "TASK-E3K8S6V2", "dst": "MOD-A4F8R2X1"}`
+
+In `depends_on.ndjson`:
+
+```json
+{"src": "TASK-E3K8S6V2", "dst": "TASK-G5M2R8X4"}
+{"src": "TASK-E3K8S6V2", "dst": "TASK-D3S1GN01"}
 ```
 
 ## Task type definitions
@@ -418,26 +442,34 @@ See [Task](../../cli/commands/task.md) for full CLI documentation.
 ### Architecture task
 
 ```json
-{"@context": "context.jsonld", "@id": "TASK-4RCH0001", "@type": "Task", "title": "Parser module decomposition", "module": {"@id": "MOD-A4F8R2X1"}, "processPhase": "architecture", "taskType": "decompose-module", "status": "complete", "deliverables": [{"kind": "document", "type": "architecture-doc", "path": "modules/MOD-A4F8R2X1/architecture.md"}]}
+{"id": "TASK-4RCH0001", "type": "Task", "title": "Parser module decomposition", "processPhase": "architecture", "taskType": "decompose-module", "status": "complete", "deliverables": [{"kind": "document", "type": "architecture-doc", "path": "modules/MOD-A4F8R2X1/architecture.md"}]}
 ```
+
+With edge: `module` → MOD-A4F8R2X1.
 
 ### Implementation task
 
 ```json
-{"@context": "context.jsonld", "@id": "TASK-E3K8S6V2", "@type": "Task", "title": "Implement lexer tokenization", "module": {"@id": "MOD-A4F8R2X1"}, "processPhase": "implementation", "taskType": "implement-feature", "status": "complete", "dependsOn": [{"@id": "TASK-D3S1GN01"}], "implements": [{"@id": "REQ-C2H6N4P8"}], "deliverables": [{"kind": "commit", "sha": "a1b2c3d4e5f6", "message": "Implement lexer tokenization"}]}
+{"id": "TASK-E3K8S6V2", "type": "Task", "title": "Implement lexer tokenization", "processPhase": "implementation", "taskType": "implement-feature", "status": "complete", "deliverables": [{"kind": "commit", "sha": "a1b2c3d4e5f6", "message": "Implement lexer tokenization"}]}
 ```
+
+With edges: `module` → MOD-A4F8R2X1, `depends_on` → TASK-D3S1GN01, `implements` → REQ-C2H6N4P8.
 
 ### Verification task
 
 ```json
-{"@context": "context.jsonld", "@id": "TASK-V3R1FY01", "@type": "Task", "title": "Parser code review", "module": {"@id": "MOD-A4F8R2X1"}, "processPhase": "verification", "taskType": "review-code", "status": "complete", "deliverables": [{"kind": "findings", "ids": ["DEF-F1L4T7W5", "DEF-K8Q3V6X2"]}, {"kind": "document", "type": "review-report", "path": "modules/MOD-A4F8R2X1/reviews/2026-01-03.md"}]}
+{"id": "TASK-V3R1FY01", "type": "Task", "title": "Parser code review", "processPhase": "verification", "taskType": "review-code", "status": "complete", "deliverables": [{"kind": "findings", "ids": ["DEF-F1L4T7W5", "DEF-K8Q3V6X2"]}, {"kind": "document", "type": "review-report", "path": "modules/MOD-A4F8R2X1/reviews/2026-01-03.md"}]}
 ```
+
+With edge: `module` → MOD-A4F8R2X1.
 
 ### Milestone task
 
 ```json
-{"@context": "context.jsonld", "@id": "TASK-R7V3W9Y1", "@type": "Task", "title": "Release 1.0", "module": {"@id": "MOD-OAPSROOT"}, "processPhase": "validation", "taskType": "release", "status": "pending", "dependsOn": [{"@id": "TASK-V3R1FY01"}, {"@id": "TASK-D0CS0001"}]}
+{"id": "TASK-R7V3W9Y1", "type": "Task", "title": "Release 1.0", "processPhase": "validation", "taskType": "release", "status": "pending"}
 ```
+
+With edges: `module` → MOD-OAPSROOT, `depends_on` → TASK-V3R1FY01, `depends_on` → TASK-D0CS0001.
 
 ## Summary
 
@@ -449,7 +481,7 @@ Tasks are atomic work units that:
 - Record deliverables with kind-specific fields
 - Execute in atomic Claude Code sessions
 - Replace plan containers with graph queries
-- Store metadata in graph.jsonlt; `summary` for inline context, prose files at derived paths for extended content
+- Stored as rows in the `tasks` vertex table (`.arci/graph/tasks.ndjson` on disk)
 - Implemented following three-layer architecture (core/io/service)
 
 The task DAG is the work organization: milestones are downstream tasks, scopes are transitive closures, and `the plan` is a query over the graph.

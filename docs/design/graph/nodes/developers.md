@@ -47,16 +47,16 @@ Archiving a developer does not invalidate provenance links. Nodes attributed to 
 
 ## Storage model
 
-ARCI stores developer metadata in `graph.jsonlt` as JSON-LD compact form. Like all node types, `graph.jsonlt` is the single source of truth for structured data.
+ARCI stores developer vertex data in the `developers` table (`developers.ndjson` on disk). Developers have no outgoing relationship properties; agents reference them via the `operator` edge table, and any node can reference them via the `attributed_to` property.
 
 ```json
-{"@context": "context.jsonld", "@id": "DEV-J4R8T2W6", "@type": "Developer", "title": "Tony", "description": "Primary developer and project maintainer", "status": "active"}
+{"id": "DEV-J4R8T2W6", "type": "Developer", "title": "Tony", "description": "Primary developer and project maintainer", "status": "active"}
 ```
 
 Fields:
 
-- `@id`: Unique identifier (DEV-XXXXXXXX format)
-- `@type`: Always "Developer"
+- `id`: Unique identifier (DEV-XXXXXXXX format)
+- `type`: Always "Developer"
 - `title`: Human-readable name for this developer
 - `description`: Role or relationship to the project (optional)
 - `summary`: Inline prose for extended context (optional)

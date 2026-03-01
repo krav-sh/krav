@@ -132,18 +132,23 @@ Unit-level testcases verify a component module's requirements. Integration testc
 
 ## Storage model
 
-ARCI stores test case metadata in `graph.jsonlt` as JSON-LD compact form. Prose files contain no frontmatter; `graph.jsonlt` is the single source of truth for all structured data.
+ARCI stores test case vertex data in the `test_cases` table (`test_cases.ndjson` on disk). Edge tables hold all relationships separately.
 
 ```json
-{"@context": "context.jsonld", "@id": "TC-D9J5Q1R3", "@type": "TestCase", "title": "Parser error latency benchmark", "module": {"@id": "MOD-A4F8R2X1"}, "description": "Verifies error reporting meets 50ms requirement", "method": "test", "level": "unit", "status": "executable", "currentResult": "pass", "lastRunAt": "2026-01-15T14:30:00Z", "acceptanceCriteria": "p99 latency < 50ms across 1000 iterations", "implementation": "tests/parser/error_latency_test.ts"}
+{"id": "TC-D9J5Q1R3", "type": "TestCase", "title": "Parser error latency benchmark", "description": "Verifies error reporting meets 50ms requirement", "method": "test", "level": "unit", "status": "executable", "currentResult": "pass", "lastRunAt": "2026-01-15T14:30:00Z", "acceptanceCriteria": "p99 latency < 50ms across 1000 iterations", "implementation": "tests/parser/error_latency_test.ts"}
+```
+
+The `module` relationship lives in the `module.ndjson` edge table:
+
+```json
+{"src": "TC-D9J5Q1R3", "dst": "MOD-A4F8R2X1"}
 ```
 
 Fields:
 
-- `@id`: Unique identifier (TC-XXXXXXXX format)
-- `@type`: Always `TestCase`
+- `id`: Unique identifier (TC-XXXXXXXX format)
+- `type`: Always `TestCase`
 - `title`: Human-readable title
-- `module`: Module this test case belongs to (required)
 - `description`: What this test case verifies (optional)
 - `method`: Verification method (inspection, demonstration, test, analysis)
 - `level`: Test case level (unit, integration, system, acceptance)
@@ -156,13 +161,15 @@ Fields:
 - `created`, `updated`: ISO 8601 timestamps
 - `tags`: Array of strings (optional)
 
+The `module` and `verifies` predicates live in their respective edge tables.
+
 ## Prose files
 
 `acceptanceCriteria` and the type-specific fields (`checklist`, `procedure`, `approach`) fully describe most testcases. Complex testcases (detailed analysis methods, multi-step demonstration procedures, environment-specific setup) may need a prose file at `.arci/test-cases/{timestamp}-{NANOID}-{slug}.md`, with the path derived from the node's identifier. See [Prose files](../schema.md#prose-files) for the full convention.
 
 ## Relationships
 
-The test case's JSON-LD record embeds relationships using `{"@id": "..."}` values.
+Edge tables hold all relationships. Each edge table row has `src` and `dst` columns identifying the source and target nodes.
 
 ### Outgoing relationships
 
@@ -179,11 +186,15 @@ The test case's JSON-LD record embeds relationships using `{"@id": "..."}` value
 
 Note: verifiedBy on REQ points to TC; verifies on TC points to REQ. These are inverses.
 
-Example with relationships:
+Example vertex record and associated edge table rows:
 
 ```json
-{"@context": "context.jsonld", "@id": "TC-D9J5Q1R3", "@type": "TestCase", "title": "Parser error latency benchmark", "module": {"@id": "MOD-A4F8R2X1"}, "method": "test", "level": "unit", "status": "executable", "currentResult": "pass", "acceptanceCriteria": "p99 latency < 50ms", "implementation": "tests/parser/error_latency_test.ts", "verifies": [{"@id": "REQ-C2H6N4P8"}]}
+{"id": "TC-D9J5Q1R3", "type": "TestCase", "title": "Parser error latency benchmark", "method": "test", "level": "unit", "status": "executable", "currentResult": "pass", "acceptanceCriteria": "p99 latency < 50ms", "implementation": "tests/parser/error_latency_test.ts"}
 ```
+
+In `module.ndjson`: `{"src": "TC-D9J5Q1R3", "dst": "MOD-A4F8R2X1"}`
+
+In `verified_by.ndjson`: `{"src": "REQ-C2H6N4P8", "dst": "TC-D9J5Q1R3"}`
 
 ## Test case types
 
@@ -192,32 +203,40 @@ Example with relationships:
 Most common. Code that executes and asserts outcomes:
 
 ```json
-{"@context": "context.jsonld", "@id": "TC-D9J5Q1R3", "@type": "TestCase", "title": "Parser error latency benchmark", "module": {"@id": "MOD-A4F8R2X1"}, "method": "test", "level": "unit", "status": "executable", "currentResult": "pass", "implementation": "tests/parser/error_latency_test.ts"}
+{"id": "TC-D9J5Q1R3", "type": "TestCase", "title": "Parser error latency benchmark", "method": "test", "level": "unit", "status": "executable", "currentResult": "pass", "implementation": "tests/parser/error_latency_test.ts"}
 ```
+
+With edge: `module` → MOD-A4F8R2X1.
 
 ### Inspection checklists
 
 For requirements that artifact examination verifies:
 
 ```json
-{"@context": "context.jsonld", "@id": "TC-1NSP3CT1", "@type": "TestCase", "title": "Documentation completeness", "module": {"@id": "MOD-OAPSROOT"}, "method": "inspection", "level": "system", "status": "executable", "currentResult": "pass", "checklist": ["API documentation exists for all public functions", "Error codes are documented with examples", "README includes quick start guide"]}
+{"id": "TC-1NSP3CT1", "type": "TestCase", "title": "Documentation completeness", "method": "inspection", "level": "system", "status": "executable", "currentResult": "pass", "checklist": ["API documentation exists for all public functions", "Error codes are documented with examples", "README includes quick start guide"]}
 ```
+
+With edge: `module` → MOD-OAPSROOT.
 
 ### Demonstrations
 
 For requirements that operation and observation verify:
 
 ```json
-{"@context": "context.jsonld", "@id": "TC-D3M00001", "@type": "TestCase", "title": "Module lifecycle demonstration", "module": {"@id": "MOD-B9G3M7K2"}, "method": "demonstration", "level": "acceptance", "status": "executable", "currentResult": "pass", "procedure": "Execute standard user workflow and verify outputs"}
+{"id": "TC-D3M00001", "type": "TestCase", "title": "Module lifecycle demonstration", "method": "demonstration", "level": "acceptance", "status": "executable", "currentResult": "pass", "procedure": "Execute standard user workflow and verify outputs"}
 ```
+
+With edge: `module` → MOD-B9G3M7K2.
 
 ### Analyses
 
 For requirements that modeling or calculation verifies:
 
 ```json
-{"@context": "context.jsonld", "@id": "TC-4N4LYS15", "@type": "TestCase", "title": "System latency analysis", "module": {"@id": "MOD-OAPSROOT"}, "method": "analysis", "level": "system", "status": "executable", "currentResult": "pass", "approach": "Performance modeling based on component benchmarks", "conclusion": "System latency under load: 87ms (within 100ms budget)"}
+{"id": "TC-4N4LYS15", "type": "TestCase", "title": "System latency analysis", "method": "analysis", "level": "system", "status": "executable", "currentResult": "pass", "approach": "Performance modeling based on component benchmarks", "conclusion": "System latency under load: 87ms (within 100ms budget)"}
 ```
+
+With edge: `module` → MOD-OAPSROOT.
 
 ## Specification-coding decoupling
 
@@ -280,34 +299,44 @@ See [Tc](../../cli/commands/tc.md) for full CLI documentation.
 ### Automated unit test case
 
 ```json
-{"@context": "context.jsonld", "@id": "TC-D9J5Q1R3", "@type": "TestCase", "title": "Parser error latency benchmark", "module": {"@id": "MOD-A4F8R2X1"}, "method": "test", "level": "unit", "status": "executable", "currentResult": "pass", "lastRunAt": "2026-01-15T14:30:00Z", "acceptanceCriteria": "p99 latency < 50ms across 1000 iterations", "implementation": "tests/parser/error_latency_test.ts", "verifies": [{"@id": "REQ-C2H6N4P8"}]}
+{"id": "TC-D9J5Q1R3", "type": "TestCase", "title": "Parser error latency benchmark", "method": "test", "level": "unit", "status": "executable", "currentResult": "pass", "lastRunAt": "2026-01-15T14:30:00Z", "acceptanceCriteria": "p99 latency < 50ms across 1000 iterations", "implementation": "tests/parser/error_latency_test.ts"}
 ```
+
+With edges: `module` → MOD-A4F8R2X1, `verified_by` (from REQ-C2H6N4P8) → TC-D9J5Q1R3.
 
 ### Integration test case
 
 ```json
-{"@context": "context.jsonld", "@id": "TC-1NT3GR01", "@type": "TestCase", "title": "Parser-CLI integration", "module": {"@id": "MOD-A4F8R2X1"}, "method": "test", "level": "integration", "status": "executable", "currentResult": "pass", "implementation": "tests/integration/parser_cli_test.ts"}
+{"id": "TC-1NT3GR01", "type": "TestCase", "title": "Parser-CLI integration", "method": "test", "level": "integration", "status": "executable", "currentResult": "pass", "implementation": "tests/integration/parser_cli_test.ts"}
 ```
+
+With edge: `module` → MOD-A4F8R2X1.
 
 ### Inspection test case
 
 ```json
-{"@context": "context.jsonld", "@id": "TC-D0C5CH3K", "@type": "TestCase", "title": "Documentation completeness", "module": {"@id": "MOD-OAPSROOT"}, "method": "inspection", "level": "system", "status": "executable", "currentResult": "pass", "checklist": ["README exists and is current", "API docs generated and published", "CONTRIBUTING.md present"]}
+{"id": "TC-D0C5CH3K", "type": "TestCase", "title": "Documentation completeness", "method": "inspection", "level": "system", "status": "executable", "currentResult": "pass", "checklist": ["README exists and is current", "API docs generated and published", "CONTRIBUTING.md present"]}
 ```
+
+With edge: `module` → MOD-OAPSROOT.
 
 ### Demonstration test case
 
 ```json
-{"@context": "context.jsonld", "@id": "TC-D3M0CL11", "@type": "TestCase", "title": "CLI workflow demonstration", "module": {"@id": "MOD-B9G3M7K2"}, "method": "demonstration", "level": "acceptance", "status": "executable", "currentResult": "pass", "procedure": "Execute standard user workflow and verify outputs"}
+{"id": "TC-D3M0CL11", "type": "TestCase", "title": "CLI workflow demonstration", "method": "demonstration", "level": "acceptance", "status": "executable", "currentResult": "pass", "procedure": "Execute standard user workflow and verify outputs"}
 ```
+
+With edge: `module` → MOD-B9G3M7K2.
 
 ## Relationship to tasks
 
 Verification-phase tasks create and execute test cases:
 
 ```json
-{"@context": "context.jsonld", "@id": "TASK-V3R1FY01", "@type": "Task", "title": "Implement parser test cases", "module": {"@id": "MOD-A4F8R2X1"}, "processPhase": "verification", "taskType": "verification-implementation"}
+{"id": "TASK-V3R1FY01", "type": "Task", "title": "Implement parser test cases", "processPhase": "verification", "taskType": "verification-implementation"}
 ```
+
+With edge: `module` → MOD-A4F8R2X1.
 
 Tasks can record test case execution results as deliverables.
 
@@ -323,7 +352,7 @@ Test cases are verification specifications:
 - `acceptanceCriteria` field defines explicit pass/fail criteria
 - Implementation is a task deliverable, decoupled from the specification
 - Enable coverage analysis and gap identification
-- Store metadata in graph.jsonlt; `summary` for inline context, prose files at derived paths for extended content
+- Stored as rows in the `test_cases` vertex table (`.arci/graph/test_cases.ndjson` on disk)
 - Implemented following three-layer architecture (core/io/service)
 
 Test cases close the loop from requirements to evidence, proving that the system meets its obligations.

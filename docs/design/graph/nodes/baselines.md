@@ -4,7 +4,7 @@
 
 Baselines (BSL-*) capture the state of the knowledge graph at a specific point in time. A baseline records which nodes existed, their states, and the relationships between them, anchored to a specific git commit. Baselines enable milestone recording, change auditing, regression detection, and phase gate enforcement.
 
-Traditional RE tools treat baselines as snapshots of a requirements database. ARCI takes a lighter approach: since graph.jsonlt is version-controlled and append-only, the git history already contains every historical state. A baseline is a named reference into that history with metadata about why the team created it, what it covers, and who approved it.
+Traditional RE tools treat baselines as snapshots of a requirements database. ARCI takes a lighter approach: since the NDJSON graph files are version-controlled and append-only, the git history already contains every historical state. A baseline is a named reference into that history with metadata about why the team created it, what it covers, and who approved it.
 
 ## Purpose
 
@@ -22,18 +22,23 @@ Baselines serve multiple roles:
 
 ## Storage model
 
-ARCI stores baseline metadata in `graph.jsonlt` as JSON-LD compact form, like all other node types. The baseline record does not contain a full graph snapshot; it stores a git commit SHA that you can use to reconstruct the graph state at baseline time.
+ARCI stores baseline vertex data in the `baselines` table (`baselines.ndjson` on disk). Edge tables hold all relationships separately. The baseline record does not contain a full graph snapshot; it stores a git commit SHA that you can use to reconstruct the graph state at baseline time.
 
 ```json
-{"@context": "context.jsonld", "@id": "BSL-R3L3AS31", "@type": "Baseline", "title": "Architecture baseline", "module": {"@id": "MOD-OAPSROOT"}, "scope": "subtree", "commitSha": "a1b2c3d4e5f6789...", "phase": "architecture", "status": "approved", "approvedBy": "tony", "approvedAt": "2026-02-28T16:00:00Z", "description": "Architecture phase complete for root module. All architecture tasks done, no blocking findings.", "statistics": {"modules": 5, "concepts": 12, "needs": 8, "requirements": 15, "verifications": 6, "tasks": 23, "findings": {"open": 0, "closed": 7}}}
+{"id": "BSL-R3L3AS31", "type": "Baseline", "title": "Architecture baseline", "scope": "subtree", "commitSha": "a1b2c3d4e5f6789...", "phase": "architecture", "status": "approved", "approvedBy": "tony", "approvedAt": "2026-02-28T16:00:00Z", "description": "Architecture phase complete for root module. All architecture tasks done, no blocking findings.", "statistics": {"modules": 5, "concepts": 12, "needs": 8, "requirements": 15, "verifications": 6, "tasks": 23, "findings": {"open": 0, "closed": 7}}}
+```
+
+The `module` relationship lives in the `module.ndjson` edge table:
+
+```json
+{"src": "BSL-R3L3AS31", "dst": "MOD-OAPSROOT"}
 ```
 
 Fields:
 
-- `@id`: Unique identifier (BSL-XXXXXXXX format)
-- `@type`: Always "Baseline"
+- `id`: Unique identifier (BSL-XXXXXXXX format)
+- `type`: Always "Baseline"
 - `title`: Human-readable title
-- `module`: The module this baseline roots at
 - `scope`: What the baseline covers (see Scope below)
 - `commitSha`: Git commit SHA anchoring the graph state
 - `phase`: The lifecycle phase this baseline captures (optional, for phase-gate baselines)
@@ -46,9 +51,11 @@ Fields:
 - `created`, `updated`: ISO 8601 timestamps
 - `tags`: Array of strings (optional)
 
+The `module` predicate lives in the `module` edge table.
+
 ### Why git commit SHA, not a full snapshot?
 
-The graph.jsonlt file is version-controlled. You can reconstruct any historical state by checking out graph.jsonlt at the baseline's commit SHA. This avoids duplicating the entire graph inside the baseline record (which would be expensive and redundant), while remaining fully reproducible.
+The graph directory (`.arci/graph/`) is version-controlled. You can reconstruct any historical state by checking out the NDJSON files at the baseline's commit SHA. This avoids duplicating the entire graph inside the baseline record (which would be expensive and redundant), while remaining fully reproducible.
 
 The tradeoff: if git history is rewritten (force push, rebase) and the baseline's commit SHA becomes unreachable, the baseline is unresolvable. This is intentional, because it surfaces history tampering. Projects that need tamper-evident baselines should protect the branch containing `.arci/` from force pushes.
 
@@ -176,7 +183,7 @@ policies:
 
 When phase advancement triggers a baseline:
 
-1. The CLI commits any pending changes to graph.jsonlt
+1. The CLI commits any pending changes to the NDJSON files
 2. ARCI creates a BSL-* record with the current commit SHA
 3. ARCI computes statistics from the current graph state
 4. If the user enables auto-approve, the baseline enters `approved` status immediately
@@ -196,9 +203,9 @@ The primary analytical operation on baselines is semantic diff: given two baseli
 
 To diff two baselines, ARCI materializes the graph at each commit:
 
-1. Read graph.jsonlt at baseline A's commit SHA (via `git show <sha>:.arci/graph.jsonlt`)
-2. Read graph.jsonlt at baseline B's commit SHA (or current working tree)
-3. Materialize both into in-memory Graph instances
+1. Read the NDJSON files at baseline A's commit SHA (via `git show <sha>:.arci/graph/*.ndjson`)
+2. Read the NDJSON files at baseline B's commit SHA (or current working tree)
+3. Hydrate both into in-memory DuckDB instances
 4. Scope each graph to the baseline's module subtree
 5. Compute structural diff
 
@@ -317,20 +324,26 @@ A baseline-creation task template could standardize the baselining process: revi
 ### Architecture phase gate baseline
 
 ```json
-{"@context": "context.jsonld", "@id": "BSL-4RCH0001", "@type": "Baseline", "title": "Architecture baseline", "module": {"@id": "MOD-OAPSROOT"}, "scope": "subtree", "commitSha": "a1b2c3d4e5f6789abcdef0123456789abcdef01", "phase": "architecture", "status": "approved", "approvedBy": "tony", "approvedAt": "2026-01-15T14:30:00Z", "description": "Architecture phase complete. Module hierarchy established, key interfaces identified, architecture review findings all closed.", "statistics": {"modules": 5, "concepts": 12, "needs": 8, "requirements": 15, "verifications": 6, "tasks": 23, "findings": {"open": 0, "closed": 7}, "suspectLinks": 0, "verificationCoverage": 0.4}}
+{"id": "BSL-4RCH0001", "type": "Baseline", "title": "Architecture baseline", "scope": "subtree", "commitSha": "a1b2c3d4e5f6789abcdef0123456789abcdef01", "phase": "architecture", "status": "approved", "approvedBy": "tony", "approvedAt": "2026-01-15T14:30:00Z", "description": "Architecture phase complete. Module hierarchy established, key interfaces identified, architecture review findings all closed.", "statistics": {"modules": 5, "concepts": 12, "needs": 8, "requirements": 15, "verifications": 6, "tasks": 23, "findings": {"open": 0, "closed": 7}, "suspectLinks": 0, "verificationCoverage": 0.4}}
 ```
+
+With edge: `module` → MOD-OAPSROOT.
 
 ### Subsystem design baseline
 
 ```json
-{"@context": "context.jsonld", "@id": "BSL-D3S1GN01", "@type": "Baseline", "title": "Parser design baseline", "module": {"@id": "MOD-A4F8R2X1"}, "scope": "subtree", "commitSha": "f6e5d4c3b2a19876543210fedcba9876543210fe", "phase": "design", "status": "approved", "approvedBy": "tony", "approvedAt": "2026-02-28T16:00:00Z", "description": "Parser API design finalized. All design tasks complete, API spec and data model documented.", "statistics": {"modules": 3, "concepts": 4, "needs": 3, "requirements": 8, "verifications": 5, "tasks": 11, "findings": {"open": 0, "closed": 4}, "suspectLinks": 0, "verificationCoverage": 0.625}}
+{"id": "BSL-D3S1GN01", "type": "Baseline", "title": "Parser design baseline", "scope": "subtree", "commitSha": "f6e5d4c3b2a19876543210fedcba9876543210fe", "phase": "design", "status": "approved", "approvedBy": "tony", "approvedAt": "2026-02-28T16:00:00Z", "description": "Parser API design finalized. All design tasks complete, API spec and data model documented.", "statistics": {"modules": 3, "concepts": 4, "needs": 3, "requirements": 8, "verifications": 5, "tasks": 11, "findings": {"open": 0, "closed": 4}, "suspectLinks": 0, "verificationCoverage": 0.625}}
 ```
+
+With edge: `module` → MOD-A4F8R2X1.
 
 ### Draft baseline pending review
 
 ```json
-{"@context": "context.jsonld", "@id": "BSL-1MPL0001", "@type": "Baseline", "title": "Implementation checkpoint", "module": {"@id": "MOD-A4F8R2X1"}, "scope": "subtree", "commitSha": "1234567890abcdef1234567890abcdef12345678", "status": "draft", "description": "Implementation checkpoint before refactoring parser internals."}
+{"id": "BSL-1MPL0001", "type": "Baseline", "title": "Implementation checkpoint", "scope": "subtree", "commitSha": "1234567890abcdef1234567890abcdef12345678", "status": "draft", "description": "Implementation checkpoint before refactoring parser internals."}
 ```
+
+With edge: `module` → MOD-A4F8R2X1.
 
 ## Implementation status
 
@@ -348,7 +361,7 @@ Baselines provide named references into git history that capture the knowledge g
 - Anchored to git commit SHAs rather than full graph snapshots
 - Scoped to module subtrees for targeted baselining
 - Integrated with phase gates via hook policies
-- Semantic diff produces structured changelogs at the graph level (not JSONLT line diffs)
+- Semantic diff produces structured changelogs at the graph level (not NDJSON line diffs)
 - Statistics snapshot enables quick inspection and integrity verification
 - Temporal sequencing via lifecycle (draft → approved → superseded)
-- Store metadata in graph.jsonlt; `summary` for inline context, prose files at derived paths for extended content
+- Stored as rows in the `baselines` vertex table (`.arci/graph/baselines.ndjson` on disk)

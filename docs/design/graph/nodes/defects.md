@@ -136,18 +136,35 @@ A resolved defect isn't necessarily fixed correctly. The `verified` state requir
 
 ## Storage model
 
-ARCI stores defect metadata in `graph.jsonlt` as JSON-LD compact form:
+ARCI stores defect vertex data in the `defects` table (`defects.ndjson` on disk). Edge tables hold all relationships separately.
 
 ```json
-{"@context": "context.jsonld", "@id": "DEF-F1L4T7W5", "@type": "Defect", "title": "Error messages missing line numbers", "module": {"@id": "MOD-A4F8R2X1"}, "category": "incomplete", "severity": "major", "status": "confirmed", "statement": "Error messages report the error type but not the source location, making it difficult to locate problems in input files", "detectedBy": {"@id": "TASK-R3V13W01"}, "detectedInPhase": "design", "subject": {"@id": "REQ-3RR0R001"}}
+{"id": "DEF-F1L4T7W5", "type": "Defect", "title": "Error messages missing line numbers", "category": "incomplete", "severity": "major", "status": "confirmed", "statement": "Error messages report the error type but not the source location, making it difficult to locate problems in input files", "detectedInPhase": "design"}
+```
+
+The `module`, `detectedBy`, and `subject` relationships live in edge tables. In `module.ndjson`:
+
+```json
+{"src": "DEF-F1L4T7W5", "dst": "MOD-A4F8R2X1"}
+```
+
+In `detected_by.ndjson`:
+
+```json
+{"src": "DEF-F1L4T7W5", "dst": "TASK-R3V13W01"}
+```
+
+In `subject.ndjson`:
+
+```json
+{"src": "DEF-F1L4T7W5", "dst": "REQ-3RR0R001"}
 ```
 
 Fields:
 
-- `@id`: Unique identifier (DEF-XXXXXXXX format)
-- `@type`: Always "Defect"
+- `id`: Unique identifier (DEF-XXXXXXXX format)
+- `type`: Always "Defect"
 - `title`: Short description of the problem
-- `module`: Module where the team found the defect (required)
 - `category`: Defect category (optional, see Defect categories)
 - `severity`: critical, major, minor, trivial (required)
 - `status`: Lifecycle state (see Lifecycle)
@@ -159,6 +176,8 @@ Fields:
 - `detectedInPhase`: The module phase when the team found the defect (optional)
 - `created`, `updated`: ISO 8601 timestamps
 - `tags`: Array of strings (optional)
+
+The `module`, `subject`, `detectedBy`, and `generates` predicates live in their respective edge tables.
 
 ## Prose files
 
@@ -185,12 +204,14 @@ Most defects are fully described by `statement` and `summary`. For defects that 
 
 `subject` replaces the old `regarding` predicate. It points at the defective node: the requirement that's ambiguous, the module whose interface is incomplete, the verification that's inadequate. Unlike `regarding` (which left the relationship meaning unclear), `subject` carries a specific semantic: `this node has a problem`.
 
-`subject` can target any node type:
+`subject` can target any node type. The `subject` edge table captures this relationship:
+
+In `subject.ndjson`:
 
 ```json
-{"@id": "DEF-AMB1GU01", "subject": {"@id": "REQ-C2H6N4P8"}, "category": "ambiguous", "statement": "Requirement says 'quickly' without defining a threshold"}
-{"@id": "DEF-M1SS1NG1", "subject": {"@id": "MOD-A4F8R2X1"}, "category": "missing", "statement": "No error handling defined for malformed input"}
-{"@id": "DEF-N0NTR4C1", "subject": {"@id": "REQ-N3WR3Q01"}, "category": "non-traceable", "statement": "Requirement has no derivesFrom link to any need"}
+{"src": "DEF-AMB1GU01", "dst": "REQ-C2H6N4P8"}
+{"src": "DEF-M1SS1NG1", "dst": "MOD-A4F8R2X1"}
+{"src": "DEF-N0NTR4C1", "dst": "REQ-N3WR3Q01"}
 ```
 
 ### The detectedBy relationship
@@ -203,9 +224,7 @@ When an agent finds a defect outside a formal review (say, during coding), the u
 
 When a confirmed defect needs work, `generates` links to the remediation task. This is the same pattern as the old DEF-* design. The remediation task, when complete, drives the defect from `confirmed` to `resolved`.
 
-```json
-{"@id": "DEF-F1L4T7W5", "generates": {"@id": "TASK-F1X00001"}, "status": "resolved"}
-```
+In `generates.ndjson`: `{"src": "DEF-F1L4T7W5", "dst": "TASK-F1X00001"}`
 
 ## Interaction with reviews
 
@@ -272,8 +291,10 @@ Some operations create defects automatically:
 **Phase regression**: when a module regresses to an earlier phase, ARCI creates a defect to record why:
 
 ```json
-{"@context": "context.jsonld", "@id": "DEF-R3GR3SS1", "@type": "Defect", "title": "Module boundary unclear", "module": {"@id": "MOD-A4F8R2X1"}, "severity": "major", "status": "confirmed", "statement": "Boundary between lexer and tokenizer is unclear, causing interface confusion", "category": "ambiguous", "detectedInPhase": "design", "subject": {"@id": "MOD-A4F8R2X1"}}
+{"id": "DEF-R3GR3SS1", "type": "Defect", "title": "Module boundary unclear", "severity": "major", "status": "confirmed", "statement": "Boundary between lexer and tokenizer is unclear, causing interface confusion", "category": "ambiguous", "detectedInPhase": "design"}
 ```
+
+With edges: `module` → MOD-A4F8R2X1, `subject` → MOD-A4F8R2X1.
 
 This is one of the few cases where automatic creation justifies itself; phase regression is always a major event that needs a tracked reason.
 
@@ -320,32 +341,42 @@ See [Defect](../../cli/commands/defect.md) for full CLI documentation.
 ### Incomplete requirement found during design review
 
 ```json
-{"@context": "context.jsonld", "@id": "DEF-F1L4T7W5", "@type": "Defect", "title": "Error messages missing source location", "module": {"@id": "MOD-A4F8R2X1"}, "category": "incomplete", "severity": "major", "status": "confirmed", "statement": "Error messages report the error type but not the line/column, making it difficult to locate problems in input files", "subject": {"@id": "REQ-3RR0R001"}, "detectedBy": {"@id": "TASK-R3V13W01"}, "detectedInPhase": "design"}
+{"id": "DEF-F1L4T7W5", "type": "Defect", "title": "Error messages missing source location", "category": "incomplete", "severity": "major", "status": "confirmed", "statement": "Error messages report the error type but not the line/column, making it difficult to locate problems in input files", "detectedInPhase": "design"}
 ```
+
+With edges: `module` → MOD-A4F8R2X1, `subject` → REQ-3RR0R001, `detected_by` → TASK-R3V13W01.
 
 ### Regression found during verification
 
 ```json
-{"@context": "context.jsonld", "@id": "DEF-R3GR3SS1", "@type": "Defect", "title": "Parser latency regression", "module": {"@id": "MOD-A4F8R2X1"}, "category": "regression", "severity": "critical", "status": "confirmed", "statement": "Parser p99 latency increased from 42ms to 67ms after refactoring, exceeding the 50ms requirement", "subject": {"@id": "REQ-C2H6N4P8"}, "detectedBy": {"@id": "TASK-V3R1FY02"}, "detectedInPhase": "verification", "generates": {"@id": "TASK-F1XP3RF1"}}
+{"id": "DEF-R3GR3SS1", "type": "Defect", "title": "Parser latency regression", "category": "regression", "severity": "critical", "status": "confirmed", "statement": "Parser p99 latency increased from 42ms to 67ms after refactoring, exceeding the 50ms requirement", "detectedInPhase": "verification"}
 ```
+
+With edges: `module` → MOD-A4F8R2X1, `subject` → REQ-C2H6N4P8, `detected_by` → TASK-V3R1FY02, `generates` → TASK-F1XP3RF1.
 
 ### Ambiguous requirement found during architecture review
 
 ```json
-{"@context": "context.jsonld", "@id": "DEF-AMB1GU01", "@type": "Defect", "title": "Requirement uses vague threshold", "module": {"@id": "MOD-A4F8R2X1"}, "category": "ambiguous", "severity": "minor", "status": "resolved", "statement": "REQ-P3RF0RM1 says 'quickly' without defining a measurable threshold", "subject": {"@id": "REQ-P3RF0RM1"}, "detectedBy": {"@id": "TASK-4RCHR3V1"}, "detectedInPhase": "architecture", "resolutionNotes": "Updated requirement to specify 'within 50ms at p99'"}
+{"id": "DEF-AMB1GU01", "type": "Defect", "title": "Requirement uses vague threshold", "category": "ambiguous", "severity": "minor", "status": "resolved", "statement": "REQ-P3RF0RM1 says 'quickly' without defining a measurable threshold", "detectedInPhase": "architecture", "resolutionNotes": "Updated requirement to specify 'within 50ms at p99'"}
 ```
+
+With edges: `module` → MOD-A4F8R2X1, `subject` → REQ-P3RF0RM1, `detected_by` → TASK-4RCHR3V1.
 
 ### Deferred defect
 
 ```json
-{"@context": "context.jsonld", "@id": "DEF-D3F3RR01", "@type": "Defect", "title": "No Windows line ending support", "module": {"@id": "MOD-OAPSROOT"}, "category": "missing", "severity": "minor", "status": "deferred", "statement": "Parser does not handle \\r\\n line endings", "subject": {"@id": "MOD-A4F8R2X1"}, "rationale": "Windows support is out of scope for initial release", "deferralTarget": "v2.0"}
+{"id": "DEF-D3F3RR01", "type": "Defect", "title": "No Windows line ending support", "category": "missing", "severity": "minor", "status": "deferred", "statement": "Parser does not handle \\r\\n line endings", "rationale": "Windows support is out of scope for initial release", "deferralTarget": "v2.0"}
 ```
+
+With edges: `module` → MOD-OAPSROOT, `subject` → MOD-A4F8R2X1.
 
 ### Rejected defect
 
 ```json
-{"@context": "context.jsonld", "@id": "DEF-R3J3CT01", "@type": "Defect", "title": "JSON output missing pretty-print", "module": {"@id": "MOD-B9G3M7K2"}, "severity": "trivial", "status": "rejected", "statement": "JSON output from CLI is compact, not pretty-printed", "subject": {"@id": "MOD-B9G3M7K2"}, "rationale": "By design: compact JSON is better for piping. Users can pipe through jq for pretty-printing."}
+{"id": "DEF-R3J3CT01", "type": "Defect", "title": "JSON output missing pretty-print", "severity": "trivial", "status": "rejected", "statement": "JSON output from CLI is compact, not pretty-printed", "rationale": "By design: compact JSON is better for piping. Users can pipe through jq for pretty-printing."}
 ```
+
+With edges: `module` → MOD-B9G3M7K2, `subject` → MOD-B9G3M7K2.
 
 ## Summary
 
@@ -358,5 +389,5 @@ Defects represent identified problems that need action:
 - Traced to the defective item via `subject` and the examination that found it via `detectedBy`
 - Remediated through generated tasks, verified before closure
 - Interact with baselines (clean baselines require no open blocking defects) and suspect links (reviewers create defects when suspect links reveal real problems)
-- Store metadata in graph.jsonlt; `summary` for inline context, prose files at derived paths for extended content
+- Stored as rows in the `defects` vertex table (`.arci/graph/defects.ndjson` on disk)
 - Do not contain decisions, questions, observations, or recommendations; those belong in concepts, task context, and review deliverables respectively

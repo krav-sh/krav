@@ -51,16 +51,16 @@ Archiving a stakeholder does not invalidate the needs linked to it. Those needs 
 
 ## Storage model
 
-Stakeholder metadata lives in `graph.jsonlt` as JSON-LD compact form. Like all node types, `graph.jsonlt` is the single source of truth for structured data.
+ARCI stores stakeholder vertex data in the `stakeholders` table (`stakeholders.ndjson` on disk). Stakeholders have no outgoing relationship properties; needs reference them via the `stakeholder` edge table.
 
 ```json
-{"@context": "context.jsonld", "@id": "STK-H5N7P3Q9", "@type": "Stakeholder", "title": "CLI end user", "description": "Developers who use the tool from the command line as part of their daily workflow", "concerns": "Usability, performance, clear error messages, predictable behavior", "status": "active"}
+{"id": "STK-H5N7P3Q9", "type": "Stakeholder", "title": "CLI end user", "description": "Developers who use the tool from the command line as part of their daily workflow", "concerns": "Usability, performance, clear error messages, predictable behavior", "status": "active"}
 ```
 
 Fields:
 
-- `@id`: Unique identifier (STK-XXXXXXXX format)
-- `@type`: Always "Stakeholder"
+- `id`: Unique identifier (STK-XXXXXXXX format)
+- `type`: Always "Stakeholder"
 - `title`: Human-readable name for this stakeholder (role, group, or individual)
 - `description`: Who this stakeholder is and what their relationship to the system is
 - `concerns`: What this stakeholder cares about, in their terms
@@ -124,19 +124,19 @@ See [Stakeholder](../../cli/commands/stakeholder.md) for full CLI documentation.
 ### End user stakeholder
 
 ```json
-{"@context": "context.jsonld", "@id": "STK-H5N7P3Q9", "@type": "Stakeholder", "title": "CLI end user", "description": "Developers who use the tool from the command line as part of their daily workflow", "concerns": "Usability, performance, clear error messages, predictable behavior", "status": "active"}
+{"id": "STK-H5N7P3Q9", "type": "Stakeholder", "title": "CLI end user", "description": "Developers who use the tool from the command line as part of their daily workflow", "concerns": "Usability, performance, clear error messages, predictable behavior", "status": "active"}
 ```
 
 ### Integrator stakeholder
 
 ```json
-{"@context": "context.jsonld", "@id": "STK-1NT3GR8R", "@type": "Stakeholder", "title": "Tool integrator", "description": "Developers building editor plugins, CI pipelines, or other tooling that consumes this tool's output programmatically", "concerns": "Stable API surface, machine-readable output, versioning, backward compatibility", "status": "active"}
+{"id": "STK-1NT3GR8R", "type": "Stakeholder", "title": "Tool integrator", "description": "Developers building editor plugins, CI pipelines, or other tooling that consumes this tool's output programmatically", "concerns": "Stable API surface, machine-readable output, versioning, backward compatibility", "status": "active"}
 ```
 
 ### Organizational stakeholder
 
 ```json
-{"@context": "context.jsonld", "@id": "STK-C0MPL1NC", "@type": "Stakeholder", "title": "Compliance office", "description": "Internal compliance team responsible for ensuring software meets regulatory requirements", "concerns": "Audit trails, data handling, access controls, change documentation", "status": "active"}
+{"id": "STK-C0MPL1NC", "type": "Stakeholder", "title": "Compliance office", "description": "Internal compliance team responsible for ensuring software meets regulatory requirements", "concerns": "Audit trails, data handling, access controls, change documentation", "status": "active"}
 ```
 
 ## Design notes
