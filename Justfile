@@ -33,6 +33,7 @@ install-tools:
     go install mvdan.cc/gofumpt@latest
     go install github.com/daixiang0/gci@latest
     vale sync
+    @echo "Note: plantuml and watchman must be installed separately (e.g., brew install plantuml watchman)"
 
 # Install the arci binary to GOPATH/bin
 install:
@@ -82,6 +83,7 @@ lint-config: lint-json lint-yaml
 lint-docs *args:
     just lint-markdown {{ args }}
     just lint-prose {{ args }}
+    just lint-plantuml
 
 # Lint JSON/JS/TS files
 lint-json:
@@ -94,6 +96,37 @@ lint-markdown *args:
 # Lint prose in Markdown files
 lint-prose *args:
     vale {{ if args == "" { "README.md" } else { args } }}
+
+# Lint PlantUML diagrams
+lint-plantuml:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    shopt -s nullglob
+    files=(docs/design/diagrams/*.puml)
+    if [[ ${#files[@]} -eq 0 ]]; then
+        echo "No .puml files found in docs/design/diagrams/"
+        exit 0
+    fi
+    plantuml -checkonly "${files[@]}"
+
+# Export PlantUML diagrams to PNG and SVG
+export-plantuml:
+    #!/usr/bin/env bash
+    set -euxo pipefail
+    mkdir -p docs/design/diagrams/png docs/design/diagrams/svg
+    plantuml -tpng -o "$(pwd)/docs/design/diagrams/png" docs/design/diagrams/*.puml
+    plantuml -tsvg -o "$(pwd)/docs/design/diagrams/svg" docs/design/diagrams/*.puml
+
+# Watch PlantUML diagrams and re-export on change
+watch-plantuml:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "Watching docs/design/diagrams/*.puml for changes. Press Ctrl-C to stop."
+    watchman-wait . -m 0 -p 'docs/design/diagrams/*.puml' | while read -r f; do
+        echo "Changed: $f"
+        plantuml -tpng -o "$(pwd)/docs/design/diagrams/png" "$f"
+        plantuml -tsvg -o "$(pwd)/docs/design/diagrams/svg" "$f"
+    done
 
 # Check spelling
 lint-spelling:
