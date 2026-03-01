@@ -289,7 +289,7 @@ See [Server](server/index.md).
 
 **Daemon options.** Manual foreground, system service, auto-start on unavailable, container deployment. See [Server](server/index.md).
 
-**Platform considerations.** Sandboxing capabilities vary by platform (see [Sandboxing](sandboxing.md)). Configuration and state directories follow platform conventions.
+**Platform considerations.** Configuration and state directories follow platform conventions.
 
 **Enterprise deployment.** Managed configuration via MDM for organization-wide policy distribution. See [Managed config](configuration/config-managed.md).
 
@@ -334,8 +334,6 @@ Key design decisions live inline across the design docs today. See [Design docum
 | Traceability | Requirements chain | Unbroken `derivesFrom` chain from concept to requirement |
 | Traceability | Suspect propagation | Changes to upstream nodes surface downstream for review |
 | Extensibility | Extension system | New policies and custom functions without modifying core |
-
-See [Testing strategy](testing.md), [Security model](security.md).
 
 ## 11. Risks and technical debt
 

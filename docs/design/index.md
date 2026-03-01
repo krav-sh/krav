@@ -116,8 +116,6 @@ Render locally: `plantuml -tpng -o png/ diagrams/*.puml`
 
 ## Infrastructure
 
-Shared components that support both pillars:
-
 ### Configuration
 
 - [Configuration](configuration/configuration.md): layered configuration system with precedence rules and hot reloading
@@ -141,29 +139,13 @@ Shared components that support both pillars:
 
 - [State store](state-store.md): persistent key-value store for tracking data across hook invocations
 
-### Security
-
-- [Security model](security.md): trust model, threat scenarios, and security controls
-- [Sandboxing](sandboxing.md): platform-native shell action isolation
-
 ### Observability
 
 - [Dashboard](dashboard/index.md): web-based diagnostics dashboard
 
-### Extensions
-
-- [Extensions](extensions.md): unified extension system for distributing policies and custom functions
-
-### Testing and quality
-
-- [Testing strategy](testing.md): testing approaches for the engine, shells, and policies
-- Performance: latency expectations and optimization strategies
-
 ### Architecture and operations
 
 - [Architecture](architecture.md): arc42 system architecture (hooks, knowledge graph, runtime views)
-- [Installation](installation.md): installation and upgrade workflows
-- [Versioning](versioning.md): schema evolution and backward compatibility
 
 ### Reference
 

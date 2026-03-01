@@ -46,7 +46,6 @@ Pre-built binaries are available from the releases page for major platforms (Lin
 - [server](commands/server.md): Start the ARCI server for the current project
 - [config](commands/config.md): Inspect, check, and change configuration
 - [state](commands/state.md): Access the state store
-- [extension](commands/extension.md): Manage ARCI extensions
 - [baseline](commands/baseline.md): Manage knowledge graph baselines
 - [concept](commands/concept.md): Manage concept nodes
 - [defect](commands/defect.md): Track and manage defects

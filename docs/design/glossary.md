@@ -74,8 +74,6 @@ This document defines key terms used throughout ARCI's documentation.
 
 **Path expression.** CEL's dot notation for traversing nested data structures (such as `tool_input.command`).
 
-**Sandbox.** An isolated execution environment for shell effects. On Linux/WSL2, uses bubblewrap; on macOS, uses sandbox-exec with Seatbelt profiles. See [Sandboxing](sandboxing.md) for details.
-
 ## Execution model
 
 **Priority level.** One of four levels (critical, high, medium, low) assigned to policies. Higher-priority policies evaluate first. See [Execution model](hooks/execution-model.md) for details.
@@ -104,9 +102,9 @@ This document defines key terms used throughout ARCI's documentation.
 
 **Imperative shell.** Code that handles real-world concerns like reading files, managing connections, and executing side effects.
 
-**Daemon.** An optional long-running process that caches configuration, pools connections, and serves an HTTP API. See [Server](server/index.md) for details.
+**Server.** Long-running process that caches configuration, pools connections, and serves an HTTP API. See [Server](server/index.md) for details.
 
-**Direct execution.** Running `arci hook apply` without a daemon, where configuration loading happens on every invocation.
+**Direct execution.** Running `arci hook apply` without a server, where configuration loading happens on every invocation.
 
 ## Parameters and variables
 
