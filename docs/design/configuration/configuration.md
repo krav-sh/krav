@@ -20,9 +20,8 @@ $schema: https://arci.dev/schemas/arci/v1.yaml
 log_level: info
 
 default:
-  daemon:
-    enabled: true
-    port: 9100
+  server:
+    port: 7680
   failure_policy: allow
 ```
 
@@ -108,32 +107,26 @@ default:
 
 This is a critical safety property. With `allow`, configuration errors never block Claude Code from operating. Only explicit deny decisions from successfully evaluated policies block operations.
 
-### Daemon
+### Server
 
-Controls the optional daemon process that caches configuration and serves an HTTP API.
+Controls the ARCI server process that owns the knowledge graph, caches configuration, and serves the dashboard and REST API.
 
 ```yaml
 default:
-  daemon:
-    enabled: true
-    host: 127.0.0.1
-    port: 9100
+  server:
+    port: 7680
     hot_reload: true
     metrics:
       enabled: true
-      port: 9101
 ```
 
-| Field             | Description                              | Default     |
-| ----------------- | ---------------------------------------- | ----------- |
-| `enabled`         | Whether to use the daemon for evaluation | `true`      |
-| `host`            | Address to bind                          | `127.0.0.1` |
-| `port`            | Port for the evaluation API              | `9100`      |
-| `hot_reload`      | Watch config files and reload on change  | `true`      |
-| `metrics.enabled` | Expose Prometheus metrics                | `true`      |
-| `metrics.port`    | Metrics endpoint port                    | `9101`      |
+| Field             | Description                             | Default |
+| ----------------- | --------------------------------------- | ------- |
+| `port`            | Base port for the server                | `7680`  |
+| `hot_reload`      | Watch config files and reload on change | `true`  |
+| `metrics.enabled` | Expose Prometheus metrics at `/metrics` | `true`  |
 
-When `daemon.enabled` is `false`, the CLI performs direct evaluation by loading configuration on each invocation.
+The server always binds to `127.0.0.1`. The configured port is a starting point; if it is in use, the server increments until it finds a free port. The server records the actual port in `.arci/server.json` for discovery. When no server is running, the CLI performs direct evaluation for hooks and reports an error for graph mutations.
 
 ### State
 
@@ -196,8 +189,7 @@ Examples:
 | Setting                  | Environment Variable          |
 | ------------------------ | ----------------------------- |
 | `default.log_level`      | `ARCI_LOG_LEVEL`        |
-| `default.daemon.enabled` | `ARCI_DAEMON__ENABLED`  |
-| `default.daemon.port`    | `ARCI_DAEMON__PORT`     |
+| `default.server.port`    | `ARCI_SERVER__PORT`     |
 
 ## Validation
 
@@ -227,7 +219,7 @@ Parse errors in configuration files produce warnings, not hard failures. The loa
 The system logs and reports errors through:
 
 - CLI output when running commands
-- Daemon dashboard status panel
+- Server dashboard status panel
 - The `arci config validate` command
 
 Managed/required configuration is the exception. Errors in required managed config cause a hard failure, as proceeding without enterprise security policies would violate the security model.
@@ -261,8 +253,7 @@ $schema: https://arci.dev/schemas/arci/v1.yaml
 
 default:
   log_level: debug
-  daemon:
-    enabled: true
+  server:
     hot_reload: true
 ```
 
@@ -285,8 +276,7 @@ default:
       headers:
         Authorization: "Bearer ${SPECS_TOKEN}"
 
-  daemon:
-    enabled: true
+  server:
     metrics:
       enabled: true
 ```

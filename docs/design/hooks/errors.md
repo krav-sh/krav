@@ -81,5 +81,5 @@ The `ARCI_LOG_LEVEL` environment variable sets the global log level. For more on
 ## See also
 
 - [CLI errors](../cli/errors.md): CLI error presentation and health checks
-- [Daemon errors](../daemon/errors.md): daemon troubleshooting and recovery
+- [Server errors](../server/errors.md): server troubleshooting and recovery
 - [Hook event logging](logging.md): the `arci hook apply` output contract and event log schema

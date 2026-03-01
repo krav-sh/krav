@@ -166,5 +166,5 @@ Diagnostic traces (`ARCI_DEBUG`) may contain even more sensitive information tha
 ## See also
 
 - [CLI logging](../cli/logging.md): output verbosity flags and diagnostic tracing
-- [Daemon logging](../daemon/logging.md): daemon.log location and event types
+- [Server logging](../server/logging.md): server log location and event types
 - [Hook error troubleshooting](errors.md): troubleshooting workflows and diagnostic commands

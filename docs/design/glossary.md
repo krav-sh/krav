@@ -104,7 +104,7 @@ This document defines key terms used throughout ARCI's documentation.
 
 **Imperative shell.** Code that handles real-world concerns like reading files, managing connections, and executing side effects.
 
-**Daemon.** An optional long-running process that caches configuration, pools connections, and serves an HTTP API. See [Daemon](daemon/index.md) for details.
+**Daemon.** An optional long-running process that caches configuration, pools connections, and serves an HTTP API. See [Server](server/index.md) for details.
 
 **Direct execution.** Running `arci hook apply` without a daemon, where configuration loading happens on every invocation.
 

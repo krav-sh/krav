@@ -123,7 +123,7 @@ Key architectural decisions with rationale:
 
 **ARCI command-line tool.** Unified entry point for hook evaluation, graph management, developer commands, and daemon/dashboard/MCP control. Operates in direct execution mode (loads config, evaluates locally) or daemon delegation mode (forwards to daemon API). See [command-line tool](cli/index.md).
 
-**Daemon.** Long-running process with config cache, compiled policies, connection pooling, REST API, WebSocket events, and hot-reload. Amortizes expensive operations (config loading, policy compilation, parameter resolution) across many requests. See [Daemon](daemon/index.md).
+**Daemon.** Long-running process with config cache, compiled policies, connection pooling, REST API, WebSocket events, and hot-reload. Amortizes expensive operations (config loading, policy compilation, parameter resolution) across many requests. See [Server](server/index.md).
 
 **Dashboard.** Web diagnostics interface for live event streaming, policy testing, state browsing, coverage reports, and graph browsing. Reads from the daemon's cached state for consistency. See [Dashboard](dashboard/index.md).
 
@@ -279,7 +279,7 @@ See [Execution model](hooks/execution-model.md).
 3. Core evaluates, daemon returns JSON response
 4. The command-line tool forwards response to stdout; latency drops because the daemon avoids per-invocation config loading and policy compilation
 
-See [Daemon](daemon/index.md).
+See [Server](server/index.md).
 
 ## 7. Deployment view
 
@@ -287,7 +287,7 @@ See [Daemon](daemon/index.md).
 
 **Installation methods.** See [Installation](installation.md) for supported installation workflows.
 
-**Daemon options.** Manual foreground, system service, auto-start on unavailable, container deployment. See [Daemon auto-spawn](daemon/auto-spawn.md).
+**Daemon options.** Manual foreground, system service, auto-start on unavailable, container deployment. See [Server](server/index.md).
 
 **Platform considerations.** Sandboxing capabilities vary by platform (see [Sandboxing](sandboxing.md)). Configuration and state directories follow platform conventions.
 

@@ -43,8 +43,7 @@ Pre-built binaries are available from the releases page for major platforms (Lin
 - [hook](commands/hook.md): Hook commands (`arci hook apply`, `arci hook policy`, `arci hook logs`, `arci hook stats`)
 - [doctor](commands/doctor.md): Health checks for installation, configuration, and integrations
 - [install](commands/install.md): Manage Claude Code hook integration
-- [daemon](commands/daemon.md): Control the optional background daemon process
-- [dashboard](commands/dashboard.md): Start the diagnostics web interface
+- [server](commands/server.md): Start the ARCI server for the current project
 - [config](commands/config.md): Inspect, check, and change configuration
 - [state](commands/state.md): Access the state store
 - [extension](commands/extension.md): Manage ARCI extensions

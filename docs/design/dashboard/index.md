@@ -2,7 +2,7 @@
 
 The ARCI dashboard is a web-based interface for monitoring and debugging hook activity. It provides real-time visibility into hook events, rule matching, configuration status, and state store contents.
 
-The [daemon](../daemon/index.md) serves the dashboard on the same HTTP port as the API. It targets developers debugging their hook configurations, answering questions like: why did this rule fire? why didn't this rule fire? what's the current state? is the configuration valid?
+The [server](../server/index.md) serves the dashboard on the same HTTP port as the API. It targets developers debugging their hook configurations, answering questions like: why did this rule fire? why didn't this rule fire? what's the current state? is the configuration valid?
 
 ## Documentation
 
@@ -48,5 +48,5 @@ These fall outside the initial scope but the team could add them based on user f
 ## See also
 
 - [Architecture](../architecture.md): high-level system architecture
-- [Daemon](../daemon/index.md): the long-running process that serves the dashboard
-- [CLI dashboard command](../cli/commands/dashboard.md): starting the dashboard from the command line
+- [Server](../server/index.md): the long-running process that serves the dashboard
+- [CLI server command](../cli/commands/server.md): starting the dashboard from the command line

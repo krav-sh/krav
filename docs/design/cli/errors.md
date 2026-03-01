@@ -55,4 +55,4 @@ Use `--verbose` to see details about warnings and `--fix` to attempt automatic r
 
 - [Exit codes](exit-codes.md): exit code conventions and semantics
 - [Hook errors](../hooks/errors.md): hook troubleshooting workflows and diagnostic commands
-- [Daemon errors](../daemon/errors.md): daemon troubleshooting and recovery
+- [Server errors](../server/errors.md): server troubleshooting and recovery

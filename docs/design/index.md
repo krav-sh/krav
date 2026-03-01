@@ -6,7 +6,7 @@ ARCI (Agentic Requirements Composition & Integration) is a system for Claude Cod
 
 ### Hooks
 
-The hook system intercepts Claude Code tool execution through declarative policies. Policies match events, evaluate CEL conditions, and produce admission decisions (allow, deny, warn) or mutations. A daemon-based architecture keeps evaluation fast; fail-open semantics ensure hooks never block the assistant unexpectedly.
+The hook system intercepts Claude Code tool execution through declarative policies. Policies match events, evaluate CEL conditions, and produce admission decisions (allow, deny, warn) or mutations. A server-based architecture keeps evaluation fast; fail-open semantics ensure hooks never block the assistant unexpectedly.
 
 See [Hooks overview](hooks/index.md) for the full hook documentation.
 
@@ -22,7 +22,7 @@ Twelve node types form the knowledge graph:
 | MOD-*  | Module                | Architectural container, owns requirements            |
 | NEED-* | Need                  | Stakeholder expectation (validated)                   |
 | REQ-*  | Requirement           | Design obligation (verified)                          |
-| Tc-*   | Test case             | Verification case specification                       |
+| TC-*   | Test case             | Verification case specification                       |
 | TASK-* | Task                  | Atomic work unit in DAG                               |
 | DEF-*  | Defect                | Identified problem requiring action                   |
 | BSL-*  | Baseline              | Named graph state reference at a decision point       |
@@ -71,7 +71,7 @@ Reference builds and architecture notes (predating the graph/ directory, retaine
 
 ### Verification: Checking the work
 
-- [Test cases](graph/nodes/test-cases.md) (Tc-*): verification case specifications decoupled from execution results
+- [Test cases](graph/nodes/test-cases.md) (TC-*): verification case specifications decoupled from execution results
 - [Defects](graph/nodes/defects.md) (DEF-*): identified problems with disposition and resolution lifecycles
 - Test plans (TP-*): coordinated verification events for milestones and releases (not yet spec'd)
 
@@ -124,10 +124,14 @@ Shared components that support both pillars:
 - [Config cascade](configuration/config-cascade.md): full precedence chain from built-in defaults to CLI flags
 - [Managed config](configuration/config-managed.md): managed/recommended and managed/required configuration
 
-### Daemon
+### Server
 
-- [Daemon](daemon/index.md): long-running process for fast evaluation, API endpoints, and lifecycle management
-- [Daemon auto-spawn](daemon/auto-spawn.md): automatic daemon startup and management
+- [Server](server/index.md): long-running process that owns the knowledge graph, caches configuration, and serves the dashboard and API
+- [Server discovery](server/discovery.md): how the CLI locates a running server via `.arci/server.json`
+
+### MCP
+
+- [MCP server](mcp/index.md): MCP integration for Claude Code, exposing diagnostic and introspection tools
 
 ### CLI
 

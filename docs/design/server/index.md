@@ -1,0 +1,178 @@
+# Server
+
+The ARCI server is a long-running process that owns the knowledge graph, caches compiled configuration, and serves the dashboard and REST API for a single project. It runs in the foreground via `arci server` and stops with Ctrl+C.
+
+The server serves two distinct roles. For hook evaluation, it is a performance optimization: the CLI can evaluate policies directly without a running server, but the server provides sub-10 ms evaluation by keeping configuration pre-compiled and state store connections pooled. For knowledge graph operations, the server is essential: it serializes graph mutations through a single process, enforcing invariants and managing SQLite write concurrency that direct CLI access cannot safely coordinate.
+
+## Documentation
+
+- [Discovery](discovery.md): how the CLI finds a running server
+- [Error handling and recovery](errors.md): troubleshooting, automatic/manual recovery, metrics and observability
+- [Logging](logging.md): log location, event types, and output modes
+
+## Responsibilities
+
+The server has six primary responsibilities.
+
+Configuration management comes first. The server loads the merged configuration cascade for the project, compiles policy expressions, and watches configuration files for changes via `fsnotify`. When files change, the server reloads configuration atomically: in-flight requests complete with the old configuration, new requests get the new configuration. If reloading fails due to syntax or validation errors, the server logs the error and continues with the last known-good configuration.
+
+The server owns the hook evaluation engine. It compiles policy expressions once and reuses them for each evaluation, avoiding the per-invocation cost of parsing. This drops evaluation overhead from 50 to 200 ms (direct mode) to single-digit milliseconds.
+
+Knowledge graph ownership is the server's most critical role. The knowledge graph is a shared mutable resource. When multiple Claude Code subagents run tasks concurrently, or a human and an agent both issue graph mutations, the server serializes writes through pooled SQLite connections. Without the server, concurrent `arci node add` or `arci link create` invocations would contend on SQLite's write lock, risking `SQLITE_BUSY` errors or interleaved operations that violate graph invariants. Read-only graph queries can work in direct mode, but any mutation requires the server.
+
+State store connection management pools SQLite connections for performance and handles concurrent access from evaluation requests, graph operations, and the dashboard.
+
+Metrics accumulation tracks policy match counts, action executions, errors, and timing information in memory. The API exposes these metrics, and the dashboard displays them. Metrics reset on server restart; the project may add persistent metrics later but in-memory suffices for diagnostics.
+
+The server serves the REST and WebSocket APIs that the CLI, dashboard, and MCP server use. It also serves the dashboard's static assets and rendered templates.
+
+## Architecture
+
+The server builds on Go's `net/http` with the `chi` router and `nhooyr.io/websocket`. Chi provides composable, lightweight HTTP routing. Go's goroutines and channels handle concurrent connections efficiently without a separate async runtime.
+
+File watching uses the `fsnotify` package, which provides efficient cross-platform file system monitoring with support for Linux inotify, macOS FSEvents, and Windows ReadDirectoryChanges.
+
+The dashboard uses Go's `html/template` with Sprig for server-side rendering and htmx for interactive updates without a JavaScript build system.
+
+```mermaid
+flowchart TB
+    subgraph server["arci server"]
+        subgraph http_server["HTTP server"]
+            subgraph routes["Routes"]
+                apply_ep["POST /apply"]
+                health_ep["GET /health"]
+                config_ep["GET /config/status"]
+                reload_ep["POST /config/reload"]
+                policies_ep["GET /policies"]
+                graph_ep["POST /graph/*"]
+                state_ep["GET /state"]
+                metrics_ep["GET /metrics"]
+                events_ep["WS /events"]
+                dashboard_ep["GET /dashboard/*"]
+            end
+        end
+
+        subgraph services["Services"]
+            subgraph config_mgr["Config manager"]
+                cache["Configuration cache"]
+                watcher["File watcher\n(fsnotify)"]
+            end
+
+            subgraph graph_mgr["Graph manager"]
+                graph[("Knowledge graph\n(SQLite)")]
+                write_serializer["Write serializer"]
+            end
+
+            subgraph state_pool["State store pool"]
+                sqlite[("State store\n(SQLite)")]
+            end
+
+            subgraph metrics_acc["Metrics accumulator"]
+                policy_counts["Policy match counts"]
+                action_stats["Action stats"]
+                timing["Timing histograms"]
+            end
+        end
+    end
+
+    routes --> services
+    watcher -.->|"hot reload"| cache
+```
+
+## Console modes
+
+The server adapts its output to the terminal environment. When stderr connects to a TTY, the server renders a status TUI showing recent hook evaluations with their decisions, active policies and match counts, configuration reload events, and a rolling latency view. When stderr lacks a TTY (piped, redirected, or launched by a service manager), the server streams structured log lines instead.
+
+The `--console` flag overrides auto-detection. `--console rich` forces the TUI. `--console plain` forces log output. Auto-detection is the default.
+
+Bubble Tea (charmbracelet/bubbletea) powers the TUI, using an Elm-style architecture that fits naturally with the server's internal event stream. The TUI subscribes to the same event data that the WebSocket `/events` endpoint exposes to the dashboard, so the three visibility surfaces (TUI, dashboard, MCP tools) all consume the same underlying data through different renderers.
+
+## Operating modes
+
+ARCI operates in two modes: direct execution and server-delegated execution. Both use the same evaluation engine; the difference is where configuration loading and state management happen.
+
+In direct execution mode, `arci hook apply` loads configuration, compiles policy expressions, and evaluates policies on every invocation. This requires no setup beyond installing ARCI and writing policies.
+
+In server-delegated mode, `arci hook apply` sends requests to the running server, which maintains cached configuration and pre-compiled expressions. The server also handles graph mutations, state management, and metrics.
+
+The CLI determines which mode to use by checking for a `.arci/server.json` lockfile in the project directory (see [discovery](discovery.md)). If the lockfile exists and the server process is alive, the CLI delegates. If not, the behavior depends on the operation: hook evaluation falls back to direct execution silently, while graph-mutating commands produce an error telling the user to start the server.
+
+## API design
+
+The server exposes an HTTP API on localhost. All endpoints use JSON for request and response bodies.
+
+### `POST /apply`
+
+The primary endpoint for hook evaluation. The CLI calls this for every hook invocation when it detects a running server.
+
+The request body contains the hook input payload. The response body contains the JSON output to write to stdout (or null if no output) and the exit code the CLI should use.
+
+This endpoint must be fast. It uses cached configuration, pre-compiled expressions, and pooled database connections. The handler deserializes the request, runs the evaluation engine, and returns the result.
+
+### `POST /graph/*`
+
+Graph mutation endpoints for knowledge graph operations. These serialize writes through the server's graph manager, ensuring transactional consistency and invariant enforcement. The spec system design docs define the graph API surface.
+
+### `GET /health`
+
+Health check endpoint. Returns HTTP 200 if the server is healthy, with a JSON body containing uptime, project root, port, and version.
+
+### `GET /config/status`
+
+Returns the status of the project's configuration: whether it is valid, when it was last reloaded, and any validation errors.
+
+### `POST /config/reload`
+
+Forces a configuration reload. File watching normally handles this automatically, but the API provides an escape hatch for edge cases.
+
+### `GET /policies`
+
+Returns the list of active policies for the project. Returns policy metadata including name, source file, priority, enabled status, event types, and rule count.
+
+### `GET /state`
+
+Returns state store entries. Accepts a `session` query parameter for filtering. Returns entries with their values and metadata.
+
+### `GET /metrics`
+
+Returns a snapshot of accumulated metrics. Includes policy match counts, action execution counts, timing percentiles, and error counts.
+
+### `WS /events`
+
+WebSocket endpoint for live event streaming. Clients connect and receive real-time events including hook invocations, policy matches, action executions, errors, and configuration reloads. Events are JSON objects with a `type` field and event-specific data. The dashboard and TUI both consume this stream.
+
+### `GET /dashboard/*`
+
+Serves the dashboard web interface. Returns HTML pages rendered with Go templates. Uses htmx for interactive updates via the WebSocket event stream.
+
+## Lifecycle
+
+The server runs in the foreground via `arci server`. It determines the project root using the same walk-up-the-tree logic as all other arci commands (looking for `.arci/` or other project markers), respecting `--project-dir` and `ARCI_PROJECT_DIR` overrides.
+
+On startup, the server selects a port by trying the configured base port (default 7680) and incrementing until it finds a free port, up to a small scan limit. It then writes `.arci/server.json` to the project directory (see [discovery](discovery.md)), initializes the HTTP server and registers routes, starts the file watcher for configuration directories, and begins accepting requests.
+
+On shutdown (SIGTERM, SIGINT, or Ctrl+C), the server stops accepting new connections, waits for in-flight requests to complete (with a timeout), stops the file watcher, closes state store and graph database connections, removes `.arci/server.json`, and exits.
+
+The lockfile is the single artifact of a running server. If the server crashes without cleaning up, the discovery mechanism detects and handles the stale lockfile.
+
+## Project scoping
+
+Each server instance owns exactly one project. The server knows its project root because that directory is where it started (or the directory specified by `--project-dir`). Configuration loading, graph operations, and state management are all scoped to that project.
+
+Running multiple arci servers for different projects is straightforward: each binds its own port and writes its own `.arci/server.json`. The auto-detection scan handles port conflicts between projects; the second server simply takes the next available port.
+
+## Process management
+
+ARCI takes a foreground-first approach: the server never forks, backgrounds, or detaches from the terminal. Users choose how to manage its lifecycle using external tools that are purpose-built for process supervision.
+
+Running the server in a terminal, tmux session, or screen works well for development. The TUI makes this pane actively useful rather than a stream of logs to ignore.
+
+For persistent installations, system service managers are the recommended approach. On Linux, systemd user services (`systemctl --user`) provide automatic restart, resource limits, and logging integration without requiring root. On macOS, launchd launch agents offer similar capabilities and run at user login.
+
+Process supervisors like supervisord provide cross-platform management without root access. Container-based deployment works by running `arci server` as the container entrypoint.
+
+## Error isolation
+
+The server isolates errors to prevent cascading failures. Evaluation errors for one request don't affect other requests. The server logs individual rule or action failures but does not fail the evaluation as a whole.
+
+The API returns appropriate HTTP status codes: 200 for success, 400 for bad requests, 500 for internal errors. The `/apply` endpoint always returns 200 with an appropriate `exit_code` in the body, even for errors, maintaining fail-open semantics for hook evaluation.

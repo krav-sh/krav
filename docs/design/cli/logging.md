@@ -52,4 +52,4 @@ ARCI initializes tracing early, before any other code runs. Because environment 
 ## See also
 
 - [Hook event logging](../hooks/logging.md): the `arci hook apply` output contract and event log schema
-- [Daemon logging](../daemon/logging.md): daemon.log location and event types
+- [Server logging](../server/logging.md): server log location and event types
