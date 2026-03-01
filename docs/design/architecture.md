@@ -87,7 +87,7 @@ See [Workflows](workflows/index.md) for the agent interaction layer documentatio
 | Skills | Markdown + YAML frontmatter (Agent Skills standard) | ARCI workflow instructions for Claude Code |
 | Subagents | Markdown + YAML frontmatter | Isolated agent contexts with preloaded skills |
 | Command-line tool | Terminal invocation | Developer and agent → ARCI graph management, diagnostics |
-| Daemon API | HTTP REST + WebSocket on localhost | Command-line delegation, live events, dashboard |
+| Server API | HTTP REST + WebSocket on localhost | Command-line delegation, live events, dashboard |
 | MCP server | stdio (Model Context Protocol) | Claude Code → ARCI diagnostics and graph queries |
 | State store | Embedded relational DB | Session-scoped and project-scoped persistent state |
 | Knowledge graph | JSON-LD compact form (JSONLT) | Typed nodes with embedded relationships |
@@ -99,9 +99,9 @@ See [Workflows](workflows/index.md) for the agent interaction layer documentatio
 
 Key architectural decisions with rationale:
 
-1. **Shared infrastructure.** The knowledge graph, hook policies, and agent interaction layer are separate concerns that share the command-line tool, daemon, state store, and config cascade. The CLI is the common interface: hooks call it to check graph state, skills instruct the agent to call it for graph mutations, and the developer calls it directly for management and diagnostics.
+1. **Shared infrastructure.** The knowledge graph, hook policies, and agent interaction layer are separate concerns that share the command-line tool, server, state store, and config cascade. The CLI is the common interface: hooks call it to check graph state, skills instruct the agent to call it for graph mutations, and the developer calls it directly for management and diagnostics.
 
-2. **Single binary, three modes.** Command-line direct execution, daemon delegation, and dashboard all share one binary. No version skew, simple distribution.
+2. **Single binary, three modes.** Command-line direct execution, server delegation, and dashboard all share one binary. No version skew, simple distribution.
 
 3. **Knowledge graph over document management.** The graph stores requirements, test cases, and tasks as typed nodes with semantic relationships. Views (graph queries) replace documents (SRS, test plans, traceability matrices).
 
@@ -121,13 +121,13 @@ Key architectural decisions with rationale:
 
 ### Level 2: Containers
 
-**ARCI command-line tool.** Unified entry point for hook evaluation, graph management, developer commands, and daemon/dashboard/MCP control. Operates in direct execution mode (loads config, evaluates locally) or daemon delegation mode (forwards to daemon API). See [command-line tool](cli/index.md).
+**ARCI command-line tool.** Unified entry point for hook evaluation, graph management, developer commands, and server/dashboard/MCP control. Operates in direct execution mode (loads config, evaluates locally) or server delegation mode (forwards to server API). See [command-line tool](cli/index.md).
 
-**Daemon.** Long-running process with config cache, compiled policies, connection pooling, REST API, WebSocket events, and hot-reload. Amortizes expensive operations (config loading, policy compilation, parameter resolution) across many requests. See [Server](server/index.md).
+**Server.** Long-running process with config cache, compiled policies, connection pooling, REST API, WebSocket events, and hot-reload. Amortizes expensive operations (config loading, policy compilation, parameter resolution) across many requests. See [Server](server/index.md).
 
-**Dashboard.** Web diagnostics interface for live event streaming, policy testing, state browsing, coverage reports, and graph browsing. Reads from the daemon's cached state for consistency. See [Dashboard](dashboard/index.md).
+**Dashboard.** Web diagnostics interface for live event streaming, policy testing, state browsing, coverage reports, and graph browsing. Reads from the server's cached state for consistency. See [Dashboard](dashboard/index.md).
 
-**MCP Server.** Exposes policy diagnostics and graph queries to Claude Code via the Model Context Protocol. Delegates to the daemon API.
+**MCP Server.** Exposes policy diagnostics and graph queries to Claude Code via the Model Context Protocol. Delegates to the server API.
 
 **State Store.** Embedded relational store with session-scoped and project-scoped persistent state for hook evaluations and graph operations. See [State store](state-store.md).
 
@@ -165,7 +165,7 @@ Key architectural decisions with rationale:
 
 **Git Context.** Reads current branch, dirty state, and staged files. Provides context for policy conditions and graph operations.
 
-#### Daemon API
+#### Server API
 
 **REST API.** Evaluation endpoint, state queries, configuration status, and graph queries.
 
@@ -272,22 +272,22 @@ See [Workflows](workflows/index.md).
 
 See [Execution model](hooks/execution-model.md).
 
-### Scenario 7: hook evaluation (daemon delegation)
+### Scenario 7: hook evaluation (server delegation)
 
-1. ARCI detects daemon enabled and delegates to the daemon's evaluate endpoint
-2. Daemon uses cached compiled policies and pooled connections
-3. Core evaluates, daemon returns JSON response
-4. The command-line tool forwards response to stdout; latency drops because the daemon avoids per-invocation config loading and policy compilation
+1. ARCI detects server enabled and delegates to the server's evaluate endpoint
+2. Server uses cached compiled policies and pooled connections
+3. Core evaluates, server returns JSON response
+4. The command-line tool forwards response to stdout; latency drops because the server avoids per-invocation config loading and policy compilation
 
 See [Server](server/index.md).
 
 ## 7. Deployment view
 
-**Single-binary deployment.** One binary serves all roles: command-line tool, daemon, dashboard, and MCP server. No version skew between components.
+**Single-binary deployment.** One binary serves all roles: command-line tool, server, dashboard, and MCP server. No version skew between components.
 
 **Installation methods.** See [Installation](installation.md) for supported installation workflows.
 
-**Daemon options.** Manual foreground, system service, auto-start on unavailable, container deployment. See [Server](server/index.md).
+**Server options.** Manual foreground, system service, auto-start on unavailable, container deployment. See [Server](server/index.md).
 
 **Platform considerations.** Configuration and state directories follow platform conventions.
 
@@ -324,7 +324,7 @@ Key design decisions live inline across the design docs today. See [Design docum
 | Category | Attribute | Scenario |
 |----------|-----------|----------|
 | Safety | Fail-open | Any internal error results in allow; Claude Code is never blocked by ARCI failures |
-| Performance | Evaluation latency | Hook evaluation within agent-invisible time budget (direct and daemon modes) |
+| Performance | Evaluation latency | Hook evaluation within agent-invisible time budget (direct and server modes) |
 | Testability | Domain logic | Domain logic testable with plain data, no mocking required |
 | Testability | Policy testing | Policy authors can dry-run and test configurations before deployment |
 | Reliability | Config resilience | Parse errors skip the file; system continues with remaining config |
@@ -339,7 +339,7 @@ Key design decisions live inline across the design docs today. See [Design docum
 
 ### Risks
 
-- **Daemon authentication.** The daemon API currently has no authentication; localhost binding provides minimal protection.
+- **Server authentication.** The server API currently has no authentication; localhost binding provides minimal protection.
 - **Platform sandbox variation.** Sandbox capabilities vary across platforms.
 - **Pre-1.0 instability.** Schema and API may change; see [Versioning](versioning.md).
 - **Expression debugging.** Complex expressions may be hard for policy authors to debug.

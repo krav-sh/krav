@@ -6,8 +6,8 @@ Environment variables provide defaults for common options. All environment varia
 
 | Variable | Description |
 |---|---|
-| `ARCI_SOCKET` | Sets the Unix socket path for daemon communication. |
-| `ARCI_URL` | Sets the daemon HTTP URL. |
+| `ARCI_SOCKET` | Sets the Unix socket path for server communication. |
+| `ARCI_URL` | Sets the server HTTP URL. |
 | `ARCI_LOG_LEVEL` | Sets the log level. |
 | `ARCI_PROJECT` | Sets the project root. |
 | `ARCI_CONFIG_FILE` | Overrides the configuration path. |

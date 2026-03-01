@@ -434,7 +434,7 @@ The loader treats each subdirectory containing an `extension.toml` as an extensi
 
 After discovery, ARCI collects macros from all extensions (using extension names as namespaces), effect handlers from all extensions, and policy paths from all extensions, then merges them into the runtime configuration.
 
-The system loads extensions once at startup. If extensions change (via `arci extension add` or similar), the daemon must restart to pick up the changes. The CLI reloads extensions on each invocation.
+The system loads extensions once at startup. If extensions change (via `arci extension add` or similar), the server must restart to pick up the changes. The CLI reloads extensions on each invocation.
 
 ## Policy precedence
 
@@ -553,6 +553,6 @@ An extension registry could provide centralized discovery, version hosting, and 
 
 Extension configuration could allow extensions to accept user-provided settings. A Slack extension might want a `default_channel` setting. The existing configuration system could handle this, perhaps in an `[extensions.config]` section of the manifest.
 
-Hot reloading would allow the daemon to pick up new extensions without restart. This adds complexity around extension state, so the team defers it for now.
+Hot reloading would allow the server to pick up new extensions without restart. This adds complexity around extension state, so the team defers it for now.
 
 Cryptographic signatures on extensions, verified against a set of trusted publisher keys, could enable a verified extensions tier for the future registry. This would allow users to trust extensions from verified publishers without manual review.

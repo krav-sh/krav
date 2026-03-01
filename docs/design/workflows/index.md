@@ -144,7 +144,7 @@ WorktreeCreate and WorktreeRemove fire when git worktrees get created or removed
 
 Command hooks (`type: "command"`) are the workhorse. Most ARCI hooks are command hooks running ARCI CLI commands to check graph state, validate preconditions, or inject context. They're fast and deterministic.
 
-HTTP hooks (`type: "http"`) POST the event JSON to a URL. Useful if ARCI's daemon exposes an HTTP endpoint for hook evaluation, avoiding the overhead of spawning a CLI process per hook invocation. Headers support environment variable interpolation via `allowedEnvVars`.
+HTTP hooks (`type: "http"`) POST the event JSON to a URL. Useful if ARCI's server exposes an HTTP endpoint for hook evaluation, avoiding the overhead of spawning a CLI process per hook invocation. Headers support environment variable interpolation via `allowedEnvVars`.
 
 Prompt hooks (`type: "prompt"`) send context to a fast LLM for single-turn evaluation. The LLM returns `{"ok": true/false, "reason": "..."}`. Useful for Stop and SubagentStop when deterministic rules can't judge whether the agent's work is actually complete. A prompt-based Stop hook could evaluate: `Given this transcript, has the agent recorded task deliverables and updated the graph?`
 

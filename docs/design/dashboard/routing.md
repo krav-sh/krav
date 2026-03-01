@@ -1,6 +1,6 @@
 # Dashboard routing
 
-The dashboard organizes routes as a chi subrouter that nests under `/dashboard`. Each page has a corresponding handler that fetches data from the daemon's shared state and renders a Go template.
+The dashboard organizes routes as a chi subrouter that nests under `/dashboard`. Each page has a corresponding handler that fetches data from the server's shared state and renders a Go template.
 
 ## Router setup
 
@@ -31,14 +31,14 @@ func (s *Server) handleDashboardIndex(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-The daemon's main router mounts the returned `http.Handler` at `/dashboard`, keeping dashboard routes cleanly separated from the API.
+The server's main router mounts the returned `http.Handler` at `/dashboard`, keeping dashboard routes cleanly separated from the API.
 
 ## Handler pattern
 
 Each handler follows a consistent pattern:
 
 1. **Parse request**: extract query parameters, filters, or form data from the request
-2. **Fetch data**: read from the daemon's cached state (events, rules, config, state store)
+2. **Fetch data**: read from the server's cached state (events, rules, config, state store)
 3. **Build struct**: assemble a typed data struct for the template
 4. **Render template**: execute the named template with the data struct
 
@@ -46,7 +46,7 @@ This pattern keeps handlers simple and testable, as each step is a straightforwa
 
 ## Data source
 
-The dashboard reads from the daemon's cached state rather than hitting the filesystem or SQLite directly. The dashboard shows the same view of configuration and state that evaluation uses. The daemon updates its cache on configuration reloads and state changes, so the dashboard always reflects current state without its own cache invalidation logic.
+The dashboard reads from the server's cached state rather than hitting the filesystem or SQLite directly. The dashboard shows the same view of configuration and state that evaluation uses. The server updates its cache on configuration reloads and state changes, so the dashboard always reflects current state without its own cache invalidation logic.
 
 ## Adding a new page
 

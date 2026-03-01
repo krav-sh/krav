@@ -224,7 +224,7 @@ Each cascade layer can contain three types of configuration files.
 
 ### `arci.yaml`
 
-Main configuration file containing settings like logging and daemon behavior. See [configuration.md](configuration.md) for the schema.
+Main configuration file containing settings like logging and server behavior. See [configuration.md](configuration.md) for the schema.
 
 ### `arci-policies.yaml`
 
@@ -317,7 +317,7 @@ Environment variables prefixed with `ARCI_` override corresponding settings in `
 
 ```bash
 ARCI_LOG_LEVEL=debug
-ARCI_DAEMON__ENABLED=false
+ARCI_SERVER__ENABLED=false
 ```
 
 ### Cascade override variables
@@ -354,7 +354,7 @@ IT administrators deploy managed configuration via MDM tools, configuration mana
 
 Parse errors in configuration files produce warnings, not failures. ARCI follows fail-open semantics: if the loader cannot parse a configuration file, it skips the file and continues with the remaining sources.
 
-A syntax error in a project's `arci.yaml` does not prevent the tool from running. It runs with the configuration that loaded successfully, and the system logs errors and surfaces them through the CLI's `config validate` command and the daemon's dashboard.
+A syntax error in a project's `arci.yaml` does not prevent the tool from running. It runs with the configuration that loaded successfully, and the system logs errors and surfaces them through the CLI's `config validate` command and the server's dashboard.
 
 Managed/required configuration errors follow different rules. If the loader cannot read required managed configuration, ARCI fails closed rather than proceeding without enterprise security policies.
 
@@ -382,4 +382,4 @@ arci hook policy get security-baseline
 arci hook policy get system/security-baseline
 ```
 
-The daemon dashboard also displays configuration status, including any parse errors or validation warnings.
+The server dashboard also displays configuration status, including any parse errors or validation warnings.

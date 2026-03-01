@@ -81,4 +81,4 @@ The rule tester provides step-by-step evaluation traces, showing each rule's con
 
 The dashboard reads hook event logs (JSONL files) for display and filtering. The Hive-partitioned file structure supports efficient tailing for live updates and scoping queries by project without scanning irrelevant files.
 
-For complex queries, the dashboard can use DuckDB's WASM build for in-browser analytics, or query via the daemon's API when advanced aggregation requires server-side processing.
+For complex queries, the dashboard can use DuckDB's WASM build for in-browser analytics, or query via the server's API when advanced aggregation requires server-side processing.

@@ -248,7 +248,7 @@ GritQL integration follows ARCI's fail-open semantics. If the grit command-line 
 
 Specific fail-open scenarios:
 
-When the grit command-line tool is not found in PATH, all GritQL operations log a warning like "grit not found; skipping GritQL pattern matching" and return no-match results. The warning appears once per daemon startup, not on every evaluation.
+When the grit command-line tool is not found in PATH, all GritQL operations log a warning like "grit not found; skipping GritQL pattern matching" and return no-match results. The warning appears once per server startup, not on every evaluation.
 
 When a GritQL pattern has syntax errors, the function logs the error and returns a no-match result. The policy continues evaluating with GritQL checks effectively skipped.
 

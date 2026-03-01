@@ -33,7 +33,7 @@ Diagnostic traces are for debugging ARCI internals. They're controlled entirely 
 | `1` or `true` | Enable debug tracing to stderr |
 | (unset or empty) | Tracing off |
 
-When enabled, ARCI emits structured log output covering config file discovery, loading, parsing, and merging; policy compilation and validation; expression evaluation; Claude Code protocol handling; state store operations; daemon lifecycle (startup, shutdown, config reload); and file watcher events.
+When enabled, ARCI emits structured log output covering config file discovery, loading, parsing, and merging; policy compilation and validation; expression evaluation; Claude Code protocol handling; state store operations; server lifecycle (startup, shutdown, config reload); and file watcher events.
 
 ### Trace output
 

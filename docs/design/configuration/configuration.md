@@ -47,7 +47,7 @@ The `default` section contains all configuration settings:
 default:
   log_level: info
 
-  daemon:
+  server:
     enabled: true
     port: 9100
     hot_reload: true
@@ -226,14 +226,14 @@ Managed/required configuration is the exception. Errors in required managed conf
 
 ## Hot reloading
 
-When the daemon is running with `hot_reload: true`, it watches all configuration files for changes using filesystem notifications. On change:
+When the server is running with `hot_reload: true`, it watches all configuration files for changes using filesystem notifications. On change:
 
 1. The modified file is re-read and re-parsed
 2. The full cascade is re-merged
 3. Policies are re-compiled
 4. The new configuration is atomically swapped in
 
-Requests in flight complete with the old configuration. New requests use the new configuration. If reloading fails due to errors, the daemon continues with the previous valid configuration and logs the error.
+Requests in flight complete with the old configuration. New requests use the new configuration. If reloading fails due to errors, the server continues with the previous valid configuration and logs the error.
 
 ## Example configurations
 

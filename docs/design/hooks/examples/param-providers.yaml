@@ -43,7 +43,7 @@ spec:
     allowedPaths: []
 
 ---
-# Unix socket provider - lower latency for local daemons
+# Unix socket provider - lower latency for local servers
 # Useful when the param provider runs on the same machine
 
 apiVersion: arci.dev/v1

@@ -27,9 +27,9 @@ func addGlobalFlags(cmd *cobra.Command) {
 
 The `cli`, `env`, and `default*` scopes only support reading. You cannot target them for modifications.
 
-`--socket <path>`: specifies the Unix socket path for daemon communication.
+`--socket <path>`: specifies the Unix socket path for server communication.
 
-`--url <url>`: specifies the HTTP URL for daemon communication.
+`--url <url>`: specifies the HTTP URL for server communication.
 
 `--verbose` (`-v`): increases output verbosity. You can repeat it for more detail (`-v`, `-vv`, `-vvv`).
 

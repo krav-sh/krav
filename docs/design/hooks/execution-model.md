@@ -272,13 +272,13 @@ When errors occur during evaluation:
 
 The principle is: uncertainty defaults to allowing the operation. Users must explicitly configure denial to block tool calls.
 
-### Daemon unavailability
+### Server unavailability
 
-When the ARCI command-line tool can't reach the daemon:
+When the ARCI command-line tool can't reach the server:
 
-- `daemon.on_unavailable: fallback`: the command-line tool falls back to direct execution
-- `daemon.on_unavailable: start`: the command-line tool attempts to spawn the daemon
-- `daemon.on_unavailable: fail`: the command-line tool fails (still doesn't block Claude; the assistant's hook system handles command-line tool failures)
+- `server.on_unavailable: fallback`: the command-line tool falls back to direct execution
+- `server.on_unavailable: start`: the command-line tool attempts to spawn the server
+- `server.on_unavailable: fail`: the command-line tool fails (still doesn't block Claude; the assistant's hook system handles command-line tool failures)
 
 Even if ARCI fails entirely, Claude continues operating. The assistant's native hook system treats hook script failures as non-blocking by default.
 
@@ -299,7 +299,7 @@ The engine compiles CEL expressions once when configuration loads. It reuses the
 
 ### Parameter caching
 
-Parameter providers can specify TTL for caching. The daemon caches resolved parameters and invalidates them based on TTL or explicit invalidation signals.
+Parameter providers can specify TTL for caching. The server caches resolved parameters and invalidates them based on TTL or explicit invalidation signals.
 
 ```yaml
 parameters:

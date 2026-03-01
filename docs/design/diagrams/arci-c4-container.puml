@@ -12,9 +12,9 @@ System_Ext(param_providers, "Parameter providers", "HTTP APIs, config files, env
 
 System_Boundary(arci, "arci") {
 
-    Container(cli, "arci CLI", "", "Unified entry point for hook\nevaluation, graph management,\ndeveloper commands, and\ndaemon/dashboard/MCP control.")
+    Container(cli, "arci CLI", "", "Unified entry point for hook\nevaluation, graph management,\ndeveloper commands, and\nserver/dashboard/MCP control.")
 
-    Container(daemon, "Daemon", "", "Long-running process.\nCaches compiled policies and\nmaterialized graph. REST API,\nWebSocket events, config hot-reload.")
+    Container(server, "Server", "", "Long-running process.\nCaches compiled policies and\nmaterialized graph. REST API,\nWebSocket events, config hot-reload.")
 
     Container(dashboard, "Dashboard", "", "Web diagnostics, policy testing,\nlive event streaming, graph\nbrowser, coverage reports.")
 
@@ -48,7 +48,7 @@ Rel(claude_code, git, "Commits, branches", "Git CLI")
 Rel(claude_code, github, "Pushes, creates PRs", "Git / GitHub API")
 
 ' === Runtime relationships ===
-Rel(cli, daemon, "Delegates when daemon.enabled", "HTTP")
+Rel(cli, server, "Delegates when server.enabled", "HTTP")
 Rel(cli, state_store, "Reads/persists hook state", "Embedded DB")
 Rel(cli, graph_db, "Loads/persists graph", "Filesystem")
 Rel(cli, prose_files, "Reads/writes prose", "Filesystem")
@@ -57,14 +57,14 @@ Rel(cli, harness_config, "Loads templates\nfor instantiation", "Filesystem")
 Rel(cli, git, "Branch context", "Git CLI")
 Rel(cli, param_providers, "Dynamic parameters", "HTTPS / File")
 
-Rel(daemon, state_store, "Pooled connections", "Embedded DB")
-Rel(daemon, graph_db, "Cached graph, hot-reload", "Filesystem")
-Rel(daemon, policy_config, "Watches for hot-reload", "Filesystem / fsnotify")
-Rel(daemon, param_providers, "Cached parameters", "HTTPS / File")
-Rel(daemon, git, "Branch context", "Git CLI")
+Rel(server, state_store, "Pooled connections", "Embedded DB")
+Rel(server, graph_db, "Cached graph, hot-reload", "Filesystem")
+Rel(server, policy_config, "Watches for hot-reload", "Filesystem / fsnotify")
+Rel(server, param_providers, "Cached parameters", "HTTPS / File")
+Rel(server, git, "Branch context", "Git CLI")
 
-Rel(mcp, daemon, "API requests", "HTTP")
-Rel(dashboard, daemon, "Cached state, live events", "HTTP / WebSocket")
+Rel(mcp, server, "API requests", "HTTP")
+Rel(dashboard, server, "Cached state, live events", "HTTP / WebSocket")
 
 SHOW_LEGEND()
 

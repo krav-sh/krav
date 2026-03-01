@@ -235,7 +235,7 @@ The state database location depends on the configuration. For project-scoped sta
 
 For user-level state that spans projects, the database lives in the user config directory at `~/.config/arci/state.db`.
 
-The daemon manages database connections using `database/sql`'s built-in connection pooling for performance.
+The server manages database connections using `database/sql`'s built-in connection pooling for performance.
 
 ## Cleanup and lifecycle
 
@@ -245,7 +245,7 @@ Project state persists indefinitely until someone explicitly deletes it.
 
 ## Concurrency
 
-SQLite handles concurrency through its built-in locking. The `database/sql` connection pool manages multiple connections, allowing concurrent read access while serializing writes. The daemon coordinates writes to avoid contention.
+SQLite handles concurrency through its built-in locking. The `database/sql` connection pool manages multiple connections, allowing concurrent read access while serializing writes. The server coordinates writes to avoid contention.
 
 The `atomic_increment` operation uses a single `INSERT ON CONFLICT` statement to ensure atomicity even under concurrent access.
 

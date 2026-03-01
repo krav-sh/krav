@@ -12,7 +12,7 @@ Builtins also serve as documentation. Even users who turn off certain policies c
 
 ## Architecture
 
-Builtins use a rules-only extension within the ARCI package itself. The `arci/builtins/` directory contains YAML policy files organized by category. At daemon startup, the standard extension mechanism discovers these policies and loads them at the lowest precedence level.
+Builtins use a rules-only extension within the ARCI package itself. The `arci/builtins/` directory contains YAML policy files organized by category. At server startup, the standard extension mechanism discovers these policies and loads them at the lowest precedence level.
 
 ```text
 arci/

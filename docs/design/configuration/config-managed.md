@@ -194,7 +194,7 @@ For organizations using Windows Group Policy or macOS MDM profiles, the system c
 =======
 - `FailurePolicy` (string) - allow/deny
 >>>>>>> Stashed changes
-- `DaemonEnabled` (bool)
+- `ServerEnabled` (bool)
 - `LogLevel` (string)
 
 These would slot preceding managed required in precedence, providing an ultimate override capability for emergency situations (turning off ARCI fleet-wide if a bug causes outages).

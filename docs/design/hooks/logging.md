@@ -71,7 +71,7 @@ Within the base directory, the system partitions logs by project:
   project=a1b2c3d4e5f6/
     2025-01-30.jsonl
     2025-01-31.jsonl
-    daemon.log
+    server.log
 ```
 
 The directory structure encodes `project` as a partition key. DuckDB (and similar tools) can extract these from the path without scanning file contents, enabling efficient predicate pushdown (examples use Linux paths; substitute your platform's base directory):

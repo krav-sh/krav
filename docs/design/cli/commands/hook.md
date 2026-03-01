@@ -18,7 +18,7 @@ The `--event` flag specifies the canonical hook event type, such as `pre_tool_ca
 
 The command reads JSON from stdin, applies the six-stage policy evaluation pipeline (see [execution model](../../hooks/execution-model.md)), writes any output JSON to stdout, and exits with the appropriate code.
 
-In direct mode (the default), the command loads configuration, compiles policies, and applies them on every invocation. This incurs 50 - 200 ms overhead but requires no daemon process. If the daemon is running and reachable, the command can optionally delegate to it for faster evaluation with cached configuration.
+In direct mode (the default), the command loads configuration, compiles policies, and applies them on every invocation. This incurs 50 - 200 ms overhead but requires no server process. If the server is running and reachable, the command can optionally delegate to it for faster evaluation with cached configuration.
 
 Configuration errors and policy evaluation failures never block Claude Code. Only explicit deny decisions from successfully evaluated validation rules block operations. This fail-open behavior is a critical safety property.
 
@@ -250,7 +250,7 @@ This command reads from the hook execution logs that ARCI writes on every evalua
 
 ## Stats
 
-The stats subcommand aggregates metrics from the project-level hook logs that ARCI writes on every evaluation. This works regardless of whether you use the daemon or direct execution mode.
+The stats subcommand aggregates metrics from the project-level hook logs that ARCI writes on every evaluation. This works regardless of whether you use the server or direct execution mode.
 
 ### Synopsis
 

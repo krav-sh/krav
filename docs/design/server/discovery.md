@@ -62,7 +62,7 @@ The first project you start gets port 7680, the second gets 7681 (if 7680 is alr
 
 ## Stale lockfile handling
 
-If the server crashes, receives SIGKILL, or the machine reboots, the lockfile remains on disk without a corresponding process. The discovery flow handles this: it reads the PID, checks process liveness, and removes the file if the process has exited. No separate cleanup daemon or garbage collection needs to run.
+If the server crashes, receives SIGKILL, or the machine reboots, the lockfile remains on disk without a corresponding process. The discovery flow handles this: it reads the PID, checks process liveness, and removes the file if the process has exited. No separate cleanup server or garbage collection needs to run.
 
 On Unix, the CLI checks process liveness with `kill(pid, 0)`, which tests existence without sending a signal. On Windows, `OpenProcess` followed by `GetExitCodeProcess` serves the same purpose.
 

@@ -79,4 +79,4 @@ Polling is simpler than WebSocket for views that display aggregate data. The ser
 
 ## Configuration reload
 
-Configuration status updates on file changes. When the daemon detects a configuration reload (via filesystem watcher), it publishes an event. The dashboard's config view either picks this up via the WebSocket connection or refreshes on its next poll cycle, ensuring users see the latest configuration state without manual refresh.
+Configuration status updates on file changes. When the server detects a configuration reload (via filesystem watcher), it publishes an event. The dashboard's config view either picks this up via the WebSocket connection or refreshes on its next poll cycle, ensuring users see the latest configuration state without manual refresh.

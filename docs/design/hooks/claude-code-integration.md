@@ -749,7 +749,7 @@ The plugin would include a `hooks/hooks.json` file with pre-configured hook entr
 
 ### Enterprise deployment
 
-Enterprise administrators can use `allowManagedHooksOnly` to restrict hooks to managed sources, ensuring only approved plugins and hooks run. ARCI's fail-open semantics align well with this model since configuration errors or daemon unavailability won't block developer workflows.
+Enterprise administrators can use `allowManagedHooksOnly` to restrict hooks to managed sources, ensuring only approved plugins and hooks run. ARCI's fail-open semantics align well with this model since configuration errors or server unavailability won't block developer workflows.
 
 ## Plugin mechanism
 

@@ -1,6 +1,6 @@
 # Command-line interface
 
-The ARCI command-line tool provides both the fast evaluation path that Claude Code invokes and management commands for configuration, diagnostics, and daemon control. This document describes the command structure and behavior.
+The ARCI command-line tool provides both the fast evaluation path that Claude Code invokes and management commands for configuration, diagnostics, and server control. This document describes the command structure and behavior.
 
 ## Overview
 
@@ -66,7 +66,7 @@ Pre-built binaries are available from the releases page for major platforms (Lin
 
 ## Design principles
 
-- **Fast apply path.** The `arci hook apply` command is on the Claude Code hot path and must limit latency. Direct mode targets 50 to 200 ms; daemon mode provides sub-millisecond cached evaluation.
+- **Fast apply path.** The `arci hook apply` command is on the Claude Code hot path and must limit latency. Direct mode targets 50 to 200 ms; server mode provides sub-millisecond cached evaluation.
 - **Fail-open semantics.** Configuration errors and policy evaluation failures never block Claude Code. Only explicit deny decisions from successfully evaluated validation rules block operations.
 - **Cobra/pflag conventions.** The command-line tool follows standard Cobra patterns: persistent flags for global options, subcommand groups for related capability, and consistent help/completion output.
 

@@ -243,7 +243,7 @@ When loading from normal cascade layers (system, user, project, local), the load
 warning: failed to parse /home/user/.config/arci/policies.d/broken.yaml: yaml: line 5: could not find expected ':'
 ```
 
-The `arci hook policy validate` command and the daemon dashboard surface these warnings for users to investigate.
+The `arci hook policy validate` command and the server dashboard surface these warnings for users to investigate.
 
 ### Managed/required layer
 
@@ -279,18 +279,18 @@ The loader loads main configuration (`arci.yaml`) first because some settings ma
 
 The loader exposes a `Factory` type that provides lazy loading. Callers initialize the factory with the project directory and other configuration state, then retrieve a loaded configuration on demand by calling the `Load` method. The loaded configuration provides access to both the full policy set and the enabled-only subset.
 
-The factory handles caching internally. Repeated calls to `Load` with the same parameters return the cached result. The daemon uses this caching to avoid reloading on every evaluation request.
+The factory handles caching internally. Repeated calls to `Load` with the same parameters return the cached result. The server uses this caching to avoid reloading on every evaluation request.
 
 ### Hot reload integration
 
-When running with the daemon and hot reload enabled, file watchers track both configuration and policy files. Changes trigger:
+When running with the server and hot reload enabled, file watchers track both configuration and policy files. Changes trigger:
 
 1. Re-reading affected files
 2. Re-merging the cascade
 3. Re-applying manifest state
 4. Atomically swapping the new configuration
 
-The daemon's existing hot reload infrastructure handles policies the same as other configuration.
+The server's existing hot reload infrastructure handles policies the same as other configuration.
 
 ## Data structures
 

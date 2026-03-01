@@ -9,7 +9,7 @@ The [server](../server/index.md) serves the dashboard on the same HTTP port as t
 - [Features](features.md): the five user-facing views and what they display
 - [Technology](technology.md): stack choices (Go templates, htmx, Alpine.js, Pico CSS)
 - [Real-time updates](real-time.md): WebSocket streaming, polling, htmx integration
-- [Routing](routing.md): chi router, handler pattern, daemon data flow
+- [Routing](routing.md): chi router, handler pattern, server data flow
 
 ## Routes
 

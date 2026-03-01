@@ -1,7 +1,7 @@
 @startuml arci-c4-component
 !include <C4/C4_Component>
 
-title Component diagram for arci CLI / Daemon
+title Component diagram for arci CLI / Server
 
 Container_Ext(claude_code, "Claude Code", "Hook events via stdin/stdout JSON,\ngraph queries via CLI invocation")
 ContainerDb_Ext(state_store, "State Store", "Embedded DB")
@@ -14,7 +14,7 @@ System_Ext(param_providers, "Parameter providers", "Dynamic policy params")
 
 Container_Boundary(arci_binary, "arci binary") {
 
-    Component(cli_commands, "CLI Commands", "", "Command router. Dispatches hook\nevaluation, graph CRUD, queries,\ntemplate instantiation, daemon control.")
+    Component(cli_commands, "CLI Commands", "", "Command router. Dispatches hook\nevaluation, graph CRUD, queries,\ntemplate instantiation, server control.")
 
     Component(hook_handler, "Hook Handler", "", "Translates Claude Code hook JSON\n(camelCase) to internal events\n(snake_case). Maps results to\nexit codes and JSON output.")
 
@@ -38,7 +38,7 @@ Container_Boundary(arci_binary, "arci binary") {
         Component(git_provider, "Git Context", "", "Reads current branch, dirty state,\nstaged files. Provides context\nfor policy conditions and\ngraph operations.")
     }
 
-    Container_Boundary(api, "API layer (daemon mode)") {
+    Container_Boundary(api, "API layer (server mode)") {
         Component(http_api, "REST API", "", "Evaluate endpoint, state queries,\nconfiguration status. Thin wrapper\naround core functions.")
 
         Component(ws_events, "Event Stream", "", "WebSocket endpoint for live\nhook evaluations, policy matches,\nand state changes.")
@@ -85,8 +85,8 @@ Rel(cli_commands, config_loader, "Load policies\n(direct mode)", "In-process")
 ' === Template to harness config ===
 Rel(template_engine, harness_config, "Loads template\ndefinitions", "Filesystem")
 
-' === API layer (daemon mode) ===
-Rel(cli_commands, http_api, "Delegates when\ndaemon.enabled", "HTTP")
+' === API layer (server mode) ===
+Rel(cli_commands, http_api, "Delegates when\nserver.enabled", "HTTP")
 Rel(http_api, policy_engine, "Compiled evaluation", "In-process")
 Rel(http_api, graph_engine, "Graph queries", "In-process")
 Rel(http_api, state_mgr, "State read/write", "In-process")

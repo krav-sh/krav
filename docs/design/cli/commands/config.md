@@ -43,7 +43,7 @@ Retrieves a configuration value by key.
 
     arci config get <key>
 
-Keys use dot notation like `daemon.port` and `logging.level`.
+Keys use dot notation like `server.port` and `logging.level`.
 
 **Flags:**
 
@@ -55,7 +55,7 @@ Sets a configuration value.
 
     arci config set <key> <value>
 
-Writes to the YAML file on disk and triggers a configuration reload if the daemon is running.
+Writes to the YAML file on disk and triggers a configuration reload if the server is running.
 
 **Flags:**
 
