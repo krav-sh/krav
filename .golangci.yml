@@ -18,18 +18,18 @@ formatters:
       sections:
         - standard
         - default
-        - prefix(github.com/tbhb/arci)
+        - prefix(pkg.krav.sh/krav)
         - blank
         - dot
         - alias
         - localmodule
       custom-order: true
     gofumpt:
-      module-path: github.com/tbhb/arci
+      module-path: pkg.krav.sh/krav
       extra-rules: true
     goimports:
       local-prefixes:
-        - github.com/tbhb/arci
+        - pkg.krav.sh/krav
     golines:
       max-len: 120
 
@@ -128,7 +128,7 @@ linters:
               desc: "Use math/rand/v2 instead"
         "non-main files":
           files:
-            - "!**/cmd/arci/main.go"
+            - "!**/cmd/krav/main.go"
           deny:
             - pkg: log$
               desc: "Use log/slog instead"

@@ -3,14 +3,14 @@ package root
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/tbhb/arci/internal/cmdutil"
+	"pkg.krav.sh/krav/internal/cmdutil"
 )
 
 func NewCmdRoot(_ *cmdutil.Factory) (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:   "arci <command> [flags]",
-		Short: "ARCI CLI",
-		Long:  "Agentic Requirements Composition & Integration.",
+		Use:   "krav <command> [flags]",
+		Short: "Krav CLI",
+		Long:  "Krav.",
 	}
 
 	return cmd, nil

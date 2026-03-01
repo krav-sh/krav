@@ -13,8 +13,8 @@ import (
 	"github.com/knadh/koanf/v2"
 	"github.com/spf13/pflag"
 
-	"github.com/tbhb/arci/internal/config"
-	"github.com/tbhb/arci/internal/logging"
+	"pkg.krav.sh/krav/internal/config"
+	"pkg.krav.sh/krav/internal/logging"
 )
 
 // LoadOpts configures cascade loading behavior.
@@ -64,9 +64,9 @@ func (opts *LoadOpts) debug(msg string, keyvals ...any) {
 // loaded as configuration values. These variables control loader behavior
 // rather than providing config values.
 var excludedEnvSuffixes = []string{
-	"DEBUG",       // ARCI_DEBUG - enable debug logging
-	"CONFIG_FILE", // ARCI_CONFIG_FILE - custom config override
-	"PROJECT_DIR", // ARCI_PROJECT_DIR - project directory override
+	"DEBUG",       // KRAV_DEBUG - enable debug logging
+	"CONFIG_FILE", // KRAV_CONFIG_FILE - custom config override
+	"PROJECT_DIR", // KRAV_PROJECT_DIR - project directory override
 }
 
 // isExcludedEnvVar returns true if the environment variable key (without prefix)
@@ -95,7 +95,7 @@ func LoadDefaultCascade(opts LoadOpts) (*DefaultCascade, error) {
 	}
 
 	// Environment variables (always, after files)
-	loadEnv(opts, cfg, "ARCI_")
+	loadEnv(opts, cfg, "KRAV_")
 
 	// CLI flags (always, after env)
 	if err := loadFlags(opts, cfg); err != nil {
@@ -111,7 +111,7 @@ func LoadDefaultCascade(opts LoadOpts) (*DefaultCascade, error) {
 	return cfg, nil
 }
 
-// loadFileCascade loads configuration files. If ARCI_CONFIG_FILE is set,
+// loadFileCascade loads configuration files. If KRAV_CONFIG_FILE is set,
 // it loads only that file. Otherwise, it loads the normal file cascade.
 func loadFileCascade(opts LoadOpts, cfg *DefaultCascade) error {
 	customConfigFile := os.Getenv(config.EnvConfigFile)

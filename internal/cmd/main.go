@@ -4,9 +4,9 @@ import (
 	"context"
 	"os"
 
-	"github.com/tbhb/arci/internal/cmd/factory"
-	"github.com/tbhb/arci/internal/cmd/root"
-	"github.com/tbhb/arci/internal/logging"
+	"pkg.krav.sh/krav/internal/cmd/factory"
+	"pkg.krav.sh/krav/internal/cmd/root"
+	"pkg.krav.sh/krav/internal/logging"
 )
 
 type ExitCode int
@@ -16,7 +16,7 @@ const (
 	ExitCodeError   ExitCode = 1
 	ExitCodeCancel  ExitCode = 2
 
-	EnvDebug = "ARCI_DEBUG"
+	EnvDebug = "KRAV_DEBUG"
 )
 
 func Main() ExitCode {

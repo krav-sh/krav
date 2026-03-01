@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/tbhb/arci/internal/cmd"
+	"pkg.krav.sh/krav/internal/cmd"
 )
 
 func main() {

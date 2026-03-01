@@ -1,4 +1,4 @@
-// Package logging provides a structured logging interface for arci.
+// Package logging provides a structured logging interface for krav.
 // It wraps charmbracelet/log to provide colorful console output, logfmt,
 // and JSON formats. All loggers must be explicitly instantiated; there is
 // no global logger.

@@ -9,25 +9,25 @@ import (
 
 	"github.com/tbhb/toolpaths-go"
 
-	"github.com/tbhb/arci/internal/fsutil"
+	"pkg.krav.sh/krav/internal/fsutil"
 )
 
 // Environment variable names for configuration overrides.
 const (
-	// EnvConfigFile overrides all arci*.yaml configuration files when set.
-	EnvConfigFile string = "ARCI_CONFIG_FILE"
+	// EnvConfigFile overrides all krav*.yaml configuration files when set.
+	EnvConfigFile string = "KRAV_CONFIG_FILE"
 	// EnvProjectDir explicitly sets the project directory, bypassing detection.
-	EnvProjectDir string = "ARCI_PROJECT_DIR"
+	EnvProjectDir string = "KRAV_PROJECT_DIR"
 )
 
 // File and directory naming constants used throughout the configuration system.
 const (
-	AppName                   = "arci"
+	AppName                   = "krav"
 	DottedAppName             = "." + AppName
 	XDGConfigDirName          = ".config"
-	ConfigFilename            = "arci.yaml"
+	ConfigFilename            = "krav.yaml"
 	DottedConfigFilename      = "." + ConfigFilename
-	LocalConfigFilename       = "arci.local.yaml"
+	LocalConfigFilename       = "krav.local.yaml"
 	DottedLocalConfigFilename = "." + LocalConfigFilename
 	ManagedDirName            = "managed"
 	RecommendedDirName        = "recommended"
@@ -36,7 +36,7 @@ const (
 )
 
 // ProjectMarkerNames lists directory and file names that indicate a project
-// root during ancestor traversal. Includes VCS directories and arci
+// root during ancestor traversal. Includes VCS directories and krav
 // configuration markers.
 var ProjectMarkerNames = []string{
 	".git",
@@ -52,12 +52,12 @@ var ProjectMarkerNames = []string{
 }
 
 // ProjectXDGConfigDirName is the relative path to the XDG-style project
-// configuration directory (.config/arci).
+// configuration directory (.config/krav).
 var ProjectXDGConfigDirName = filepath.Join(XDGConfigDirName, AppName)
 
 // ProjectConfigDirNames lists possible project configuration directory
-// locations in order of increasing precedence. The last entry (.arci)
-// takes precedence over earlier entries (.config/arci).
+// locations in order of increasing precedence. The last entry (.krav)
+// takes precedence over earlier entries (.config/krav).
 var ProjectConfigDirNames = []string{
 	filepath.Join(XDGConfigDirName, AppName),
 	DottedAppName,
@@ -90,7 +90,7 @@ var ManagedRecommendedDirName = filepath.Join(ManagedDirName, RecommendedDirName
 var ManagedRequiredDirName = filepath.Join(ManagedDirName, RequiredDirName)
 
 // Paths provides access to configuration file and directory locations across
-// all cascade layers for the arci configuration system.
+// all cascade layers for the krav configuration system.
 type Paths interface {
 	// Managed recommended (enterprise defaults, overridable)
 	ManagedRecommendedConfigFile() string
@@ -186,7 +186,7 @@ func (d *DefaultPaths) ManagedRequiredConfigFile() string {
 
 // ProjectDir returns the project root directory by checking in precedence order:
 // 1. PathOpts.ProjectDir override (from CLI flag)
-// 2. ARCI_PROJECT_DIR environment variable
+// 2. KRAV_PROJECT_DIR environment variable
 // 3. Detection from current working directory being inside a config directory
 // 4. Ancestor traversal looking for project markers (VCS dirs, config files)
 //
@@ -225,7 +225,7 @@ func (d *DefaultPaths) ProjectDir() (string, error) {
 	return "", nil
 }
 
-// projectDirFromConfigPath checks if the given path is inside an arci
+// projectDirFromConfigPath checks if the given path is inside a krav
 // config directory and returns the project root if so.
 func projectDirFromConfigPath(path string) (string, bool) {
 	path = filepath.Clean(path)
@@ -322,19 +322,19 @@ func (d *DefaultPaths) matchProjectFiles(names []string) (string, []string, erro
 }
 
 // DefaultProjectConfigDir returns the default path for a new project
-// configuration directory (.arci within the project root).
+// configuration directory (.krav within the project root).
 func (d *DefaultPaths) DefaultProjectConfigDir() (string, error) {
 	return d.JoinProjectDir(ProjectConfigDirNames[len(ProjectConfigDirNames)-1])
 }
 
 // DefaultProjectConfigFile returns the default path for a new project
-// configuration file (.arci/arci.yaml).
+// configuration file (.krav/krav.yaml).
 func (d *DefaultPaths) DefaultProjectConfigFile() (string, error) {
 	return d.JoinProjectDir(ProjectConfigFileNames[len(ProjectConfigFileNames)-1])
 }
 
 // DefaultLocalConfigFile returns the default path for a new local
-// configuration file (.arci/arci.local.yaml).
+// configuration file (.krav/krav.local.yaml).
 func (d *DefaultPaths) DefaultLocalConfigFile() (string, error) {
 	return d.JoinProjectDir(LocalConfigFileNames[len(LocalConfigFileNames)-1])
 }

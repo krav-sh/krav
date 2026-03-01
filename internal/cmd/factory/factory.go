@@ -4,10 +4,10 @@ import (
 	"os"
 	"sync"
 
-	"github.com/tbhb/arci/internal/cmdutil"
-	"github.com/tbhb/arci/internal/config"
-	"github.com/tbhb/arci/internal/config/settings"
-	"github.com/tbhb/arci/internal/logging"
+	"pkg.krav.sh/krav/internal/cmdutil"
+	"pkg.krav.sh/krav/internal/config"
+	"pkg.krav.sh/krav/internal/config/settings"
+	"pkg.krav.sh/krav/internal/logging"
 )
 
 // Opts configures factory creation.

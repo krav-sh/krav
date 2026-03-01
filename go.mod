@@ -1,4 +1,4 @@
-module github.com/tbhb/arci
+module pkg.krav.sh/krav
 
 go 1.25.0
 
