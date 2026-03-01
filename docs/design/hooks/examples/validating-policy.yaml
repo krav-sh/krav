@@ -3,6 +3,7 @@
 # matchConditions defines conditional logic (when it applies, can reference params).
 # Enforcement is specified in PolicyBindings.
 
+---
 apiVersion: arci.dev/v1
 kind: Policy
 metadata:

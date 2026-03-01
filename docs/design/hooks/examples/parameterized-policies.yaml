@@ -388,6 +388,9 @@ spec:
       expression: |
         object.with({
           tool_input: object.tool_input.with({
-            content: header_template.replace("{{year}}", current_year).replace("{{holder}}", copyright_holder) + "\n\n" + object.tool_input.content
+            content: header_template
+              .replace("{{year}}", current_year)
+              .replace("{{holder}}", copyright_holder) +
+              "\n\n" + object.tool_input.content
           })
         })

@@ -7,6 +7,7 @@
 # - Different mutation behavior per environment
 # - Gradual rollout of transformations
 
+---
 apiVersion: arci.dev/v1
 kind: Policy
 metadata:
@@ -59,14 +60,26 @@ spec:
     - name: python-standards
       expression: |
         object.with({
-          context: object.context + "\n\nWhen writing Python code for this project:\n\n- Use Python 3.11+ features\n- Type hints required for all function signatures\n- Google-style docstrings for public functions\n- Use pathlib, not os.path\n- Prefer dataclasses or Pydantic\n- Max line length: 100 characters\n\nThe project uses pytest, ruff, and mypy."
+          context: object.context +
+            "\n\nWhen writing Python code for this project:" +
+            "\n\n- Use Python 3.11+ features" +
+            "\n- Type hints required for all function signatures" +
+            "\n- Google-style docstrings for public functions" +
+            "\n- Use pathlib, not os.path" +
+            "\n- Prefer dataclasses or Pydantic" +
+            "\n- Max line length: 100 characters" +
+            "\n\nThe project uses pytest, ruff, and mypy."
         })
 
     - name: add-file-header
       expression: |
         object.with({
           tool_input: object.tool_input.with({
-            content: "# Copyright " + current_year + " Company Name\n# SPDX-License-Identifier: MIT\n\n\"\"\"" + module_name + " module.\"\"\"\n\n" + object.tool_input.content
+            content: "# Copyright " + current_year +
+              " Company Name\n# SPDX-License-Identifier: MIT" +
+              "\n\n\"\"\"" + module_name +
+              " module.\"\"\"\n\n" +
+              object.tool_input.content
           })
         })
 
@@ -135,14 +148,23 @@ spec:
     - name: typescript-standards
       expression: |
         object.with({
-          context: object.context + "\n\nWhen writing TypeScript code for this project:\n\n- Use strict TypeScript configuration\n- Prefer interfaces over type aliases for objects\n- Use readonly where mutation not needed\n- Avoid any; use unknown for truly unknown types\n- Max line length: 100 characters\n- Use named exports over default exports"
+          context: object.context +
+            "\n\nWhen writing TypeScript code for this project:" +
+            "\n\n- Use strict TypeScript configuration" +
+            "\n- Prefer interfaces over type aliases for objects" +
+            "\n- Use readonly where mutation not needed" +
+            "\n- Avoid any; use unknown for truly unknown types" +
+            "\n- Max line length: 100 characters" +
+            "\n- Use named exports over default exports"
         })
 
     - name: add-file-header
       expression: |
         object.with({
           tool_input: object.tool_input.with({
-            content: "// Copyright " + current_year + " Company Name\n// SPDX-License-Identifier: MIT\n\n" + object.tool_input.content
+            content: "// Copyright " + current_year +
+              " Company Name\n// SPDX-License-Identifier: MIT" +
+              "\n\n" + object.tool_input.content
           })
         })
 
@@ -218,13 +240,21 @@ spec:
     - key: staged_files
       expression: "$git_staged_files()"
     - key: staged_list
-      expression: 'size(staged_files) > 0 ? "\n- Staged: " + staged_files.join(", ") : ""'
+      expression: >-
+        size(staged_files) > 0
+        ? "\n- Staged: " + staged_files.join(", ")
+        : ""
 
   mutations:
     - name: git-context-injection
       expression: |
         object.with({
-          context: object.context + "\n\nGit context:\n- Branch: " + current_branch + "\n- Working tree: " + (is_dirty ? "dirty" : "clean") + staged_list
+          context: object.context +
+            "\n\nGit context:\n- Branch: " +
+            current_branch +
+            "\n- Working tree: " +
+            (is_dirty ? "dirty" : "clean") +
+            staged_list
         })
 
 ---
@@ -389,13 +419,21 @@ spec:
     - key: current_branch
       expression: "$current_branch()"
     - key: commit_suggestion
-      expression: 'files_modified_count > 10 ? "\n\nConsider committing changes in logical chunks." : ""'
+      expression: >-
+        files_modified_count > 10
+        ? "\n\nConsider committing changes in logical chunks."
+        : ""
 
   mutations:
     - name: session-context
       expression: |
         object.with({
-          context: object.context + "\n\nSession activity:\n- Files modified: " + string(files_modified_count) + "\n- Branch: " + current_branch + commit_suggestion
+          context: object.context +
+            "\n\nSession activity:" +
+            "\n- Files modified: " +
+            string(files_modified_count) +
+            "\n- Branch: " + current_branch +
+            commit_suggestion
         })
 
   sideEffects:

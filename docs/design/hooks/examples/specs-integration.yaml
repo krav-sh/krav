@@ -216,8 +216,8 @@ response:
       canModifyConfig: false
       canDeleteFiles: false
       canRunArbitraryCommands: false
-    # Policy will block force push for interns
 
+# Policy will block force push for interns
 
 # Scenario 5: After hours / on-call
 # Specs sees: current time outside business hours, on-call rotation
