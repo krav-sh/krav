@@ -1,31 +1,31 @@
 # ParamProviders define how policies receive dynamic parameters at evaluation time.
-# This enables external systems like arci's specs subsystem to inject context into policy evaluation
-# without arci needing to understand their internal state management.
+# This enables external systems like krav's specs subsystem to inject context into policy evaluation
+# without krav needing to understand their internal state management.
 
 ---
-# HTTP-based param provider - arci specs integration
+# HTTP-based param provider - krav specs integration
 # The specs subsystem runs a lightweight HTTP endpoint that receives the hook event
 # and returns params based on its rich project/workflow context.
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: ParamProvider
 metadata:
-  name: arci-specs
-  description: arci specs integration for dynamic policy context
+  name: krav-specs
+  description: krav specs integration for dynamic policy context
   labels:
-    integration: arci-specs
+    integration: krav-specs
 
 spec:
   http:
-    # The specs subsystem exposes this endpoint for arci param requests
-    endpoint: http://localhost:9100/arci/params
+    # The specs subsystem exposes this endpoint for krav param requests
+    endpoint: http://localhost:9100/krav/params
 
     # Timeout for param fetch - keep short to avoid blocking
     timeout: 100ms
 
     # Optional headers for authentication
     headers:
-      Authorization: Bearer ${ARCI_SPECS_TOKEN}
+      Authorization: Bearer ${KRAV_SPECS_TOKEN}
 
     # What to send to the provider
     # full: entire hook event (tool_name, tool_input, session, etc.)
@@ -46,15 +46,15 @@ spec:
 # Unix socket provider - lower latency for local servers
 # Useful when the param provider runs on the same machine
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: ParamProvider
 metadata:
-  name: arci-specs-socket
-  description: arci specs via Unix socket for minimal latency
+  name: krav-specs-socket
+  description: krav specs via Unix socket for minimal latency
 
 spec:
   socket:
-    path: /tmp/arci-specs.sock
+    path: /tmp/krav-specs.sock
     timeout: 50ms
 
   failurePolicy: useDefaults
@@ -63,10 +63,10 @@ spec:
 
 ---
 # File-based provider - simplest integration
-# External system writes params to a file, arci reads it
+# External system writes params to a file, krav reads it
 # Good for systems that can't run an HTTP server
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: ParamProvider
 metadata:
   name: project-context
@@ -74,7 +74,7 @@ metadata:
 
 spec:
   file:
-    path: .arci/params.json
+    path: .krav/params.json
 
     # Watch for changes and reload automatically
     watch: true
@@ -94,7 +94,7 @@ spec:
 # Fetches params from Open Policy Agent for organizations
 # that manage policy data centrally
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: ParamProvider
 metadata:
   name: enterprise-opa
@@ -103,7 +103,7 @@ metadata:
 spec:
   opa:
     endpoint: https://opa.internal.corp/v1/data
-    policyPath: arci/params
+    policyPath: krav/params
     timeout: 200ms
 
     headers:
@@ -126,7 +126,7 @@ spec:
 # Environment-based provider - params from env vars
 # Simple way to configure policies without external systems
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: ParamProvider
 metadata:
   name: env-config
@@ -135,9 +135,9 @@ metadata:
 spec:
   env:
     mapping:
-      strictMode: ARCI_STRICT_MODE
-      maxFileSize: ARCI_MAX_FILE_SIZE
-      allowedBranches: ARCI_ALLOWED_BRANCHES
+      strictMode: KRAV_STRICT_MODE
+      maxFileSize: KRAV_MAX_FILE_SIZE
+      allowedBranches: KRAV_ALLOWED_BRANCHES
       teamName: TEAM_NAME
 
     # Type coercion for non-string values
@@ -156,7 +156,7 @@ spec:
 # Composite provider - combine multiple sources
 # Params are merged with later sources taking precedence
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: ParamProvider
 metadata:
   name: layered-config
@@ -173,8 +173,8 @@ spec:
       - ref: project-context
         priority: 2
 
-      # Dynamic context from arci specs
-      - ref: arci-specs
+      # Dynamic context from krav specs
+      - ref: krav-specs
         priority: 3
 
     # How to merge when same key exists
@@ -188,7 +188,7 @@ spec:
 # Static provider - inline params for simple cases
 # No external system needed, just literal values
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: ParamProvider
 metadata:
   name: production-hardened

@@ -5,7 +5,7 @@
 ---
 # File size limits - different thresholds for different contexts
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: FileSizeParams
 metadata:
   name: strict-limits
@@ -22,7 +22,7 @@ spec:
     - "*.lock"
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: FileSizeParams
 metadata:
   name: relaxed-limits
@@ -39,7 +39,7 @@ spec:
 ---
 # Security parameters - different security postures
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: SecurityParams
 metadata:
   name: enterprise-baseline
@@ -85,7 +85,7 @@ spec:
     - production
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: SecurityParams
 metadata:
   name: developer-baseline
@@ -113,7 +113,7 @@ spec:
 ---
 # Code style parameters - language-specific settings
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: CodeStyleParams
 metadata:
   name: typescript-strict
@@ -146,7 +146,7 @@ spec:
       import: "import { logger } from '@/lib/logger'"
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: CodeStyleParams
 metadata:
   name: python-standard
@@ -180,7 +180,7 @@ spec:
 ---
 # License compliance parameters
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: LicenseParams
 metadata:
   name: permissive-only
@@ -216,7 +216,7 @@ spec:
 ---
 # Git workflow parameters
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: GitWorkflowParams
 metadata:
   name: trunk-based
@@ -240,7 +240,7 @@ spec:
   requireSquashMerge: true
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: GitWorkflowParams
 metadata:
   name: gitflow
@@ -267,15 +267,15 @@ spec:
   requireSquashMerge: false
 
 ---
-# arci specs-style dynamic context parameters
-# These would typically be provided by arci specs at runtime,
+# krav specs-style dynamic context parameters
+# These would typically be provided by krav specs at runtime,
 # but can be defined statically for testing or fallback
 
-apiVersion: arci.dev/v1
-kind: arci specsContextParams
+apiVersion: krav.sh/v1
+kind: krav specsContextParams
 metadata:
   name: specs-fallback
-  description: Fallback params when arci specs is unavailable
+  description: Fallback params when krav specs is unavailable
 
 spec:
   # Project context

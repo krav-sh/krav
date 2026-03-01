@@ -13,7 +13,7 @@
 ---
 # Simple binding - no additional scoping
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: enterprise-security-global
@@ -34,7 +34,7 @@ spec:
 ---
 # Binding that narrows to specific paths
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: typescript-quality-src
@@ -56,7 +56,7 @@ spec:
 ---
 # Same policy, different enforcement for tests
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: typescript-quality-tests
@@ -77,7 +77,7 @@ spec:
 ---
 # Branch-specific binding
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: git-workflow-protected
@@ -100,7 +100,7 @@ spec:
   actions: [deny]
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: git-workflow-feature
@@ -121,10 +121,10 @@ spec:
   actions: [warn]
 
 ---
-# arci specs-driven binding
+# krav specs-driven binding
 # Different params provide different context, policy's matchConditions react
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: workflow-restrictions-specs
@@ -133,9 +133,9 @@ spec:
   policyRef:
     name: workflow-phase-restrictions
 
-  # arci specs provides workflowPhase, userRole, etc.
+  # krav specs provides workflowPhase, userRole, etc.
   paramProviderRef:
-    name: arci-specs
+    name: krav-specs
 
   # No matchResources - let specs context control via policy's matchConditions
 
@@ -144,7 +144,7 @@ spec:
 ---
 # Gradual rollout - audit mode first
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: typescript-quality-rollout
@@ -161,7 +161,7 @@ spec:
 ---
 # Mutating policy binding with mutations enabled
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: python-standards-apply
@@ -174,7 +174,7 @@ spec:
   mutationsEnabled: true
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: typescript-standards-apply
@@ -189,7 +189,7 @@ spec:
 ---
 # Mutation in audit mode first (mutations disabled)
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: console-to-logger-audit
@@ -206,7 +206,7 @@ spec:
 # Different params for different contexts
 # Policy's matchConditions use params to decide applicability
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: protected-branch-main
@@ -221,7 +221,7 @@ spec:
   actions: [deny]
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: protected-branch-release
@@ -238,7 +238,7 @@ spec:
 ---
 # Disabled binding
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: typescript-quality-disabled
@@ -253,7 +253,7 @@ spec:
 ---
 # Binding with fallback params
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: workflow-with-fallback
@@ -263,7 +263,7 @@ spec:
     name: workflow-phase-restrictions
 
   paramProviderRef:
-    name: arci-specs
+    name: krav-specs
 
   # If specs subsystem unavailable, use static params
   fallbackParamRef:
@@ -273,9 +273,9 @@ spec:
 
 ---
 # User role binding via different params
-# arci specs provides userRole, policy's matchConditions check it
+# krav specs provides userRole, policy's matchConditions check it
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: security-with-roles
@@ -285,14 +285,14 @@ spec:
     name: role-aware-security # Has matchCondition: params.userRole != "senior"
 
   paramProviderRef:
-    name: arci-specs
+    name: krav-specs
 
   actions: [deny]
 
 ---
 # Combining structural scope with param-driven conditions
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: strict-mode-src
@@ -313,7 +313,7 @@ spec:
   actions: [deny]
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: PolicyBinding
 metadata:
   name: strict-mode-experiments

@@ -188,7 +188,7 @@ The `status` command shows:
 
 For organizations using Windows Group Policy or macOS MDM profiles, the system could read a small subset of scalar settings from OS policy stores:
 
-- `ArciEnabled` (bool) - emergency stop
+- `KravEnabled` (bool) - emergency stop
 <<<<<<< Updated upstream
 - `FailurePolicy` (string) - allow/deny
 =======

@@ -8,7 +8,7 @@
 # - Gradual rollout of transformations
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: python-standards
@@ -97,7 +97,7 @@ spec:
       valueExpression: file_path
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: typescript-standards
@@ -169,7 +169,7 @@ spec:
         })
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: normalize-paths
@@ -210,7 +210,7 @@ spec:
         })
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: git-context
@@ -258,7 +258,7 @@ spec:
         })
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: convert-console-to-logger
@@ -311,7 +311,7 @@ spec:
         language: typescript
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: sanitize-shell-secrets
@@ -347,7 +347,7 @@ spec:
         })
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: ban-var-keyword
@@ -391,7 +391,7 @@ spec:
         language: typescript
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: session-context

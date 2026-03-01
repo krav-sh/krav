@@ -4,7 +4,7 @@
 # Enforcement is specified in PolicyBindings.
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: enterprise-security-baseline
@@ -99,7 +99,7 @@ spec:
 ---
 # TypeScript-specific policy
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: typescript-quality
@@ -153,7 +153,7 @@ spec:
 ---
 # Git workflow policy
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: git-workflow
@@ -195,7 +195,7 @@ spec:
 ---
 # Branch-aware policy using matchConditions
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: protected-branch-restrictions
@@ -216,7 +216,7 @@ spec:
       - Edit
       - Bash
 
-  # Only active on protected branches (via params from arci specs or config)
+  # Only active on protected branches (via params from krav specs or config)
   matchConditions:
     - name: on-protected-branch
       expression: "$current_branch() in params.protectedBranches"
@@ -238,19 +238,19 @@ spec:
       message: "Cannot amend commits on protected branches"
 
 ---
-# arci specs-aware policy
+# krav specs-aware policy
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: workflow-phase-restrictions
-  description: Restrictions based on arci specs workflow phase
+  description: Restrictions based on krav specs workflow phase
 
 spec:
   failurePolicy: allow
 
   paramKind:
-    kind: arci specsContextParams
+    kind: krav specsContextParams
 
   matchConstraints:
     events:
@@ -261,7 +261,7 @@ spec:
       - Write
       - Edit
 
-  # arci specs provides workflowPhase via params
+  # krav specs provides workflowPhase via params
   matchConditions:
     - name: in-review-phase
       expression: 'params.workflowPhase == "review"'
@@ -283,7 +283,7 @@ spec:
 ---
 # Simple policy with no conditions
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: no-force-delete

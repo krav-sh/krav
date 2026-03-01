@@ -1,35 +1,35 @@
 # Specs Integration Guide
 #
-# This document shows how arci's specs subsystem integrates with arci
+# This document shows how krav's specs subsystem integrates with krav
 # as a ParamProvider, enabling rich contextual policy evaluation.
 #
 # The flow:
 # 1. AI assistant (Claude Code) fires a hook event
-# 2. arci receives the event and prepares to evaluate policies
-# 3. For policies bound to the specs provider, arci requests params
+# 2. krav receives the event and prepares to evaluate policies
+# 3. For policies bound to the specs provider, krav requests params
 # 4. The specs subsystem receives the request with hook context, returns params based on its state
-# 5. arci evaluates policies with params.* populated from specs
-# 6. arci returns decision to the AI assistant
+# 5. krav evaluates policies with params.* populated from specs
+# 6. krav returns decision to the AI assistant
 
 # ============================================================================
 # Specs ParamProvider configuration
 # ============================================================================
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: ParamProvider
 metadata:
-  name: arci-specs
-  description: arci specs subsystem integration
+  name: krav-specs
+  description: krav specs subsystem integration
 
 spec:
   http:
-    endpoint: http://localhost:9100/arci/params
+    endpoint: http://localhost:9100/krav/params
     timeout: 100ms
 
     # Specs subsystem authenticates via token
     headers:
-      Authorization: Bearer ${ARCI_SPECS_TOKEN}
+      Authorization: Bearer ${KRAV_SPECS_TOKEN}
 
     # Send full context so specs can make informed decisions
     requestBody: full
@@ -43,12 +43,12 @@ spec:
 
 
 # ============================================================================
-# Request format (arci -> specs subsystem)
+# Request format (krav -> specs subsystem)
 # ============================================================================
 #
-# When arci needs params, it POSTs to the specs endpoint:
+# When krav needs params, it POSTs to the specs endpoint:
 #
-# POST /arci/params
+# POST /krav/params
 # Content-Type: application/json
 # Authorization: Bearer <token>
 #
@@ -78,7 +78,7 @@ spec:
 # }
 
 # ============================================================================
-# Response format (specs subsystem -> arci)
+# Response format (specs subsystem -> krav)
 # ============================================================================
 #
 # The specs subsystem returns params as JSON:
@@ -290,8 +290,8 @@ response:
 # Specs endpoint implementation sketch (Python)
 # ============================================================================
 #
-# @app.post("/arci/params")
-# async def get_params(request: ArciRequest) -> ParamsResponse:
+# @app.post("/krav/params")
+# async def get_params(request: KravRequest) -> ParamsResponse:
 #     session = get_specs_session(request.session.id)
 #     project = get_specs_project(request.project.path)
 #     user = get_specs_user(request.session.user)
@@ -327,7 +327,7 @@ response:
 # Caching and performance
 # ============================================================================
 #
-# To minimize latency, arci can cache params:
+# To minimize latency, krav can cache params:
 #
 # - Use cache_key from response for cache lookup
 # - Respect ttl for cache expiration
@@ -336,7 +336,7 @@ response:
 #
 # The specs subsystem can also push param updates proactively:
 #
-# POST /arci/params/invalidate
+# POST /krav/params/invalidate
 # {
 #   "cache_keys": ["sess_abc123:*"],
 #   "reason": "workflow_phase_changed"
@@ -348,7 +348,7 @@ response:
 #
 # If the specs subsystem returns an error or times out:
 #
-# 1. arci uses defaults from ParamProvider.spec.defaults
+# 1. krav uses defaults from ParamProvider.spec.defaults
 # 2. Policy evaluation continues with degraded context
 # 3. Audit log records that params came from defaults
 # 4. Optional: notify user that full context unavailable

@@ -3,7 +3,7 @@
 # Enforcement (deny/warn/audit) is also specified in bindings, not here.
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: security-baseline
@@ -69,7 +69,7 @@ spec:
       message: "Content appears to contain secrets"
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: max-file-size
@@ -111,7 +111,7 @@ spec:
         "File " + string(content_size) + " bytes exceeds limit of " + string(max_bytes)
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: code-style
@@ -166,7 +166,7 @@ spec:
         banned_patterns.filter(bp, content.contains(bp.pattern)).map(bp, bp.message).join("; ")
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: git-workflow
@@ -220,17 +220,17 @@ spec:
       message: "Merge commits not allowed; use rebase"
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: specs-context-aware
-  description: Policy leveraging arci specs workflow context
+  description: Policy leveraging krav specs workflow context
 
 spec:
   failurePolicy: allow
 
   paramKind:
-    kind: arci specsContextParams
+    kind: krav specsContextParams
 
   matchConstraints:
     events:
@@ -247,7 +247,7 @@ spec:
     - key: file_path
       expression: 'has(tool_input.file_path) ? tool_input.file_path : ""'
 
-    # arci specs context
+    # krav specs context
     - key: workflow_phase
       expression: 'has(params.workflowPhase) ? params.workflowPhase : "none"'
     - key: strict_mode
@@ -294,7 +294,7 @@ spec:
       message: "{{ size(files_modified) }} files modified. Consider smaller changes."
 
 ---
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: license-compliance
@@ -341,7 +341,7 @@ spec:
 ---
 # Parameterized policy with mutations
 
-apiVersion: arci.dev/v1
+apiVersion: krav.sh/v1
 kind: Policy
 metadata:
   name: inject-standards
