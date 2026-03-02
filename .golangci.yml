@@ -18,18 +18,18 @@ formatters:
       sections:
         - standard
         - default
-        - prefix(pkg.krav.sh/krav)
+        - prefix(go.krav.sh/krav)
         - blank
         - dot
         - alias
         - localmodule
       custom-order: true
     gofumpt:
-      module-path: pkg.krav.sh/krav
+      module-path: go.krav.sh/krav
       extra-rules: true
     goimports:
       local-prefixes:
-        - pkg.krav.sh/krav
+        - go.krav.sh/krav
     golines:
       max-len: 120
 

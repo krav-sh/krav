@@ -4,9 +4,9 @@ import (
 	"context"
 	"os"
 
-	"pkg.krav.sh/krav/internal/cmd/factory"
-	"pkg.krav.sh/krav/internal/cmd/root"
-	"pkg.krav.sh/krav/internal/logging"
+	"go.krav.sh/krav/internal/cmd/factory"
+	"go.krav.sh/krav/internal/cmd/root"
+	"go.krav.sh/krav/internal/logging"
 )
 
 type ExitCode int

@@ -1,9 +1,9 @@
 package cmdutil
 
 import (
-	"pkg.krav.sh/krav/internal/config"
-	"pkg.krav.sh/krav/internal/config/settings"
-	"pkg.krav.sh/krav/internal/logging"
+	"go.krav.sh/krav/internal/config"
+	"go.krav.sh/krav/internal/config/settings"
+	"go.krav.sh/krav/internal/logging"
 )
 
 type Factory struct {

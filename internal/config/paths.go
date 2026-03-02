@@ -9,7 +9,7 @@ import (
 
 	"github.com/tbhb/toolpaths-go"
 
-	"pkg.krav.sh/krav/internal/fsutil"
+	"go.krav.sh/krav/internal/fsutil"
 )
 
 // Environment variable names for configuration overrides.

@@ -14,8 +14,8 @@ import (
 	"github.com/knadh/koanf/v2"
 	"github.com/spf13/pflag"
 
-	"pkg.krav.sh/krav/internal/config"
-	"pkg.krav.sh/krav/internal/logging"
+	"go.krav.sh/krav/internal/config"
+	"go.krav.sh/krav/internal/logging"
 )
 
 // LoadOpts configures cascade loading behavior.

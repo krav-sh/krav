@@ -4,7 +4,7 @@ set positional-arguments := true
 
 # Go project metadata
 
-module := "pkg.krav.sh/krav"
+module := "go.krav.sh/krav"
 bin_name := "krav"
 bin_dir := "bin"
 

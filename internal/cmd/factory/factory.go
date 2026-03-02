@@ -4,10 +4,10 @@ import (
 	"os"
 	"sync"
 
-	"pkg.krav.sh/krav/internal/cmdutil"
-	"pkg.krav.sh/krav/internal/config"
-	"pkg.krav.sh/krav/internal/config/settings"
-	"pkg.krav.sh/krav/internal/logging"
+	"go.krav.sh/krav/internal/cmdutil"
+	"go.krav.sh/krav/internal/config"
+	"go.krav.sh/krav/internal/config/settings"
+	"go.krav.sh/krav/internal/logging"
 )
 
 // Opts configures factory creation.
